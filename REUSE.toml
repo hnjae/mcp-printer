@@ -1,0 +1,31 @@
+version = 1
+
+[[annotations]]
+path = [
+  "package.json",
+  "tsconfig.json",
+]
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+SPDX-FileCopyrightText = ["2025 Steve CLARKE", "2026 KIM Hyunjae"]
+
+[[annotations]]
+path = [
+  ".editorconfig",
+  "biome.jsonc",
+  "bun.lock",
+]
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+SPDX-FileCopyrightText = "2026 KIM Hyunjae"
+
+[[annotations]]
+path = [
+  "tests/fixtures/CHANGELOG",
+  "tests/fixtures/README",
+  "tests/fixtures/diagram-test.md",
+  "tests/fixtures/markdown-reference.md",
+  "tests/fixtures/markdown-test-short.md",
+  "tests/fixtures/no-shebang-plain",
+  "tests/fixtures/notes.txt",
+]
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+SPDX-FileCopyrightText = "2024 Test Project"

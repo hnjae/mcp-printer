@@ -1,17 +1,17 @@
 {
-  "name": "mcp-printer",
-  "version": "2.0.0",
+  "version": "3.0.0-alpha",
+  "private": true,
   "description": "MCP server for printing documents on macOS/Linux via CUPS. Gives AI assistants the ability to print files, manage print queues, and control printers.",
-  "author": "Stephen Clarke",
-  "license": "MIT",
+  "author": "KIM Hyunjae",
+  "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
-    "url": "https://github.com/steveclarke/mcp-printer.git"
+    "url": "https://github.com/hnjae/mcp-printer.git"
   },
   "bugs": {
-    "url": "https://github.com/steveclarke/mcp-printer/issues"
+    "url": "https://github.com/hnjae/mcp-printer/issues"
   },
-  "homepage": "https://github.com/steveclarke/mcp-printer#readme",
+  "homepage": "https://github.com/hnjae/mcp-printer#readme",
   "keywords": [
     "mcp",
     "mcp-server",
@@ -33,60 +33,24 @@
   "bin": {
     "mcp-printer": "./dist/index.js"
   },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE",
-    "CHANGELOG.md"
-  ],
   "engines": {
-    "node": ">=22.0.0"
-  },
-  "scripts": {
-    "clean": "rm -rf dist",
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "prepare": "husky",
-    "prepublishOnly": "pnpm run build",
-    "release": "np",
-    "test": "pnpm run test:unit && pnpm run test:integration",
-    "test:unit": "vitest run tests/unit",
-    "test:integration": "vitest run tests/integration --testTimeout=30000",
-    "test:watch": "vitest tests/unit",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage",
-    "lint": "eslint src tests --ext .ts",
-    "lint:fix": "eslint src tests --ext .ts --fix",
-    "format": "prettier --write \"**/*.{ts,json,md,yml,yaml}\"",
-    "format:check": "prettier --check \"**/*.{ts,json,md,yml,yaml}\""
+    "bun": ">=1.3.14"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.20.1",
-    "crossnote": "^0.9.15",
-    "execa": "^9.6.0",
+    "@modelcontextprotocol/sdk": "^1.32.0",
+    "crossnote": "^0.9.41",
+    "execa": "^10.0.1",
     "gray-matter": "^4.0.3",
-    "he": "^1.2.0",
-    "highlight.js": "^11.11.1",
-    "pdf-parse": "^2.4.4",
+    "he": "^2.0.0",
+    "highlight.js": "^11.12.0",
+    "pdf-parse": "^2.4.5",
     "yn": "^5.1.0",
-    "zod": "^3.25.76"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
     "@types/he": "^1.2.3",
-    "@types/node": "^24.8.1",
-    "@types/pdf-parse": "^1.1.5",
-    "@typescript-eslint/eslint-plugin": "^8.46.1",
-    "@typescript-eslint/parser": "^8.46.1",
-    "@vitest/coverage-v8": "^3.2.4",
-    "@vitest/ui": "^3.2.4",
-    "eslint": "^9.38.0",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.4",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.2.4",
-    "np": "^10.2.0",
-    "prettier": "^3.6.2",
-    "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2"
   }
 }

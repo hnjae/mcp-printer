@@ -1,13 +1,17 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Steve CLARKE
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
 /**
  * @fileoverview Central tool registry.
  * Registers all MCP tools and prompts with the server instance.
  */
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
-import { registerPrinterTools } from "./printer.js"
-import { registerPrintTools } from "./print.js"
-import { registerPrompts } from "./prompts.js"
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { config } from "../config.js"
+import { registerPrintTools } from "./print.js"
+import { registerPrinterTools } from "./printer.js"
+import { registerPrompts } from "./prompts.js"
 
 /**
  * Registers all available MCP tools and prompts with the given server.

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Steve CLARKE
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
 /**
  * @fileoverview MCP Server implementation for printing operations.
  * Provides a Model Context Protocol server that exposes printing tools via CUPS.
@@ -5,8 +9,8 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
-import { registerAllTools } from "./tools/index.js"
 import packageJson from "../package.json" with { type: "json" }
+import { registerAllTools } from "./tools/index.js"
 
 /**
  * MCP Server instance for printing via CUPS.

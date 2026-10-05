@@ -1,8 +1,4 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 KIM Hyunjae
-
-/node_modules
-/dist
-
-# Cache files:
-.rumdl_cache/
+[formatting]
+array_auto_collapse = false

@@ -1,18 +1,22 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Steve CLARKE
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
 /**
  * @fileoverview Printer management tools registration.
  * Registers printer query, management, and job cancellation tools with the MCP server.
  */
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
-import { z } from "zod"
-import { execCommand } from "../utils.js"
-import { config } from "../config.js"
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { execa } from "execa"
+import { z } from "zod"
+import { config } from "../config.js"
+import { execCommand } from "../utils.js"
 import {
-  handleCancel,
-  formatCancelResults,
-  checkBatchSizeLimit,
   type CancelJobResult,
+  checkBatchSizeLimit,
+  formatCancelResults,
+  handleCancel,
 } from "./batch-helpers.js"
 
 /**

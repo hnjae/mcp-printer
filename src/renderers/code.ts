@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Steve CLARKE
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
 /**
  * @fileoverview Code file renderer with syntax highlighting.
  *
@@ -19,17 +23,17 @@
  *    which preserves syntax colors and formatting for printing.
  *
  * The approach of manually building HTML structure (rather than using browser-focused
- * plugins) is necessary for server-side Node.js rendering without DOM APIs.
+ * plugins) is necessary for server-side rendering without DOM APIs.
  */
 
-import { readFileSync } from "fs"
-import { basename, dirname, extname, join } from "path"
-import { fileURLToPath } from "url"
+import { readFileSync } from "node:fs"
+import { basename, dirname, extname, join } from "node:path"
+import { fileURLToPath } from "node:url"
+import { encode } from "he"
 import hljs from "highlight.js"
-import he from "he"
-import { convertHtmlToPdf, hasShebang } from "../utils.js"
-import { validateFilePath } from "../file-security.js"
 import { config } from "../config.js"
+import { validateFilePath } from "../file-security.js"
+import { convertHtmlToPdf, hasShebang } from "../utils.js"
 
 /**
  * Determines if a file should be rendered with syntax highlighting.
@@ -177,7 +181,7 @@ export function getLanguageFromExtension(filePath: string): string {
  * @internal Exported for testing purposes
  */
 export function fixMultilineSpans(text: string): string {
-  let classes: string[] = []
+  const classes: string[] = []
   const spanRegex = /<(\/?)span(.*?)>/g
   const tagAttrRegex = /(\S+)=["']?((?:.(?!["']?\s+(?:\S+)=|\s*\/?[>"']))+.)["']?/g
 
@@ -186,20 +190,23 @@ export function fixMultilineSpans(text: string): string {
     .map((line) => {
       const pre = classes.map((classVal) => `<span class="${classVal}">`)
 
-      let spanMatch
       spanRegex.lastIndex = 0
-      while ((spanMatch = spanRegex.exec(line)) !== null) {
+      let spanMatch = spanRegex.exec(line)
+      while (spanMatch !== null) {
         if (spanMatch[1] !== "") {
           classes.pop()
+          spanMatch = spanRegex.exec(line)
           continue
         }
-        let attrMatch
         tagAttrRegex.lastIndex = 0
-        while ((attrMatch = tagAttrRegex.exec(spanMatch[2])) !== null) {
+        let attrMatch = tagAttrRegex.exec(spanMatch[2])
+        while (attrMatch !== null) {
           if (attrMatch[1].toLowerCase().trim() === "class") {
             classes.push(attrMatch[2])
           }
+          attrMatch = tagAttrRegex.exec(spanMatch[2])
         }
+        spanMatch = spanRegex.exec(line)
       }
 
       return `${pre.join("")}${line}${"</span>".repeat(classes.length)}`
@@ -241,7 +248,7 @@ function applySyntaxHighlighting(sourceCode: string, language: string): string {
 function loadColorSchemeCSS(colorScheme: string): string {
   try {
     const stylesDir = join(__dirname, "../../node_modules/highlight.js/styles")
-    const themeFileName = colorScheme + ".css"
+    const themeFileName = `${colorScheme}.css`
     const themePath = join(stylesDir, themeFileName)
 
     try {
@@ -373,7 +380,7 @@ function generateHTML(
   </style>
 </head>
 <body>
-  <h3 class="filepath">${he.encode(filePath)}</h3>
+  <h3 class="filepath">${encode(filePath)}</h3>
   <table class="hljs">
     ${tableRows}
   </table>

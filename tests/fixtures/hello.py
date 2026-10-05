@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2024 Test Project
+
 """Simple greeting script"""
 
 def greet(name):
@@ -11,4 +14,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

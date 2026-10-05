@@ -1,10 +1,14 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Steve CLARKE
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
 /**
  * @fileoverview Unit tests for configuration parsing
  */
 
-import { describe, it, expect } from "vitest"
-import { homedir } from "os"
-import { join } from "path"
+import { describe, expect, it } from "bun:test"
+import { homedir } from "node:os"
+import { join } from "node:path"
 import { config, MARKDOWN_EXTENSIONS } from "../../src/config.js"
 
 describe("config", () => {

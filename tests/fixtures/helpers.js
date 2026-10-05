@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2024 Test Project
+
 // Utility functions
 
 function sum(arr) {
@@ -13,4 +16,3 @@ function max(arr) {
 }
 
 module.exports = { sum, average, max };
-

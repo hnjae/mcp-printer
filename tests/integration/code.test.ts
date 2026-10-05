@@ -1,16 +1,18 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Steve CLARKE
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
 /**
  * @fileoverview Unit tests for code rendering functionality
  */
 
-import { describe, it, expect, vi } from "vitest"
-import { unlinkSync } from "fs"
+import { describe, expect, it, vi } from "bun:test"
+import { mkdirSync, unlinkSync } from "node:fs"
+import { dirname, join } from "node:path"
+import { fileURLToPath } from "node:url"
 
 // Mock config to allow access to test directory
 vi.mock("../../src/config.js", () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { dirname, join } = require("path")
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { fileURLToPath } = require("url")
   const mockTestDir = join(dirname(fileURLToPath(import.meta.url)), "..")
 
   return {
@@ -31,9 +33,11 @@ vi.mock("../../src/config.js", () => {
   }
 })
 
+mkdirSync(join(dirname(fileURLToPath(import.meta.url)), "../tmp"), { recursive: true })
+
 import {
-  getLanguageFromExtension,
   fixMultilineSpans,
+  getLanguageFromExtension,
   renderCodeToPdf,
 } from "../../src/renderers/code.js"
 
@@ -143,9 +147,9 @@ describe("fixMultilineSpans", () => {
 describe("renderCodeToPdf", () => {
   it("should render a simple JavaScript file to PDF", async () => {
     // Create a simple test file in the test tmp directory
-    const { writeFileSync } = await import("fs")
-    const { join, dirname } = await import("path")
-    const { fileURLToPath } = await import("url")
+    const { writeFileSync } = await import("node:fs")
+    const { join, dirname } = await import("node:path")
+    const { fileURLToPath } = await import("node:url")
 
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)
@@ -160,7 +164,7 @@ describe("renderCodeToPdf", () => {
       expect(pdfPath).toContain(".pdf")
 
       // Check that file exists
-      const { existsSync } = await import("fs")
+      const { existsSync } = await import("node:fs")
       expect(existsSync(pdfPath)).toBe(true)
 
       // Clean up
@@ -176,9 +180,9 @@ describe("renderCodeToPdf", () => {
   })
 
   it("should handle different languages", async () => {
-    const { writeFileSync } = await import("fs")
-    const { join, dirname } = await import("path")
-    const { fileURLToPath } = await import("url")
+    const { writeFileSync } = await import("node:fs")
+    const { join, dirname } = await import("node:path")
+    const { fileURLToPath } = await import("node:url")
 
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)
@@ -201,9 +205,9 @@ describe("renderCodeToPdf", () => {
   })
 
   it("should respect line numbers parameter", async () => {
-    const { writeFileSync } = await import("fs")
-    const { join, dirname } = await import("path")
-    const { fileURLToPath } = await import("url")
+    const { writeFileSync } = await import("node:fs")
+    const { join, dirname } = await import("node:path")
+    const { fileURLToPath } = await import("node:url")
 
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)
@@ -231,9 +235,9 @@ describe("renderCodeToPdf", () => {
   })
 
   it("should handle empty files", async () => {
-    const { writeFileSync } = await import("fs")
-    const { join, dirname } = await import("path")
-    const { fileURLToPath } = await import("url")
+    const { writeFileSync } = await import("node:fs")
+    const { join, dirname } = await import("node:path")
+    const { fileURLToPath } = await import("node:url")
 
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)
@@ -255,14 +259,14 @@ describe("renderCodeToPdf", () => {
   })
 
   it("should handle files with special characters", async () => {
-    const { writeFileSync } = await import("fs")
-    const { join, dirname } = await import("path")
-    const { fileURLToPath } = await import("url")
+    const { writeFileSync } = await import("node:fs")
+    const { join, dirname } = await import("node:path")
+    const { fileURLToPath } = await import("node:url")
 
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)
     const testFile = join(__dirname, "../tmp/test-special-chars.js")
-    writeFileSync(testFile, 'const str = "Hello <world> & \"quotes\"";', "utf-8")
+    writeFileSync(testFile, 'const str = "Hello <world> & "quotes"";', "utf-8")
 
     try {
       const pdfPath = await renderCodeToPdf(testFile)

@@ -1,7 +1,11 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2025 Steve CLARKE
+# SPDX-FileCopyrightText: 2026 KIM Hyunjae
 version: 2
 updates:
-  # Monitor npm dependencies
-  - package-ecosystem: "npm"
+  # Monitor Bun dependencies
+  - package-ecosystem: "bun"
     directory: "/"
     schedule:
       interval: "daily"
@@ -23,8 +27,7 @@ updates:
         update-types:
           - "minor"
           - "patch"
-
-  # Monitor GitHub Actions (ready for when you add workflows)
+  # Monitor GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

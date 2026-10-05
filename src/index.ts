@@ -1,4 +1,7 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Steve CLARKE
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
 
 /**
  * @fileoverview Entry point for the MCP Printer server.

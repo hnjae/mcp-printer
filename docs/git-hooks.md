@@ -1,84 +1,26 @@
-# Git Hooks with Husky
+<!--
+SPDX-License-Identifier: AGPL-3.0-or-later
+SPDX-FileCopyrightText: 2026 KIM Hyunjae
+-->
 
-This project uses Husky and lint-staged to automatically lint and format code before commits.
+# Git Hooks with prek
 
-## How It Works
+This project uses treefmt to format and typos to check staged files before commits, runs `just lint` before pushes, and uses Cocogitto to check commit messages against its default Conventional Commits rules.
 
-```
-┌─────────────────────────┐
-│   git commit -m "..."   │
-└───────────┬─────────────┘
-            │
-            ▼
-┌─────────────────────────┐
-│  Git pre-commit hook    │
-│  (installed by Husky)   │
-└───────────┬─────────────┘
-            │
-            ▼
-┌─────────────────────────┐
-│  .husky/pre-commit      │
-│  runs: lint-staged      │
-└───────────┬─────────────┘
-            │
-            ▼
-┌─────────────────────────┐
-│  .lintstagedrc.json     │
-│  defines what to run    │
-└───────────┬─────────────┘
-            │
-            ├─────────────────┬──────────────┐
-            ▼                 ▼              ▼
-      ┌─────────┐      ┌──────────┐   ┌──────────┐
-      │ ESLint  │      │ Prettier │   │ Prettier │
-      │  --fix  │      │  --write │   │  --write │
-      └────┬────┘      └────┬─────┘   └────┬─────┘
-        .ts files      .ts files      .json/.md
-            │                 │              │
-            └─────────────────┴──────────────┘
-                          │
-            ┌─────────────┴──────────────┐
-            ▼                            ▼
-       ✅ Success                    ❌ Errors
-    Commit proceeds              Commit blocked
+## Setup
+
+Enter the Nix shell to make Bun and the hook tools available and install both Git hooks automatically. Then install JavaScript dependencies:
+
+```sh
+nix-shell
+bun install --frozen-lockfile
 ```
 
-## Setup (Automatic)
+## Hooks
 
-When you run `pnpm install`, the `prepare` script automatically runs `husky`, which:
-1. Installs Git hooks into `.git/hooks/`
-2. Links them to the scripts in `.husky/` directory
+- **treefmt** runs Biome, Taplo, nixfmt, yamlfmt, and rumdl based on `treefmt.toml`.
+- **typos** checks spelling in staged files before commits.
+- **just lint** runs Biome against the project before each push.
+- **Cocogitto** rejects commit messages that do not follow Conventional Commits.
 
-This means all developers get the hooks automatically - no manual setup required.
-
-## What Happens on Commit
-
-1. You run `git commit`
-2. Git triggers `.husky/pre-commit` hook
-3. The hook runs `lint-staged`
-4. `lint-staged` processes only staged files according to `.lintstagedrc.json`:
-   - **TypeScript files**: ESLint (auto-fix) → Prettier (format)
-   - **Config/doc files**: Prettier (format)
-5. **If errors remain** (e.g., `any` types): Commit is blocked
-6. **If all pass**: Auto-fixed files are added to commit, commit proceeds
-
-## Configuration Files
-
-- **`.husky/pre-commit`**: Runs `lint-staged` before each commit
-- **`.lintstagedrc.json`**: Defines which tools run on which file types
-- **`eslint.config.js`**: ESLint rules (including `no-explicit-any`)
-- **`.prettierrc.json`**: Code formatting rules (double quotes, no semicolons, 2-space indent)
-
-## Bypassing Hooks (Emergency Only)
-
-```bash
-git commit --no-verify -m "Emergency fix"
-```
-
-## Benefits
-
-- **Fast**: Only lints changed files, not entire codebase
-- **Automatic**: Works for all developers on `pnpm install`
-- **Prevents issues**: Catches problems before they reach the repository
-- **Consistent**: Everyone's code is formatted the same way
-
+Run `just format` to format the full repository, `just format-check` to check formatting in CI mode, and `just typos` to check spelling across the repository. Run `prek run --all-files` to run the pre-commit hooks across tracked files, or `prek run --hook-stage pre-push` to run the push checks manually. Run `prek validate-config .pre-commit-config.yaml` to check the prek configuration. `just ci` runs typos as well as the other CI checks. The Nix shell installs the prek `pre-commit` and `pre-push` hooks, plus the Cocogitto `commit-msg` hook defined in `cog.toml`, when entered.

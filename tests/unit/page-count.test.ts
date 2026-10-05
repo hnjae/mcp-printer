@@ -1,8 +1,12 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Steve CLARKE
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
 /**
  * @fileoverview Unit tests for page count utilities.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "bun:test"
 import { calculatePhysicalSheets, shouldTriggerConfirmation } from "../../src/utils.js"
 
 // Mock the config module

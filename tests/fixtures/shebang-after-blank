@@ -1,6 +1,9 @@
 
 
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2024 Test Project
+
 # Test fixture: Python script with blank line before shebang
 # This file has no extension and should be auto-detected as code
 
@@ -42,4 +45,3 @@ if __name__ == '__main__':
     analyzer = LogAnalyzer('/var/log/app.log')
     analyzer.parse_log()
     analyzer.print_summary()
-

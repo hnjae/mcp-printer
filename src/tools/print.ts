@@ -1,18 +1,22 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Steve CLARKE
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
 /**
  * @fileoverview File printing tool registration.
  * Registers print_file and get_page_meta tools with the MCP server.
  */
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
 import {
-  handlePrint,
+  checkBatchSizeLimit,
+  formatPageMetaResults,
   formatPrintResults,
   handlePageMeta,
-  formatPageMetaResults,
-  checkBatchSizeLimit,
-  type PrintResult,
+  handlePrint,
   type PageMetaResult,
+  type PrintResult,
 } from "./batch-helpers.js"
 
 /**

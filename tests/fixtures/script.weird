@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2024 Test Project
+
 // This file has a .weird extension but contains real JavaScript code
 // It should NOT auto-render (unknown extension)
 // Use force_code_render=true to render it
@@ -9,4 +12,3 @@ function fibonacci(n) {
 
 const result = fibonacci(10);
 console.log(`Fibonacci(10) = ${result}`);
-

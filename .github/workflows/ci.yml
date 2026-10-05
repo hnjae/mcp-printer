@@ -1,68 +1,27 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 KIM Hyunjae
 name: CI
-
 on:
   push:
     branches: ["**"]
   pull_request:
     branches: ["**"]
-
 jobs:
   test:
-    name: Test (Node.js ${{ matrix.node-version }})
+    name: Checks
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        node-version: [22.x, 23.x, latest]
-
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: actions/checkout@v7
         with:
-          version: 9
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
+          persist-credentials: false
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@main
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Cache apt packages
-        uses: actions/cache@v4
-        id: cache-apt
-        with:
-          path: /var/cache/apt/archives
-          key: apt-${{ runner.os }}-chromium-${{ hashFiles('.github/workflows/ci.yml') }}
-          restore-keys: |
-            apt-${{ runner.os }}-chromium-
-
-      - name: Install Chromium
-        run: |
-          if ! command -v chromium-browser &> /dev/null; then
-            sudo apt-get update
-            sudo apt-get install -y chromium-browser
-          else
-            echo "Chromium already installed, skipping installation"
-          fi
-
-      - name: Run linter
-        run: pnpm run lint
-
-      - name: Check formatting
-        run: pnpm run format:check
-
-      - name: Run unit tests
-        run: pnpm run test:unit
-
-      - name: Run integration tests
-        run: pnpm run test:integration
-
-      - name: Build project
-        run: pnpm run build
+          extra-conf: |
+            experimental-features = nix-command flakes
+      - name: Install dependencies and run checks
+        run: nix-shell --run 'bun install --frozen-lockfile && just ci'

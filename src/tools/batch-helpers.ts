@@ -1,19 +1,23 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Steve CLARKE
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
 /**
  * @fileoverview Batch operation helpers for print, page metadata, and job cancellation operations.
  * Provides interfaces, processing functions, and result formatting for batch tool operations.
  */
 
 import { execa } from "execa"
+import { config } from "../config.js"
 import {
+  calculatePhysicalSheets,
+  cleanupRenderedPdf,
   executePrintJob,
   getPdfPageCount,
-  calculatePhysicalSheets,
-  shouldTriggerConfirmation,
-  prepareFileForPrinting,
   isDuplexEnabled,
-  cleanupRenderedPdf,
+  prepareFileForPrinting,
+  shouldTriggerConfirmation,
 } from "../utils.js"
-import { config } from "../config.js"
 
 /**
  * Error codes used in batch operations.

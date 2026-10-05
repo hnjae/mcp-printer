@@ -1,3 +1,8 @@
+This fixture set is licensed under the GNU Affero General Public License, version 3 or any later version. The complete license text is in ../../LICENSES/AGPL-3.0-or-later.txt.
+
+The fixture material was originally distributed by Test Project under the MIT License. Its original copyright notice and complete permission notice, including the disclaimer, are preserved here:
+
+```text
 MIT License
 
 Copyright (c) 2024 Test Project
@@ -13,4 +18,8 @@ The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+```
 
+<!--
+vi:ft=markdown
+-->

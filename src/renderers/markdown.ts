@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Steve CLARKE
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
 /**
  * @fileoverview Markdown file renderer.
  * Converts markdown files to PDF using crossnote.
@@ -5,15 +9,15 @@
  * Automatically adds page numbering to all rendered PDFs.
  */
 
-import { basename, join } from "path"
-import { readFileSync, writeFileSync, mkdtempSync, unlinkSync } from "fs"
-import { tmpdir } from "os"
-import matter from "gray-matter"
-import he from "he"
-import { findChrome } from "../utils.js"
-import { validateFilePath } from "../file-security.js"
-import { config } from "../config.js"
+import { mkdtempSync, readFileSync, unlinkSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { basename, join } from "node:path"
 import { Notebook } from "crossnote"
+import matter from "gray-matter"
+import { encode } from "he"
+import { config } from "../config.js"
+import { validateFilePath } from "../file-security.js"
+import { findChrome } from "../utils.js"
 
 /**
  * Page numbering configuration function for Puppeteer PDF generation.
@@ -44,7 +48,7 @@ function getPageNumberConfig(filename: string) {
     headerTemplate: "<div></div>",
     footerTemplate: `
       <div style="${footerStyles.container}">
-        <span style="${footerStyles.filename}">${he.encode(filename)}</span>
+        <span style="${footerStyles.filename}">${encode(filename)}</span>
         <span><span class="pageNumber"></span> / <span class="totalPages"></span></span>
       </div>
     `,

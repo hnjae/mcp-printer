@@ -1,21 +1,24 @@
+<!--
+SPDX-License-Identifier: AGPL-3.0-or-later
+SPDX-FileCopyrightText: 2025 Steve CLARKE
+SPDX-FileCopyrightText: 2026 KIM Hyunjae
+-->
+
 # MCP Printer Tests
 
 Unit tests for the MCP Printer server, focusing on pure functions, configuration parsing, and security validation.
 
 ## Running Tests
 
-```bash
+```sh
 # Run tests once
-pnpm test
+just test
 
 # Run tests in watch mode (re-runs on file changes)
-pnpm test:watch
-
-# Open Vitest UI (browser-based test interface)
-pnpm test:ui
+just test-watch
 
 # Run tests with coverage report
-pnpm test:coverage
+just test-coverage
 ```
 
 ## Test Structure
@@ -23,27 +26,27 @@ pnpm test:coverage
 ### Unit Tests (`tests/unit/`)
 
 - **`utils.test.ts`** - Pure utility functions
-  - String parsing (`parseDelimitedString`)
-  - Language mapping (`getLanguageFromExtension`)
-  - HTML manipulation (`fixMultilineSpans`)
-  - Response formatting (`formatPrintResponse`)
+    - String parsing (`parseDelimitedString`)
+    - Language mapping (`getLanguageFromExtension`)
+    - HTML manipulation (`fixMultilineSpans`)
+    - Response formatting (`formatPrintResponse`)
 
 - **`file-detection.test.ts`** - File type detection logic
-  - Markdown rendering detection (`shouldRenderToPdf`)
-  - Code syntax highlighting detection (`shouldRenderCode`)
-  - Extension handling and exclusions
+    - Markdown rendering detection (`shouldRenderToPdf`)
+    - Code syntax highlighting detection (`shouldRenderCode`)
+    - Extension handling and exclusions
 
 - **`security.test.ts`** - Security validation
-  - File path validation (`validateFilePath`)
-  - Allowed/denied path enforcement
-  - .env file blocking
-  - Sensitive directory protection
+    - File path validation (`validateFilePath`)
+    - Allowed/denied path enforcement
+    - .env file blocking
+    - Sensitive directory protection
 
 - **`config.test.ts`** - Configuration parsing
-  - Environment variable parsing
-  - Default values
-  - Boolean/array/path parsing
-  - Configuration merging
+    - Environment variable parsing
+    - Default values
+    - Boolean/array/path parsing
+    - Configuration merging
 
 ## Coverage Goals
 
@@ -66,4 +69,3 @@ Potential additions for comprehensive testing:
 ## Test Helpers
 
 The `tests/helpers/` directory is available for shared test utilities as the test suite grows. Temporary test files are written to `tests/tmp/` (not tracked in git).
-

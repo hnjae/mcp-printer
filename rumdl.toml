@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 KIM Hyunjae
+[global]
+flavor = "gfm"
+disable = [
+  "heading-increment",
+  "line-length",
+  "single-title",
+  "no-emphasis-as-heading",
+  "first-line-heading",
+]
+
+[ul-indent]
+indent = 4
+
+[table-format]
+enabled = true
+style = "compact"

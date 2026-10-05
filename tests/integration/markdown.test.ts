@@ -1,12 +1,14 @@
-import { describe, it, expect, vi } from "vitest"
-import { existsSync, unlinkSync } from "fs"
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Steve CLARKE
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
+import { describe, expect, it, vi } from "bun:test"
+import { existsSync, mkdirSync, unlinkSync } from "node:fs"
+import { dirname, join } from "node:path"
+import { fileURLToPath } from "node:url"
 
 // Mock config to allow access to test directory
 vi.mock("../../src/config.js", () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { dirname, join } = require("path")
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { fileURLToPath } = require("url")
   const mockTestDir = join(dirname(fileURLToPath(import.meta.url)), "..")
 
   return {
@@ -20,14 +22,16 @@ vi.mock("../../src/config.js", () => {
   }
 })
 
+mkdirSync(join(dirname(fileURLToPath(import.meta.url)), "../tmp"), { recursive: true })
+
 import { renderMarkdownToPdf } from "../../src/renderers/markdown.js"
 
 describe("renderMarkdownToPdf", () => {
   it("should render a simple markdown file to PDF", async () => {
     // Create a simple test file in the test tmp directory
-    const { writeFileSync } = await import("fs")
-    const { join, dirname } = await import("path")
-    const { fileURLToPath } = await import("url")
+    const { writeFileSync } = await import("node:fs")
+    const { join, dirname } = await import("node:path")
+    const { fileURLToPath } = await import("node:url")
 
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)
@@ -54,9 +58,9 @@ describe("renderMarkdownToPdf", () => {
   })
 
   it("should handle markdown with code blocks", async () => {
-    const { writeFileSync } = await import("fs")
-    const { join, dirname } = await import("path")
-    const { fileURLToPath } = await import("url")
+    const { writeFileSync } = await import("node:fs")
+    const { join, dirname } = await import("node:path")
+    const { fileURLToPath } = await import("node:url")
 
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)
@@ -90,9 +94,9 @@ Some text after the code.`
   })
 
   it("should handle markdown with lists and formatting", async () => {
-    const { writeFileSync } = await import("fs")
-    const { join, dirname } = await import("path")
-    const { fileURLToPath } = await import("url")
+    const { writeFileSync } = await import("node:fs")
+    const { join, dirname } = await import("node:path")
+    const { fileURLToPath } = await import("node:url")
 
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)
@@ -129,9 +133,9 @@ Some text after the code.`
   })
 
   it("should handle empty markdown files", async () => {
-    const { writeFileSync } = await import("fs")
-    const { join, dirname } = await import("path")
-    const { fileURLToPath } = await import("url")
+    const { writeFileSync } = await import("node:fs")
+    const { join, dirname } = await import("node:path")
+    const { fileURLToPath } = await import("node:url")
 
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)
@@ -155,9 +159,9 @@ Some text after the code.`
   })
 
   it("should handle markdown with special characters", async () => {
-    const { writeFileSync } = await import("fs")
-    const { join, dirname } = await import("path")
-    const { fileURLToPath } = await import("url")
+    const { writeFileSync } = await import("node:fs")
+    const { join, dirname } = await import("node:path")
+    const { fileURLToPath } = await import("node:url")
 
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)
@@ -190,9 +194,9 @@ Emoji: 🎉 ✨ 🚀`
   })
 
   it("should inject page numbering into markdown without front-matter", async () => {
-    const { writeFileSync } = await import("fs")
-    const { join, dirname } = await import("path")
-    const { fileURLToPath } = await import("url")
+    const { writeFileSync } = await import("node:fs")
+    const { join, dirname } = await import("node:path")
+    const { fileURLToPath } = await import("node:url")
 
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)
@@ -218,9 +222,9 @@ Emoji: 🎉 ✨ 🚀`
   })
 
   it("should merge page numbering with existing front-matter", async () => {
-    const { writeFileSync } = await import("fs")
-    const { join, dirname } = await import("path")
-    const { fileURLToPath } = await import("url")
+    const { writeFileSync } = await import("node:fs")
+    const { join, dirname } = await import("node:path")
+    const { fileURLToPath } = await import("node:url")
 
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)
@@ -254,9 +258,9 @@ This is a test with existing front-matter.`
   })
 
   it("should respect existing chrome configuration in front-matter", async () => {
-    const { writeFileSync } = await import("fs")
-    const { join, dirname } = await import("path")
-    const { fileURLToPath } = await import("url")
+    const { writeFileSync } = await import("node:fs")
+    const { join, dirname } = await import("node:path")
+    const { fileURLToPath } = await import("node:url")
 
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)
@@ -290,9 +294,9 @@ This document has its own chrome config that should not be overridden.`
   })
 
   it("should respect existing puppeteer configuration in front-matter", async () => {
-    const { writeFileSync } = await import("fs")
-    const { join, dirname } = await import("path")
-    const { fileURLToPath } = await import("url")
+    const { writeFileSync } = await import("node:fs")
+    const { join, dirname } = await import("node:path")
+    const { fileURLToPath } = await import("node:url")
 
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)
@@ -327,9 +331,9 @@ This document has its own puppeteer config that should not be overridden.`
   })
 
   it("should handle empty front-matter blocks", async () => {
-    const { writeFileSync } = await import("fs")
-    const { join, dirname } = await import("path")
-    const { fileURLToPath } = await import("url")
+    const { writeFileSync } = await import("node:fs")
+    const { join, dirname } = await import("node:path")
+    const { fileURLToPath } = await import("node:url")
 
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)
@@ -361,9 +365,9 @@ This has an empty front-matter block.`
   })
 
   it("should handle filenames with HTML special characters", async () => {
-    const { writeFileSync } = await import("fs")
-    const { join, dirname } = await import("path")
-    const { fileURLToPath } = await import("url")
+    const { writeFileSync } = await import("node:fs")
+    const { join, dirname } = await import("node:path")
+    const { fileURLToPath } = await import("node:url")
 
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)

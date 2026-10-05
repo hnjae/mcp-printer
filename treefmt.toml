@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
+[formatter.biome]
+command = "bun"
+options = ["x", "biome", "format", "--write"]
+includes = ["*.js", "*.jsx", "*.ts", "*.tsx", "*.json", "*.jsonc"]
+excludes = ["tests/fixtures/**"]
+
+[formatter.taplo]
+command = "taplo"
+options = ["fmt"]
+includes = ["*.toml"]
+
+[formatter.nixfmt]
+command = "nixfmt"
+includes = ["*.nix"]
+
+[formatter.yamlfmt]
+command = "yamlfmt"
+options = ["-conf", "yamlfmt.yaml"]
+includes = ["*.yaml", "*.yml"]
+
+[formatter.rumdl]
+command = "rumdl"
+options = ["fmt"]
+includes = ["*.md", "*.markdown"]
+excludes = ["tests/fixtures/**"]
+
+[formatter.just]
+command = "just"
+options = ["--fmt", "--justfile"]
+includes = ["justfile"]

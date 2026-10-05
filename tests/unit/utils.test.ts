@@ -1,9 +1,13 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Steve CLARKE
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
 /**
  * @fileoverview Unit tests for pure utility functions
  */
 
-import { describe, it, expect } from "vitest"
-import { parseDelimitedString, formatPrintResponse } from "../../src/utils.js"
+import { describe, expect, it } from "bun:test"
+import { formatPrintResponse, parseDelimitedString } from "../../src/utils.js"
 
 describe("parseDelimitedString", () => {
   it("should parse colon-delimited string", () => {

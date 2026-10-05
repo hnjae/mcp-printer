@@ -1,6 +1,10 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Steve CLARKE
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
+import { homedir } from "node:os"
+import { join } from "node:path"
 import yn from "yn"
-import { homedir } from "os"
-import { join } from "path"
 import { parseDelimitedString } from "./utils.js"
 
 /**

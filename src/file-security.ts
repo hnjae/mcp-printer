@@ -1,10 +1,13 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Steve CLARKE
+
 /**
  * @fileoverview File path security validation and access control.
  * Enforces allowlist/denylist rules and blocks access to dotfiles and sensitive directories.
  */
 
-import { realpathSync } from "fs"
-import { resolve, sep } from "path"
+import { realpathSync } from "node:fs"
+import { resolve, sep } from "node:path"
 import { config } from "./config.js"
 
 /**

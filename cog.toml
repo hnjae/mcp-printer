@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 KIM Hyunjae
 
-/node_modules
-/dist
+[git_hooks.commit-msg]
+script = '''
+#!/bin/sh
+set -e
 
-# Cache files:
-.rumdl_cache/
+cog verify --file "$1"
+'''

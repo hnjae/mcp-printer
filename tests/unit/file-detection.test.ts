@@ -1,11 +1,15 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Steve CLARKE
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
 /**
  * @fileoverview Unit tests for file type detection logic
  */
 
-import { describe, it, expect } from "vitest"
-import { join } from "path"
-import { shouldRenderToPdf, hasShebang } from "../../src/utils.js"
+import { describe, expect, it } from "bun:test"
+import { join } from "node:path"
 import { shouldRenderCode } from "../../src/renderers/code.js"
+import { hasShebang, shouldRenderToPdf } from "../../src/utils.js"
 
 describe("shouldRenderToPdf", () => {
   it("should return true for markdown extensions (based on config at load time)", () => {

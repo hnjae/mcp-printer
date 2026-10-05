@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2024 Test Project
+
 # Test fixture: Shell script with shebang on first line
 # This file has no extension and should be auto-detected as code
 
@@ -31,4 +34,3 @@ for log in "$LOG_DIR"/*.log; do
 done
 
 echo "Log rotation complete"
-

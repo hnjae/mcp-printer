@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2024 Test Project
+
 // Test fixture: Node.js script with env-style shebang
 // This file has no extension and should be auto-detected as code
 
@@ -55,4 +58,3 @@ if (manager.load()) {
   console.log('Server:', manager.get('server', 'localhost'));
   console.log('Port:', manager.get('port', 3000));
 }
-

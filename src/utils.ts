@@ -1,19 +1,22 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Steve CLARKE
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
 /**
  * @fileoverview General utility functions for command execution, dependency checking,
  * file type detection, and print job handling for the MCP Printer server.
  */
 
-import { execa, type ExecaError } from "execa"
-import { access, readFile } from "fs/promises"
-import { constants } from "fs"
-import { writeFileSync, mkdtempSync, unlinkSync } from "fs"
-import { extname, join } from "path"
-import { tmpdir } from "os"
-import { config, MARKDOWN_EXTENSIONS, type MarkdownExtension } from "./config.js"
+import { constants, mkdtempSync, unlinkSync, writeFileSync } from "node:fs"
+import { access, readFile } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { extname, join } from "node:path"
+import { type ExecaError, execa } from "execa"
 import { PDFParse } from "pdf-parse"
+import { config, MARKDOWN_EXTENSIONS, type MarkdownExtension } from "./config.js"
 import { validateFilePath } from "./file-security.js"
-import { renderMarkdownToPdf } from "./renderers/markdown.js"
 import { renderCodeToPdf, shouldRenderCode } from "./renderers/code.js"
+import { renderMarkdownToPdf } from "./renderers/markdown.js"
 
 /**
  * Parse a delimited string into an array of strings.
@@ -89,7 +92,7 @@ export async function hasShebang(filePath: string): Promise<boolean> {
   try {
     // Read first 1024 bytes of the file
     const buffer = Buffer.alloc(1024)
-    const { open } = await import("fs/promises")
+    const { open } = await import("node:fs/promises")
     const fileHandle = await open(filePath, "r")
 
     try {
@@ -304,7 +307,7 @@ export async function executePrintJob(
   }
 
   // Build options with defaults
-  let allOptions = []
+  const allOptions = []
 
   // Add default duplex if auto-enabled in config and not already specified
   if (config.autoDuplex && !options?.includes("sides=")) {

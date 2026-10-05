@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2024 Test Project
+
 // Type definitions
 
 interface User {
@@ -15,4 +18,3 @@ function createUser(name: string, email: string): User {
 }
 
 export { User, createUser };
-

@@ -1,0 +1,6 @@
+#:schema https://cdn.jsdelivr.net/gh/crate-ci/typos@master/config.schema.json
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
+[default]
+locale = "en"

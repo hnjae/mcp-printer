@@ -3,9 +3,11 @@
 
 /**
  * @fileoverview The typed print settings the tools accept (sides, media, orientation, quality)
- * and per-printer values for them, derived from `lpoptions -l` output. Also defines the JIS
+ * and per-printer values for them, derived from a printer's PPD options. Also defines the JIS
  * B-series sizes the server adds as custom sizes for printers that do not list them.
  */
+
+import type { PpdOption } from "./cups.js"
 
 export const SIDES = ["one-sided", "two-sided-long-edge", "two-sided-short-edge"] as const
 export const ORIENTATIONS = ["portrait", "landscape"] as const
@@ -59,44 +61,6 @@ export function resolveMedia(media: string, pageSizes: string[]): string {
     return native
   }
   return pageSizes.includes(CUSTOM_PAGE_SIZE) ? `Custom.${jis.widthMm}x${jis.heightMm}mm` : media
-}
-
-/** One PPD option: its choices without markers, and the default choice if marked. */
-export interface PpdOption {
-  choices: string[]
-  default?: string
-}
-
-/**
- * Parse `lpoptions -l` output: lines of `Keyword/UI text: choice *defaultChoice ...`.
- * Choice names never contain ": ", while UI text may, so the choices start after the last ": ".
- * Lines and tokens that do not look like this format are skipped.
- *
- * @param text - Output of `lpoptions -p <printer> -l`
- * @returns Options by PPD keyword
- */
-export function parseLpoptions(text: string): Record<string, PpdOption> {
-  const options: Record<string, PpdOption> = {}
-  for (const line of text.split("\n")) {
-    const keyword = /^([A-Za-z0-9_-]+)\//.exec(line)?.[1]
-    const split = line.lastIndexOf(": ")
-    if (!keyword || split < 0) {
-      continue
-    }
-    const option: PpdOption = { choices: [] }
-    for (const token of line.slice(split + 2).split(/\s+/)) {
-      if (!/^\*?[A-Za-z0-9._+-]+$/.test(token)) {
-        continue
-      }
-      const choice = token.replace(/^\*/, "")
-      option.choices.push(choice)
-      if (token.startsWith("*")) {
-        option.default = choice
-      }
-    }
-    options[keyword] = option
-  }
-  return options
 }
 
 /** A value for a print tool parameter, and whether it is the printer's default. */

@@ -89,7 +89,7 @@ const SIDES_BY_DUPLEX: Record<string, (typeof SIDES)[number]> = {
 /**
  * Translate PPD options into the values `sides`, `media` and `quality` accept.
  *
- * @param options - Parsed `lpoptions -l` output
+ * @param options - The printer's PPD options by keyword
  * @returns Settings with the printer's defaults marked
  */
 export function describePrinterSettings(options: Record<string, PpdOption>): PrinterSettings {

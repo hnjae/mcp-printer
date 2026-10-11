@@ -365,7 +365,7 @@ export function buildCupsOptions({
 }
 
 /**
- * Turn a JIS `media` name into what the target printer accepts. Only JIS sizes cost an extra
+ * extra read of the printer's options; if it fails, `media` is sent unchanged for CUPS to judge.
  * `lpoptions` call; if it fails, `media` is sent unchanged for CUPS to judge.
  */
 async function withResolvedMedia(settings: PrintOptions, printer?: string): Promise<PrintOptions> {
@@ -379,7 +379,7 @@ async function withResolvedMedia(settings: PrintOptions, printer?: string): Prom
 
 /**
  * Execute a print job with the given file and options.
- * Handles copy validation, lpr argument building, and execution.
+ * Handles copy validation, option assembly, and execution.
  *
  * @param filePath - Path to the file to print
  * @param printer - Optional printer name

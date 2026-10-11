@@ -29,4 +29,10 @@ Before creating a release on the fork:
 5. Create a GitHub release from that tag at <https://github.com/hnjae/mcp-printer/releases>.
 6. Confirm the release source archive includes `LICENSE`, `LICENSES/`, and `README.md`.
 
+## Container image
+
+Pushing a `v*` tag runs `.github/workflows/image.yml`. It builds the `Containerfile`, smoke-tests the image over HTTP, and publishes `ghcr.io/hnjae/mcp-printer` tagged `X.Y.Z`, `X.Y` and `X`, plus `latest` unless the tag is a pre-release (contains `-`). The workflow fails if the tag does not match the `package.json` version. Pull requests only build and smoke-test the image.
+
+After the first publish, set the package visibility to public in the GitHub package settings so the image can be pulled without logging in. The workflow cannot do this.
+
 The `package.json` version is used in the MCP server's reported version. It does not indicate that a fork release exists. Use Bun to install and run this fork from source.

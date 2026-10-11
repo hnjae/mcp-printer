@@ -16,7 +16,15 @@ import { encode } from "he"
 import { PDFParse } from "pdf-parse"
 import { config, MARKDOWN_EXTENSIONS, type MarkdownExtension } from "./config.js"
 import { validateFilePath } from "./file-security.js"
-import { type ORIENTATIONS, type QUALITIES, resolveMedia, type SIDES } from "./print-settings.js"
+import {
+  JIS_SIZES,
+  type ORIENTATIONS,
+  type PpdOption,
+  type QUALITIES,
+  parseLpoptions,
+  resolveMedia,
+  type SIDES,
+} from "./print-settings.js"
 import { renderCodeToPdf, shouldRenderCode } from "./renderers/code.js"
 import { renderMarkdownToPdf } from "./renderers/markdown.js"
 import { hardenHtml, sanitizeUntrustedMarkdown } from "./untrusted-content.js"
@@ -346,7 +354,7 @@ export function buildCupsOptions({
     all.push(`sides=${sides}`)
   }
   if (media) {
-    all.push(`media=${resolveMedia(media)}`)
+    all.push(`media=${media}`)
   }
   if (orientation) {
     all.push(`orientation-requested=${ORIENTATION_REQUESTED[orientation]}`)
@@ -355,6 +363,39 @@ export function buildCupsOptions({
     all.push(`cupsPrintQuality=${PRINT_QUALITY_CHOICE[quality]}`)
   }
   return all
+}
+
+/** Longest wait for one printer's options, so an unreachable queue cannot stall a tool call. */
+const PRINTER_OPTIONS_TIMEOUT_MS = 10_000
+
+/**
+ * Read a printer's PPD options with `lpoptions -l`.
+ *
+ * @param printer - Printer name, or undefined for the default destination
+ * @returns The options by PPD keyword, or null if `lpoptions` fails or times out
+ */
+export async function readPpdOptions(printer?: string): Promise<Record<string, PpdOption> | null> {
+  try {
+    const { stdout } = await execa("lpoptions", [...(printer ? ["-p", printer] : []), "-l"], {
+      timeout: PRINTER_OPTIONS_TIMEOUT_MS,
+    })
+    return parseLpoptions(stdout)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Turn a JIS `media` name into what the target printer accepts. Only JIS sizes cost an extra
+ * `lpoptions` call; if it fails, `media` is sent unchanged for CUPS to judge.
+ */
+async function withResolvedMedia(settings: PrintOptions, printer?: string): Promise<PrintOptions> {
+  const { media } = settings
+  if (!media || !(media in JIS_SIZES)) {
+    return settings
+  }
+  const pageSizes = (await readPpdOptions(printer))?.PageSize?.choices ?? []
+  return { ...settings, media: resolveMedia(media, pageSizes) }
 }
 
 /**
@@ -393,7 +434,7 @@ export async function executePrintJob(
     args.push(`-#${copies}`)
   }
 
-  const allOptions = buildCupsOptions(settings)
+  const allOptions = buildCupsOptions(await withResolvedMedia(settings, targetPrinter))
 
   // Add each option with -o flag
   for (const option of allOptions) {

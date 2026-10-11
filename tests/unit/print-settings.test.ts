@@ -5,16 +5,13 @@
  * @fileoverview Unit tests for per-printer print settings and JIS size handling.
  */
 
-import { describe, expect, it, vi } from "bun:test"
+import { describe, expect, it } from "bun:test"
 import {
   describePrinterSettings,
   formatPrinterSettings,
   parseLpoptions,
   resolveMedia,
 } from "../../src/print-settings.js"
-import { buildCupsOptions } from "../../src/utils.js"
-
-vi.mock("../../src/config.js", () => ({ config: { autoDuplex: false, defaultOptions: [] } }))
 
 // Trimmed `lpoptions -p <name> -l` output from an inkjet IPP queue and a cups-pdf queue.
 const INKJET = `PageSize/Media Size: 215x345mm 4x6 *A4 A4.Borderless A5 A6 Letter Custom.WIDTHxHEIGHT
@@ -70,32 +67,47 @@ describe("describePrinterSettings", () => {
     expect(settings.quality).toEqual([])
   })
 
-  it("adds JIS-B5 and JIS-B6 when A4 and A5 and custom sizes are available", () => {
+  it("offers jis_b5_182x257mm and jis_b6_128x182mm when A4, A5 and custom sizes are available", () => {
     const media = values(describePrinterSettings(parseLpoptions(INKJET)).media)
-    expect(media).toContain("JIS-B5")
-    expect(media).toContain("JIS-B6")
+    expect(media).toContain("jis_b5_182x257mm")
+    expect(media).toContain("jis_b6_128x182mm")
     expect(media).not.toContain("Custom.WIDTHxHEIGHT")
   })
 
-  it("adds a JIS size only when its own A-series size is listed", () => {
+  it("offers a JIS size only when its own A-series size is listed", () => {
     const media = values(
       describePrinterSettings(parseLpoptions("PageSize/x: *A4 Custom.WIDTHxHEIGHT")).media
     )
-    expect(media).toContain("JIS-B5")
-    expect(media).not.toContain("JIS-B6")
+    expect(media).toContain("jis_b5_182x257mm")
+    expect(media).not.toContain("jis_b6_128x182mm")
   })
 
-  it("adds no JIS size without custom size support", () => {
+  it("offers no JIS size without custom size support or a listing of its own", () => {
     const media = values(describePrinterSettings(parseLpoptions("PageSize/x: *A4 A5")).media)
-    expect(media).not.toContain("JIS-B5")
-    expect(media).not.toContain("JIS-B6")
+    expect(media).not.toContain("jis_b5_182x257mm")
+    expect(media).not.toContain("jis_b6_128x182mm")
   })
 
-  it("does not duplicate a size the printer lists natively", () => {
-    const media = values(describePrinterSettings(parseLpoptions(CUPS_PDF)).media)
-    expect(media).toContain("JISB5")
-    expect(media).not.toContain("JIS-B5")
-    expect(media).toContain("JIS-B6")
+  it("shows a size the printer lists itself under the JIS name, without duplicates", () => {
+    // A driver PPD names it JISB5; a PPD CUPS generated from IPP names it by its size
+    for (const [ppdName, native] of [
+      [CUPS_PDF, "JISB5"],
+      ["PageSize/x: *A4 182x257mm", "182x257mm"],
+    ] as const) {
+      const media = values(describePrinterSettings(parseLpoptions(ppdName)).media)
+      expect(media.filter((value) => value === "jis_b5_182x257mm")).toHaveLength(1)
+      expect(media).not.toContain(native)
+    }
+  })
+
+  it("offers a native JIS size even without custom size support", () => {
+    const media = values(describePrinterSettings(parseLpoptions("PageSize/x: A4 *JISB5")).media)
+    expect(media).toContain("jis_b5_182x257mm")
+  })
+
+  it("keeps the printer default when it is a native JIS size", () => {
+    const { media } = describePrinterSettings(parseLpoptions("PageSize/x: A4 *JISB5"))
+    expect(media.find((entry) => entry.isDefault)?.value).toBe("jis_b5_182x257mm")
   })
 
   it("lists nothing for a printer without page sizes", () => {
@@ -115,15 +127,27 @@ describe("formatPrinterSettings", () => {
   })
 })
 
-describe("JIS media", () => {
-  it("resolves JIS names to custom sizes in millimetres and passes other media through", () => {
-    expect(resolveMedia("JIS-B5")).toBe("Custom.182x257mm")
-    expect(resolveMedia("JIS-B6")).toBe("Custom.128x182mm")
-    expect(resolveMedia("A4")).toBe("A4")
-    expect(resolveMedia("JISB5")).toBe("JISB5")
+describe("resolveMedia", () => {
+  const withCustom = ["A4", "A5", "Custom.WIDTHxHEIGHT"]
+
+  it("sends a JIS size the printer does not list as a custom size in millimetres", () => {
+    expect(resolveMedia("jis_b5_182x257mm", withCustom)).toBe("Custom.182x257mm")
+    expect(resolveMedia("jis_b6_128x182mm", withCustom)).toBe("Custom.128x182mm")
   })
 
-  it("sends the custom size to CUPS", () => {
-    expect(buildCupsOptions({ media: "JIS-B5" })).toEqual(["media=Custom.182x257mm"])
+  it("sends the printer's own choice when it lists the size", () => {
+    expect(resolveMedia("jis_b5_182x257mm", [...withCustom, "JISB5"])).toBe("JISB5")
+    expect(resolveMedia("jis_b6_128x182mm", ["A5", "128x182mm"])).toBe("128x182mm")
+  })
+
+  it("passes a JIS name through when the printer has no custom sizes or no options", () => {
+    expect(resolveMedia("jis_b5_182x257mm", ["A4", "A5"])).toBe("jis_b5_182x257mm")
+    expect(resolveMedia("jis_b5_182x257mm", [])).toBe("jis_b5_182x257mm")
+  })
+
+  it("passes other media, including PPD names, through", () => {
+    expect(resolveMedia("A4", withCustom)).toBe("A4")
+    expect(resolveMedia("JISB5", withCustom)).toBe("JISB5")
+    expect(resolveMedia("Custom.100x200mm", withCustom)).toBe("Custom.100x200mm")
   })
 })

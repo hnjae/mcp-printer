@@ -15,9 +15,8 @@ import {
   describePrinterSettings,
   formatPrinterSettings,
   type PrinterSettings,
-  parseLpoptions,
 } from "../print-settings.js"
-import { execCommand } from "../utils.js"
+import { execCommand, readPpdOptions } from "../utils.js"
 import {
   type CancelJobResult,
   checkBatchSizeLimit,
@@ -25,24 +24,15 @@ import {
   handleCancel,
 } from "./batch-helpers.js"
 
-/** Longest wait for one printer's options, so an unreachable queue cannot stall list_printers. */
-const PRINTER_OPTIONS_TIMEOUT_MS = 10_000
-
 /**
  * Read the print settings a printer accepts from its PPD options.
  *
  * @param name - Printer name
- * @returns The settings, or null if `lpoptions` fails or times out
+ * @returns The settings, or null if the options could not be read
  */
 async function readPrinterSettings(name: string): Promise<PrinterSettings | null> {
-  try {
-    const { stdout } = await execa("lpoptions", ["-p", name, "-l"], {
-      timeout: PRINTER_OPTIONS_TIMEOUT_MS,
-    })
-    return describePrinterSettings(parseLpoptions(stdout))
-  } catch {
-    return null
-  }
+  const options = await readPpdOptions(name)
+  return options && describePrinterSettings(options)
 }
 
 /**

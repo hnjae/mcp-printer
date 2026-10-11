@@ -12,12 +12,24 @@ export const ORIENTATIONS = ["portrait", "landscape"] as const
 export const QUALITIES = ["draft", "normal", "high"] as const
 
 /**
- * JIS B-series sizes offered as `media` values. A printer gets one when it lists the A-series
- * size in `requires` and custom page sizes, and has no native size of that kind.
+ * JIS B-series sizes, named as in IPP (PWG). `ppdNames` are the `PageSize` choices under which a
+ * printer may list the size itself: `JISB5` in a driver's PPD, or the size in millimetres in a PPD
+ * CUPS generated from the printer's IPP attributes. A printer that lists none of them can still
+ * print the size as a custom size when it lists `requires` and custom page sizes.
  */
 export const JIS_SIZES = {
-  "JIS-B5": { widthMm: 182, heightMm: 257, requires: "A4", native: "JISB5" },
-  "JIS-B6": { widthMm: 128, heightMm: 182, requires: "A5", native: "JISB6" },
+  jis_b5_182x257mm: {
+    widthMm: 182,
+    heightMm: 257,
+    requires: "A4",
+    ppdNames: ["JISB5", "182x257mm"],
+  },
+  jis_b6_128x182mm: {
+    widthMm: 128,
+    heightMm: 182,
+    requires: "A5",
+    ppdNames: ["JISB6", "128x182mm"],
+  },
 } as const
 
 type JisName = keyof typeof JIS_SIZES
@@ -25,15 +37,28 @@ type JisName = keyof typeof JIS_SIZES
 /** PPD choice that marks support for custom page sizes in the `PageSize` option. */
 const CUSTOM_PAGE_SIZE = "Custom.WIDTHxHEIGHT"
 
+/** The `PageSize` choice under which the printer lists the size itself, if it does. */
+const nativeChoice = (choices: string[], name: JisName) =>
+  JIS_SIZES[name].ppdNames.find((ppdName) => choices.includes(ppdName))
+
 /**
- * Replace a JIS size name with the equivalent custom size; any other media passes through.
+ * Turn a JIS size name into what the printer accepts: its own choice for the size if it lists one,
+ * else a custom size. Other media, and JIS names for a printer that supports neither, pass through.
  *
  * @param media - The `media` value from the tool call
+ * @param pageSizes - The printer's `PageSize` choices
  * @returns The value to send to CUPS
  */
-export function resolveMedia(media: string): string {
+export function resolveMedia(media: string, pageSizes: string[]): string {
+  if (!(media in JIS_SIZES)) {
+    return media
+  }
   const jis = JIS_SIZES[media as JisName]
-  return jis ? `Custom.${jis.widthMm}x${jis.heightMm}mm` : media
+  const native = nativeChoice(pageSizes, media as JisName)
+  if (native) {
+    return native
+  }
+  return pageSizes.includes(CUSTOM_PAGE_SIZE) ? `Custom.${jis.widthMm}x${jis.heightMm}mm` : media
 }
 
 /** One PPD option: its choices without markers, and the default choice if marked. */
@@ -119,10 +144,14 @@ export function describePrinterSettings(options: Record<string, PpdOption>): Pri
     .filter((choice) => choice !== CUSTOM_PAGE_SIZE)
     .map((value) => ({ value, isDefault: value === pageSize?.default }))
   for (const [name, jis] of Object.entries(JIS_SIZES)) {
-    const hasNative = listed.some(
-      (choice) => choice === jis.native || choice.startsWith(`${jis.native}.`)
-    )
-    if (customMedia && listed.includes(jis.requires) && !hasNative) {
+    const native = nativeChoice(listed, name as JisName)
+    if (native) {
+      // Show the native choice under the common name, so callers see one name on every printer
+      const entry = media.find(({ value }) => value === native)
+      if (entry) {
+        entry.value = name
+      }
+    } else if (customMedia && listed.includes(jis.requires)) {
       media.push({ value: name, isDefault: false })
     }
   }

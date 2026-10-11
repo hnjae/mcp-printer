@@ -75,7 +75,7 @@ const printSettingsSchema = {
     .regex(/^[^\s=]+$/, "Must not contain whitespace or '='")
     .optional()
     .describe(
-      "Paper size, e.g. 'A4' or 'Letter'. Accepted names depend on the printer: list_printers shows them, including 'JIS-B5', 'JIS-B6' and Custom.<W>x<H>mm where supported."
+      "Paper size, e.g. 'A4' or 'Letter'. Accepted names depend on the printer: list_printers shows them, including 'jis_b5_182x257mm', 'jis_b6_128x182mm' and Custom.<W>x<H>mm where supported."
     ),
   orientation: z
     .enum(ORIENTATIONS)

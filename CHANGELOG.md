@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `sides`, `media`, `orientation` and `quality` parameters on `print_content`, `print_pdf` and `print_file`, replacing the need to write `sides=…`, `media=…`, `landscape` and `cupsPrintQuality=…` in the free-form `options` string. They override the same settings in `options`, `MCP_PRINTER_DEFAULT_OPTIONS` and `MCP_PRINTER_AUTO_DUPLEX`. `get_page_meta` accepts `sides`. `options` remains for other CUPS options
-- `list_printers` reports the `sides`, `media` and `quality` values each printer accepts, read from `lpoptions -l`. For printers that support custom page sizes it adds `JIS-B5` (when A4 is listed) and `JIS-B6` (when A5 is listed), which the server sends as `Custom.182x257mm` and `Custom.128x182mm`
+- `list_printers` reports the `sides`, `media` and `quality` values each printer accepts, read from `lpoptions -l`. It offers `jis_b5_182x257mm` and `jis_b6_128x182mm` under that name on every printer that can print the size, whether or not the printer lists it itself, and sends the printer's own choice or, failing that, `Custom.182x257mm` / `Custom.128x182mm`. A printer without its own listing gets the size when it lists A4 (B5) or A5 (B6) and custom page sizes
 
 ### Fixed
 

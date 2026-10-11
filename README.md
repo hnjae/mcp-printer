@@ -1,8 +1,3 @@
-<!--
-SPDX-License-Identifier: AGPL-3.0-or-later
-SPDX-FileCopyrightText: 2026 KIM Hyunjae
--->
-
 # MCP Printer
 
 Print documents from an AI assistant through the Model Context Protocol (MCP). MCP Printer uses CUPS on macOS and Linux to submit print jobs, query printers, and inspect queues.
@@ -165,64 +160,31 @@ Print a file on the server with `print_file`:
 }
 ```
 
-Replace the example path with an allowed path on the server. File printing and page metadata calls use `files` arrays even for one file; cancellations use `jobs` arrays. Each batch processes at most 50 items per call. Larger batches return a warning without processing; split them into smaller calls. Individual failures do not stop the remaining items.
+Replace the example path with an allowed path on the server. `print_file`, `get_page_meta`, and `cancel_print_job` take arrays even for one item, with at most 50 items per call.
 
-Print calls accept `printer`, `copies`, and these print settings: `sides` (`one-sided`, `two-sided-long-edge`, or `two-sided-short-edge`), `media` (paper size such as `A4` or `Letter`; `list_printers` shows the names each printer accepts), `orientation` (`portrait` or `landscape`), and `quality` (`draft`, `normal`, or `high`, sent as the CUPS `cupsPrintQuality` option). Any other CUPS option goes in the space-separated `options` string, such as `number-up=2`. Supported values depend on the printer; `list_printers` reports them from `lpoptions -l`. Printers that list custom page sizes also accept `Custom.<W>x<H>mm`, such as `Custom.182x257mm`. `list_printers` also offers `jis_b5_182x257mm` and `jis_b6_128x182mm` under that name on every printer that can print the size, whether it lists the size itself or not. A printer without its own listing gets the size when it lists A4 (B5) or A5 (B6) and custom page sizes. At print time the server sends the printer's own choice for the size if it has one, else a custom size. Whether a printer feeds and prints a custom size depends on the printer. `sides`, `media`, `orientation`, and `quality` override the same settings in `options`, `MCP_PRINTER_DEFAULT_OPTIONS`, and `MCP_PRINTER_AUTO_DUPLEX`. `get_page_meta` accepts `sides` for its sheet estimate. Code rendering accepts `line_numbers`, `color_scheme`, `font_size`, and `line_spacing`; `print_content` with `format: "code"` also accepts `language`, such as `py` or `ts`. File tools accept `force_markdown_render` and `force_code_render` to override automatic detection.
+Print calls accept `printer`, `copies`, the typed settings `sides`, `media`, `orientation`, and `quality`, and an `options` string for any other CUPS option. `list_printers` shows the values each printer accepts, including `jis_b5_182x257mm` and `jis_b6_128x182mm`. Markdown and code files are rendered to PDF before printing.
 
-When a readable PDF exceeds the configured sheet threshold, the server returns `PAGE_COUNT_CONFIRMATION_REQUIRED` without printing it. After the user approves, repeat the call with `skip_confirmation: true`. The default threshold is 10 sheets; the estimate accounts for duplex but does not multiply by copies. The check does not apply to file formats whose PDF page count cannot be read. `get_page_meta` requires a PDF or a file that can be rendered to PDF.
+A PDF that would use more sheets than the threshold (default 10) is not printed until the user approves and the call is repeated with `skip_confirmation: true`. The `print-changed` prompt prints the files changed in a git context.
 
-The `print-changed` prompt guides the assistant through printing staged changes, unstaged changes (`uncommitted`), or the diff of the current or a named branch against `main`. It requires the client to discover changed files and is available when both prompts and file tools are enabled.
+Parameters, limits, and behavior are specified in [docs/spec](docs/spec/README.md).
 
 ## Configuration
 
-Set environment variables before starting the server. Restart it to apply changes. Booleans accept `true` or `false`. Defaults below describe a source installation; the container overrides transport, HTTP host, and file-tool availability as described above.
+Set `MCP_PRINTER_*` environment variables before starting the server, and restart it to apply changes. The [configuration reference](docs/spec/configuration.md) lists every variable with its default. The most common ones:
 
-### Connection and printing
+- `MCP_PRINTER_DEFAULT_PRINTER`: print target when a call names no printer.
+- `MCP_PRINTER_ALLOWED_PATHS`: colon-separated directories that file tools may read. A nonempty value **replaces** the default `~/Documents:~/Downloads:~/Desktop`.
+- `MCP_PRINTER_AUTO_DUPLEX`: print two-sided unless a call says otherwise.
+- `MCP_PRINTER_ENABLE_FILE_TOOLS` and `MCP_PRINTER_ENABLE_MANAGEMENT`: choose which tools are registered. Management enables `cancel_print_job`, which can cancel other users' jobs where CUPS permits, and `set_default_printer`.
 
-| Variable | Default | Effect |
-| --- | --- | --- |
-| `MCP_PRINTER_TRANSPORT` | `stdio` | `stdio` or `http`. |
-| `MCP_PRINTER_HTTP_HOST` | `127.0.0.1` | HTTP bind address. |
-| `MCP_PRINTER_HTTP_PORT` | `3000` | HTTP port. |
-| `MCP_PRINTER_DEFAULT_PRINTER` | Unset | Print target when no `printer` is supplied; otherwise CUPS chooses its default. |
-| `MCP_PRINTER_DEFAULT_OPTIONS` | Unset | Space-separated CUPS options; per-call settings override them. |
-| `MCP_PRINTER_AUTO_DUPLEX` | `false` | Add `sides=two-sided-long-edge` unless the call or `MCP_PRINTER_DEFAULT_OPTIONS` sets `sides`. |
-| `MCP_PRINTER_MAX_COPIES` | `10` | Maximum copies per job; `0` or a negative value removes the limit. |
-| `MCP_PRINTER_CONFIRM_IF_OVER_PAGES` | `10` | Physical-sheet threshold for PDF confirmation; `0` disables it. |
-| `MCP_PRINTER_ENABLE_MANAGEMENT` | `false` | Register `cancel_print_job` and `set_default_printer`, which change the server user's default printer and cancel queued jobs, including other users' jobs where CUPS permits. Printing remains available when disabled. |
-| `MCP_PRINTER_ENABLE_FILE_TOOLS` | `true` | Register `print_file` and `get_page_meta`; disabling also hides `print-changed`. |
-| `MCP_PRINTER_ENABLE_PROMPTS` | `true` | Enable workflow prompts when file tools are enabled. |
+Defaults describe a source installation; the container overrides transport, HTTP host, and file-tool availability as described above.
 
 ### File access
 
-| Variable | Default | Effect |
-| --- | --- | --- |
-| `MCP_PRINTER_ALLOWED_PATHS` | `~/Documents:~/Downloads:~/Desktop` | Colon-separated allowed paths. A nonempty value **replaces** the defaults. Supports `~`, `$HOME`, and `${HOME}`. |
-| `MCP_PRINTER_DENIED_PATHS` | Built-in restricted paths | Colon-separated paths added to the built-in deny list; denial takes precedence. |
-
-File tools check original and resolved paths for hidden components and resolve symlinks before checking allowed and denied paths. Dotfiles, hidden directories, and built-in restricted paths cannot be allowed through configuration. The full deny list is in [src/config.ts](src/config.ts); it includes sensitive directories and system paths such as `/etc`, `/var`, and `/tmp`.
+File tools check original and resolved paths for hidden components and resolve symlinks before checking allowed and denied paths. Dotfiles, hidden directories, and built-in restricted paths such as `/etc`, `/var`, and `/tmp` cannot be allowed through configuration.
 
 > [!IMPORTANT]
 > File-path restrictions apply to the document passed to file tools, not every resource a renderer may embed. Client-supplied Markdown disables file-import directives and embedding tags, but can still embed image files readable by the server process. Run with only the filesystem access you intend to expose. Client-supplied HTML permits inline styles and `data:` images/fonts, and blocks scripts and external or local resource loads.
-
-### Rendering
-
-| Variable | Default | Effect |
-| --- | --- | --- |
-| `MCP_PRINTER_CHROME_PATH` | Auto-detected | Path to Chrome or Chromium. |
-| `MCP_PRINTER_CHROME_NO_SANDBOX` | `false` | Launch Chrome with `--no-sandbox`, needed when running as root. |
-| `MCP_PRINTER_AUTO_RENDER_MARKDOWN` | `true` | Render `.md` and `.markdown` files to PDF. |
-| `MCP_PRINTER_AUTO_RENDER_CODE` | `true` | Render known code files and detected shebang scripts to PDF. |
-| `MCP_PRINTER_FALLBACK_ON_RENDER_ERROR` | `false` | Submit the original file if automatic Markdown/code rendering fails. |
-| `MCP_PRINTER_CODE_EXCLUDE_EXTENSIONS` | Unset | Comma-separated extensions excluded from automatic code rendering. |
-| `MCP_PRINTER_CODE_COLOR_SCHEME` | `atom-one-light` | highlight.js theme. |
-| `MCP_PRINTER_CODE_AUTO_LINE_NUMBERS` | `true` | Include line numbers in code output. |
-| `MCP_PRINTER_CODE_FONT_SIZE` | `10pt` | Code font size. |
-| `MCP_PRINTER_CODE_LINE_SPACING` | `1.5` | Code line spacing. |
-
-The automatic-rendering switches and fallback setting govern file printing. `print_content` renders according to its explicit `format`; text content is escaped and rendered as a monospace PDF. Its limit is 1,000,000 characters. Markdown front matter that selects a non-YAML engine, such as `---js`, is rejected.
-
-Rendered Markdown files get a page-number footer. In a file printed through `print_file`, front matter can replace it with Chrome's PDF options, for example `chrome: { displayHeaderFooter: false }` to remove it or a custom `footerTemplate`.
 
 ## Troubleshooting
 

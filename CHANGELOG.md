@@ -1,8 +1,3 @@
-<!--
-SPDX-License-Identifier: AGPL-3.0-or-later
-SPDX-FileCopyrightText: 2026 KIM Hyunjae
--->
-
 # Changelog
 
 All notable changes to this project will be documented in this file.

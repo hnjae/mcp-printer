@@ -7,6 +7,9 @@ path = [
   "bun.lock",
   "package.json",
   "tsconfig.json",
+  "docs/**/*.md",
+  "README.md",
+  "CHANGELOG.md",
 ]
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 SPDX-FileCopyrightText = "2026 KIM Hyunjae"

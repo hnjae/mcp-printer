@@ -413,7 +413,8 @@ export async function executePrintJob(
   })
 
   // Determine the printer name used
-  const printerName = targetPrinter || (await getDefaultPrinter()) || "default"
+  const printerName =
+    targetPrinter || (await getDefaultPrinter().catch(() => undefined)) || "default"
 
   return { printerName, allOptions }
 }

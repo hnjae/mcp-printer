@@ -8,6 +8,10 @@
 import { beforeEach, describe, expect, it, vi } from "bun:test"
 import {
   cancelAllJobs,
+  describePrinters,
+  listPrinterNames,
+  readPrinterOptions,
+  showQueue,
   cancelJob,
   getDefaultPrinter,
   parseLpoptions,
@@ -110,5 +114,25 @@ describe("getDefaultPrinter", () => {
     await getDefaultPrinter()
     const options = execa.mock.calls[0]?.[2] as { env?: Record<string, string> }
     expect(options.env?.LC_ALL).toBe("C.UTF-8")
+  })
+})
+
+describe("time limits", () => {
+  it("bounds every command in time", async () => {
+    await describePrinters()
+    await listPrinterNames()
+    await getDefaultPrinter()
+    await showQueue()
+    await readPrinterOptions("athena")
+    await submitJob({ file: "/tmp/a.pdf", copies: 1, options: [] })
+    await cancelJob("42")
+    await cancelAllJobs("athena")
+    await setDefaultPrinter("athena")
+
+    expect(execa.mock.calls).toHaveLength(9)
+    for (const call of execa.mock.calls) {
+      const { timeout } = call[2] as { timeout?: number }
+      expect(timeout).toBeGreaterThan(0)
+    }
   })
 })

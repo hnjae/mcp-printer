@@ -30,10 +30,11 @@ const submitJob = vi.fn(async (_job: unknown) => undefined)
 const readPrinterOptions = vi.fn(
   async (_printer?: string): Promise<Record<string, unknown> | null> => null
 )
+const getDefaultPrinter = vi.fn(async (): Promise<string | undefined> => "office")
 vi.mock("../../src/cups.js", () => ({
   submitJob,
   readPrinterOptions,
-  getDefaultPrinter: async () => "office",
+  getDefaultPrinter,
 }))
 
 import { handlePrint, handlePrintPdf } from "../../src/tools/batch-helpers.js"
@@ -70,6 +71,8 @@ beforeEach(() => {
   submitJob.mockResolvedValue(undefined)
   readPrinterOptions.mockReset()
   readPrinterOptions.mockResolvedValue(null)
+  getDefaultPrinter.mockReset()
+  getDefaultPrinter.mockResolvedValue("office")
   config.autoDuplex = false
   config.defaultOptions = []
   config.maxCopies = 10
@@ -100,6 +103,15 @@ describe("failure reporting", () => {
 
     expect(result.success).toBe(false)
     expect(result.error).toContain("Not authorized")
+  })
+
+  it("still reports success for a job that CUPS accepted when the printer name lookup fails", async () => {
+    getDefaultPrinter.mockRejectedValue(new Error("Command failed: timed out"))
+
+    const result = await handlePrint({ file_path: NOTES })
+
+    expect(result.success).toBe(true)
+    expect(submitJob).toHaveBeenCalledTimes(1)
   })
 
   it("reports a path outside the allowed directories as a failed result", async () => {

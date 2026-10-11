@@ -744,3 +744,45 @@ export async function withPreparedContent<T>(
     rmSync(tempDir, { recursive: true, force: true })
   }
 }
+
+/** Largest PDF accepted from a client, in bytes after decoding. */
+export const MAX_PDF_BYTES = 5 * 1024 * 1024
+
+/**
+ * Validates a base64-encoded PDF from the client, writes it to a private temporary file and removes
+ * the file afterwards.
+ *
+ * The page count must be readable so the confirmation threshold cannot be bypassed with a PDF that
+ * only the print system can parse.
+ *
+ * @param base64 - PDF bytes encoded as base64
+ * @param use - Receives the file to print and a description of the rendering performed
+ * @returns Whatever `use` returns
+ * @throws {Error} If the data is too large, is not a PDF, or its page count cannot be read
+ */
+export async function withPreparedPdf<T>(
+  base64: string,
+  use: (prepared: { actualFilePath: string; renderType: string }) => Promise<T>
+): Promise<T> {
+  const bytes = Buffer.from(base64, "base64")
+  if (bytes.length > MAX_PDF_BYTES) {
+    throw new Error(`PDF exceeds the ${MAX_PDF_BYTES / 1024 / 1024} MB size limit`)
+  }
+  if (bytes.subarray(0, 5).toString("latin1") !== "%PDF-") {
+    throw new Error("Data is not a PDF")
+  }
+
+  const tempDir = mkdtempSync(join(tmpdir(), "mcp-printer-pdf-"))
+  try {
+    const file = join(tempDir, "document.pdf")
+    writeFileSync(file, bytes)
+    try {
+      await getPdfPageCount(file)
+    } catch {
+      throw new Error("Data is not a readable PDF")
+    }
+    return await use({ actualFilePath: file, renderType: "" })
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true })
+  }
+}

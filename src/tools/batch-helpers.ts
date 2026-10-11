@@ -19,6 +19,7 @@ import {
   prepareFileForPrinting,
   shouldTriggerConfirmation,
   withPreparedContent,
+  withPreparedPdf,
 } from "../utils.js"
 
 /**
@@ -265,6 +266,44 @@ export async function handlePrintContent(spec: ContentPrintSpec): Promise<PrintR
           options,
           skip_confirmation,
         })
+    )
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    return {
+      success: false,
+      file_path: label,
+      message: `Failed to print: ${message}`,
+      error: message,
+    }
+  }
+}
+
+/**
+ * Specification for printing a PDF sent by the client as base64.
+ */
+export interface PdfPrintSpec extends PrintTarget {
+  pdf_base64: string
+}
+
+/**
+ * Handle printing of a PDF sent by the client as base64 (print_pdf).
+ *
+ * @param spec - Base64 PDF and print settings
+ * @returns PrintResult object with success status and details
+ * @throws Never throws - all errors are captured in the result object
+ */
+export async function handlePrintPdf(spec: PdfPrintSpec): Promise<PrintResult> {
+  const { pdf_base64, printer, copies, options, skip_confirmation } = spec
+  const label = "(content: pdf)"
+
+  try {
+    return await withPreparedPdf(pdf_base64, ({ actualFilePath, renderType }) =>
+      printPreparedFile(label, actualFilePath, renderType, {
+        printer,
+        copies,
+        options,
+        skip_confirmation,
+      })
     )
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)

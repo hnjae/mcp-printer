@@ -4,12 +4,12 @@
 
 /**
  * @fileoverview File printing tool registration.
- * Registers print_file, print_content and get_page_meta tools with the MCP server.
+ * Registers print_file, print_content, print_pdf and get_page_meta tools with the MCP server.
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
-import { CONTENT_FORMATS } from "../utils.js"
+import { CONTENT_FORMATS, MAX_PDF_BYTES } from "../utils.js"
 import {
   checkBatchSizeLimit,
   formatPageMetaResults,
@@ -17,6 +17,7 @@ import {
   handlePageMeta,
   handlePrint,
   handlePrintContent,
+  handlePrintPdf,
   type PageMetaResult,
   type PrintResult,
 } from "./batch-helpers.js"
@@ -61,6 +62,11 @@ const renderingParametersSchema = {
  * Maximum length of the content accepted by print_content, in characters.
  */
 const MAX_CONTENT_LENGTH = 1_000_000
+
+/**
+ * Maximum length of the base64 text accepted by print_pdf (base64 encodes 3 bytes in 4 characters).
+ */
+const MAX_PDF_BASE64_LENGTH = Math.ceil((MAX_PDF_BYTES * 4) / 3) + 4
 
 /**
  * Registers the print_file tool with the MCP server.
@@ -176,6 +182,46 @@ export function registerPrintTools(server: McpServer) {
       },
     },
     async (spec) => formatPrintResults([await handlePrintContent(spec)])
+  )
+
+  // Register print_pdf tool
+  server.registerTool(
+    "print_pdf",
+    {
+      title: "Print PDF",
+      description:
+        "Print a PDF file whose bytes you provide as base64, for PDFs that exist only on your side and not on the server. Only practical for small PDFs because you must write out the whole base64 text; prefer print_content when you can supply the document as markdown or html.",
+      inputSchema: {
+        pdf_base64: z
+          .string()
+          .min(1)
+          .max(MAX_PDF_BASE64_LENGTH)
+          .describe("The PDF file contents encoded as base64"),
+        printer: z
+          .string()
+          .optional()
+          .describe(
+            "Printer name (use list_printers to see available printers). Optional if default printer is set."
+          ),
+        copies: z
+          .number()
+          .min(1)
+          .optional()
+          .default(1)
+          .describe("Number of copies to print (default: 1)"),
+        options: z
+          .string()
+          .optional()
+          .describe("Additional CUPS options (e.g., 'landscape', 'sides=two-sided-long-edge')"),
+        skip_confirmation: z
+          .boolean()
+          .optional()
+          .describe(
+            "Skip page count confirmation check (bypasses MCP_PRINTER_CONFIRM_IF_OVER_PAGES threshold)"
+          ),
+      },
+    },
+    async (spec) => formatPrintResults([await handlePrintPdf(spec)])
   )
 
   // Register get_page_meta tool

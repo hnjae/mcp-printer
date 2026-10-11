@@ -253,6 +253,17 @@ Copy limits (`MCP_PRINTER_MAX_COPIES`) and the page count confirmation apply as 
 
 **Content restrictions:** The content comes from the client, so the renderers are hardened against reading or writing files through it. `html` must be self-contained: inline CSS and `data:` images and fonts only, with no scripts, frames, `<meta>` tags or external resources. In `markdown`, file-including syntax (`@import`, `![[file]]`, standalone image lines), embedding tags (`<iframe>`, `<object>`, ...) and `chrome:`/`puppeteer:` front matter are neutralized, and front matter with a language specifier such as `---js` is rejected. Markdown can still embed image files that the server process can read (for example `![x](../photo.png)` or `<img src="file://...">`), so run the server where only intended paths exist, such as a container that mounts only the directories you want.
 
+### `print_pdf`
+
+Print a PDF whose bytes the client sends as base64, for PDFs that exist only on the client side. Prefer `print_content` when the document can be sent as markdown or HTML: the AI has to write out the whole base64 text, so this is only practical for small PDFs.
+
+**Parameters:**
+
+- `pdf_base64` (required) - The PDF file contents encoded as base64 (at most 5 MB decoded)
+- `printer`, `copies`, `options`, `skip_confirmation` (optional) - Same as `print_file`
+
+The data must start with `%PDF-` and its page count must be readable; otherwise it is rejected. Copy limits and the page count confirmation apply as for `print_file`.
+
 ### `get_page_meta`
 
 Get page count and physical sheet information for one or more files before printing. This tool pre-renders files (markdown, code) if needed and returns page metadata. Supports batch operations.

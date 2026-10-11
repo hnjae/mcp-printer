@@ -31,7 +31,7 @@ export function registerPrompts(server: McpServer) {
         options: z
           .string()
           .optional()
-          .describe('Print settings (e.g., "landscape", "A4", "two-sided")'),
+          .describe('Print settings (e.g., "landscape", "A4", "two-sided", "high quality")'),
       },
     },
     ({ context, options }) => {
@@ -57,7 +57,7 @@ INSTRUCTIONS:
 
 2. For each changed file:
    - Use print_file tool, passing the paths in its "files" array
-   - Apply consistent print settings${printOpts ? ` (${options})` : ""}${options ? ", mapped to the sides, media and orientation parameters; pass anything else in options" : ""}
+   - Apply consistent print settings${printOpts ? ` (${options})` : ""}${options ? ", mapped to the sides, media, orientation and quality parameters; pass anything else in options" : ""}
 
 3. Report what was printed:
    - List file names

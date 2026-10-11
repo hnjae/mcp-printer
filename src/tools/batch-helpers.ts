@@ -181,6 +181,7 @@ export async function handlePrint(spec: FilePrintSpec): Promise<PrintResult> {
     sides,
     media,
     orientation,
+    quality,
     skip_confirmation,
     line_numbers,
     color_scheme,
@@ -210,6 +211,7 @@ export async function handlePrint(spec: FilePrintSpec): Promise<PrintResult> {
         sides,
         media,
         orientation,
+        quality,
         skip_confirmation,
       })
     } finally {
@@ -250,8 +252,17 @@ export interface ContentPrintSpec
  * @throws Never throws - all errors are captured in the result object
  */
 export async function handlePrintContent(spec: ContentPrintSpec): Promise<PrintResult> {
-  const { printer, copies, options, sides, media, orientation, skip_confirmation, ...content } =
-    spec
+  const {
+    printer,
+    copies,
+    options,
+    sides,
+    media,
+    orientation,
+    quality,
+    skip_confirmation,
+    ...content
+  } = spec
   const label = `(content: ${spec.format})`
 
   try {
@@ -273,6 +284,7 @@ export async function handlePrintContent(spec: ContentPrintSpec): Promise<PrintR
           sides,
           media,
           orientation,
+          quality,
           skip_confirmation,
         })
     )
@@ -302,8 +314,17 @@ export interface PdfPrintSpec extends PrintTarget {
  * @throws Never throws - all errors are captured in the result object
  */
 export async function handlePrintPdf(spec: PdfPrintSpec): Promise<PrintResult> {
-  const { pdf_base64, printer, copies, options, sides, media, orientation, skip_confirmation } =
-    spec
+  const {
+    pdf_base64,
+    printer,
+    copies,
+    options,
+    sides,
+    media,
+    orientation,
+    quality,
+    skip_confirmation,
+  } = spec
   const label = "(content: pdf)"
 
   try {
@@ -315,6 +336,7 @@ export async function handlePrintPdf(spec: PdfPrintSpec): Promise<PrintResult> {
         sides,
         media,
         orientation,
+        quality,
         skip_confirmation,
       })
     )

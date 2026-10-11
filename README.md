@@ -15,7 +15,7 @@ Print documents from an AI assistant through the Model Context Protocol (MCP). M
 - Print text supplied by the client as Markdown, HTML, highlighted code, or plain text.
 - Send small PDFs as base64, or print files already on the server.
 - Render Markdown with tables, KaTeX math, and Mermaid diagrams; render source files with syntax highlighting and optional line numbers.
-- Check PDF page counts before printing, choose sides, paper size, and orientation, and process files in batches.
+- Check PDF page counts before printing, choose sides, paper size, orientation, and quality, and process files in batches.
 - Connect over stdio or stateless Streamable HTTP; optionally enable job cancellation and default-printer management.
 
 ## Install from source
@@ -167,7 +167,7 @@ Print a file on the server with `print_file`:
 
 Replace the example path with an allowed path on the server. File printing and page metadata calls use `files` arrays even for one file; cancellations use `jobs` arrays. Each batch processes at most 50 items per call. Larger batches return a warning without processing; split them into smaller calls. Individual failures do not stop the remaining items.
 
-Print calls accept `printer`, `copies`, and these print settings: `sides` (`one-sided`, `two-sided-long-edge`, or `two-sided-short-edge`), `media` (paper size such as `A4` or `Letter`), and `orientation` (`portrait` or `landscape`). Any other CUPS option goes in the space-separated `options` string, such as `number-up=2`. Supported values depend on the printer; `lpoptions -l` lists them. `sides`, `media`, and `orientation` override the same settings in `options`, `MCP_PRINTER_DEFAULT_OPTIONS`, and `MCP_PRINTER_AUTO_DUPLEX`. `get_page_meta` accepts `sides` for its sheet estimate. Code rendering accepts `line_numbers`, `color_scheme`, `font_size`, and `line_spacing`; `print_content` with `format: "code"` also accepts `language`, such as `py` or `ts`. File tools accept `force_markdown_render` and `force_code_render` to override automatic detection.
+Print calls accept `printer`, `copies`, and these print settings: `sides` (`one-sided`, `two-sided-long-edge`, or `two-sided-short-edge`), `media` (paper size such as `A4` or `Letter`), `orientation` (`portrait` or `landscape`), and `quality` (`draft`, `normal`, or `high`, sent as the CUPS `cupsPrintQuality` option). Any other CUPS option goes in the space-separated `options` string, such as `number-up=2`. Supported values depend on the printer; `lpoptions -l` lists them. `sides`, `media`, `orientation`, and `quality` override the same settings in `options`, `MCP_PRINTER_DEFAULT_OPTIONS`, and `MCP_PRINTER_AUTO_DUPLEX`. `get_page_meta` accepts `sides` for its sheet estimate. Code rendering accepts `line_numbers`, `color_scheme`, `font_size`, and `line_spacing`; `print_content` with `format: "code"` also accepts `language`, such as `py` or `ts`. File tools accept `force_markdown_render` and `force_code_render` to override automatic detection.
 
 When a readable PDF exceeds the configured sheet threshold, the server returns `PAGE_COUNT_CONFIRMATION_REQUIRED` without printing it. After the user approves, repeat the call with `skip_confirmation: true`. The default threshold is 10 sheets; the estimate accounts for duplex but does not multiply by copies. The check does not apply to file formats whose PDF page count cannot be read. `get_page_meta` requires a PDF or a file that can be rendered to PDF.
 

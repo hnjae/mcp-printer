@@ -53,6 +53,24 @@ describe("buildCupsOptions orientation", () => {
   })
 })
 
+describe("buildCupsOptions quality", () => {
+  it("maps quality to cupsPrintQuality", () => {
+    expect(buildCupsOptions({ quality: "draft" })).toEqual(["cupsPrintQuality=Draft"])
+    expect(buildCupsOptions({ quality: "high" })).toEqual(["cupsPrintQuality=High"])
+  })
+
+  it("drops print-quality from defaults and options when quality is set", () => {
+    mockConfig.defaultOptions = ["print-quality=3"]
+    expect(buildCupsOptions({ options: "print-quality=5 number-up=2", quality: "normal" })).toEqual(
+      ["number-up=2", "cupsPrintQuality=Normal"]
+    )
+  })
+
+  it("keeps print-quality when quality is not set", () => {
+    expect(buildCupsOptions({ options: "print-quality=5" })).toEqual(["print-quality=5"])
+  })
+})
+
 describe("isDuplexEnabled", () => {
   it("is false without any sides setting", () => {
     expect(isDuplexEnabled({})).toBe(false)

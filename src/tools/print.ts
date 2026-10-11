@@ -10,7 +10,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
-import { CONTENT_FORMATS, MAX_PDF_BYTES, ORIENTATIONS, SIDES } from "../utils.js"
+import { CONTENT_FORMATS, MAX_PDF_BYTES, ORIENTATIONS, QUALITIES, SIDES } from "../utils.js"
 import {
   checkBatchSizeLimit,
   formatPageMetaResults,
@@ -80,11 +80,17 @@ const printSettingsSchema = {
     .enum(ORIENTATIONS)
     .optional()
     .describe("Page orientation: 'portrait' or 'landscape'"),
+  quality: z
+    .enum(QUALITIES)
+    .optional()
+    .describe(
+      "Print quality: 'draft', 'normal' or 'high' (CUPS cupsPrintQuality). Not every printer supports it."
+    ),
   options: z
     .string()
     .optional()
     .describe(
-      "Other CUPS options as a space-separated string (e.g., 'print-quality=5 number-up=2'). Use sides, media and orientation for those settings instead."
+      "Other CUPS options as a space-separated string (e.g., 'number-up=2'). Use sides, media, orientation and quality for those settings instead."
     ),
 }
 

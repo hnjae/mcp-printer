@@ -285,6 +285,7 @@ export function shouldRenderToPdf(filePath: string): boolean {
 
 export const SIDES = ["one-sided", "two-sided-long-edge", "two-sided-short-edge"] as const
 export const ORIENTATIONS = ["portrait", "landscape"] as const
+export const QUALITIES = ["draft", "normal", "high"] as const
 
 /**
  * Print settings that map to CUPS options.
@@ -296,22 +297,41 @@ export interface PrintOptions {
   sides?: (typeof SIDES)[number]
   media?: string
   orientation?: (typeof ORIENTATIONS)[number]
+  quality?: (typeof QUALITIES)[number]
 }
 
 /** IPP `orientation-requested` values for each orientation. */
 const ORIENTATION_REQUESTED = { portrait: 3, landscape: 4 } as const
 
+/** PPD `cupsPrintQuality` choices for each quality. */
+const PRINT_QUALITY_CHOICE = { draft: "Draft", normal: "Normal", high: "High" } as const
+
+/**
+ * Remove every occurrence of the given option names, with or without a value, from `all`.
+ * Used when a typed setting is also reachable under a different CUPS key that ordering cannot
+ * override.
+ */
+function dropOptions(all: string[], names: string[]): string[] {
+  return all.filter((option) => !names.includes(option.split("=")[0] ?? option))
+}
+
 /**
  * Build the effective CUPS option list for a print job. When an option name occurs more than
  * once, the last occurrence wins, so the order is: auto-duplex, MCP_PRINTER_DEFAULT_OPTIONS,
- * the free-form `options` string, then the typed settings. A typed `orientation` also removes
- * `landscape` from the defaults and `options`.
+ * the free-form `options` string, then the typed settings. A typed `orientation` or `quality`
+ * also removes the alias `landscape` or `print-quality` from the defaults and `options`.
  *
  * @param settings - Typed settings and free-form options from the tool call
  * @returns Option strings in precedence order, each in `name=value` or `name` form
  */
-export function buildCupsOptions({ options, sides, media, orientation }: PrintOptions): string[] {
-  const all: string[] = []
+export function buildCupsOptions({
+  options,
+  sides,
+  media,
+  orientation,
+  quality,
+}: PrintOptions): string[] {
+  let all: string[] = []
   if (config.autoDuplex) {
     all.push("sides=two-sided-long-edge")
   }
@@ -320,12 +340,10 @@ export function buildCupsOptions({ options, sides, media, orientation }: PrintOp
     all.push(...options.split(/\s+/).filter(Boolean))
   }
   if (orientation) {
-    // `landscape` is a separate CUPS key that `orientation-requested` cannot override by order
-    for (let i = all.length - 1; i >= 0; i--) {
-      if (all[i] === "landscape" || all[i]?.startsWith("landscape=")) {
-        all.splice(i, 1)
-      }
-    }
+    all = dropOptions(all, ["landscape"])
+  }
+  if (quality) {
+    all = dropOptions(all, ["print-quality"])
   }
   if (sides) {
     all.push(`sides=${sides}`)
@@ -335,6 +353,9 @@ export function buildCupsOptions({ options, sides, media, orientation }: PrintOp
   }
   if (orientation) {
     all.push(`orientation-requested=${ORIENTATION_REQUESTED[orientation]}`)
+  }
+  if (quality) {
+    all.push(`cupsPrintQuality=${PRINT_QUALITY_CHOICE[quality]}`)
   }
   return all
 }

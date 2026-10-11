@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- `sides`, `media` and `orientation` parameters on `print_content`, `print_pdf` and `print_file`, replacing the need to write `sides=…`, `media=…` and `landscape` in the free-form `options` string. They override the same settings in `options`, `MCP_PRINTER_DEFAULT_OPTIONS` and `MCP_PRINTER_AUTO_DUPLEX`. `get_page_meta` accepts `sides`. `options` remains for other CUPS options
+- `sides`, `media`, `orientation` and `quality` parameters on `print_content`, `print_pdf` and `print_file`, replacing the need to write `sides=…`, `media=…`, `landscape` and `cupsPrintQuality=…` in the free-form `options` string. They override the same settings in `options`, `MCP_PRINTER_DEFAULT_OPTIONS` and `MCP_PRINTER_AUTO_DUPLEX`. `get_page_meta` accepts `sides`. `options` remains for other CUPS options
 
 ### Fixed
 

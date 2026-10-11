@@ -5,6 +5,7 @@ Print documents from an AI assistant through the Model Context Protocol (MCP). M
 [![License: AGPL-3.0-or-later](https://img.shields.io/badge/License-AGPL--3.0--or--later-blue.svg)](LICENSE)
 [![CI](https://github.com/hnjae/mcp-printer/actions/workflows/ci.yml/badge.svg)](https://github.com/hnjae/mcp-printer/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/hnjae/mcp-printer)](https://github.com/hnjae/mcp-printer/releases/latest)
+[![npm](https://img.shields.io/npm/v/@hnjae/mcp-printer)](https://www.npmjs.com/package/@hnjae/mcp-printer)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Bun](https://img.shields.io/badge/Bun-000000?logo=bun&logoColor=white)](https://bun.sh/)
 

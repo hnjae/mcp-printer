@@ -3,13 +3,14 @@ version = 1
 [[annotations]]
 path = [
   ".editorconfig-checker.json",
+  "AGENTS.md",
+  "CHANGELOG.md",
+  "README.md",
   "biome.jsonc",
   "bun.lock",
+  "docs/**/*.md",
   "package.json",
   "tsconfig.json",
-  "docs/**/*.md",
-  "README.md",
-  "CHANGELOG.md",
 ]
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 SPDX-FileCopyrightText = "2026 KIM Hyunjae"

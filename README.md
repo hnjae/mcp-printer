@@ -206,11 +206,7 @@ bun install --frozen-lockfile
 just ci
 ```
 
-For narrower checks, use `just typecheck`, `just test-unit`, or `just test-integration`. Integration tests render PDFs with Chrome/Chromium. Restart the running server to load source changes. `just format` applies formatters, and `just hooks-install` installs the formatting, typo, and Conventional Commit hooks.
-
-### Releasing
-
-Draft the release's `CHANGELOG.md` section from the commits with `cog changelog vPREVIOUS..HEAD` and edit it by hand; the changelog is not updated between releases. Set the `package.json` version, run `just ci`, then push a `vX.Y.Z` tag. The [image workflow](.github/workflows/image.yml) fails if the tag does not match the `package.json` version.
+Commands, conventions and the release procedure are in [AGENTS.md](AGENTS.md).
 
 ## License
 

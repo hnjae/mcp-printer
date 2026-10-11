@@ -11,6 +11,12 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { execa } from "execa"
 import { z } from "zod"
 import { config } from "../config.js"
+import {
+  describePrinterSettings,
+  formatPrinterSettings,
+  type PrinterSettings,
+  parseLpoptions,
+} from "../print-settings.js"
 import { execCommand } from "../utils.js"
 import {
   type CancelJobResult,
@@ -18,6 +24,26 @@ import {
   formatCancelResults,
   handleCancel,
 } from "./batch-helpers.js"
+
+/** Longest wait for one printer's options, so an unreachable queue cannot stall list_printers. */
+const PRINTER_OPTIONS_TIMEOUT_MS = 10_000
+
+/**
+ * Read the print settings a printer accepts from its PPD options.
+ *
+ * @param name - Printer name
+ * @returns The settings, or null if `lpoptions` fails or times out
+ */
+async function readPrinterSettings(name: string): Promise<PrinterSettings | null> {
+  try {
+    const { stdout } = await execa("lpoptions", ["-p", name, "-l"], {
+      timeout: PRINTER_OPTIONS_TIMEOUT_MS,
+    })
+    return describePrinterSettings(parseLpoptions(stdout))
+  } catch {
+    return null
+  }
+}
 
 /**
  * Registers printer management tools with the MCP server.
@@ -87,19 +113,24 @@ export function registerPrinterTools(server: McpServer) {
     {
       title: "List Printers",
       description:
-        "List all available printers on the system with their status. Returns printer names, states, and whether they're accepting jobs.",
+        "List all available printers on the system with their status, and the values each printer accepts for the sides, media (paper size) and quality parameters of the print tools. Returns printer names, states, and whether they're accepting jobs.",
       inputSchema: {},
     },
     async () => {
       const output = await execCommand("lpstat", ["-p", "-d"])
-      return {
-        content: [
-          {
-            type: "text",
-            text: output || "No printers found",
-          },
-        ],
+      if (!output) {
+        return { content: [{ type: "text", text: "No printers found" }] }
       }
+
+      const names = (await execCommand("lpstat", ["-e"]).catch(() => ""))
+        .split("\n")
+        .filter(Boolean)
+      const settings = await Promise.all(names.map(readPrinterSettings))
+      const details = names.map((name, i) => formatPrinterSettings(name, settings[i] ?? null))
+      const text =
+        details.length > 0 ? `${output}\n\nPrint settings:\n${details.join("\n")}` : output
+
+      return { content: [{ type: "text", text }] }
     }
   )
 

@@ -16,6 +16,7 @@ import { encode } from "he"
 import { PDFParse } from "pdf-parse"
 import { config, MARKDOWN_EXTENSIONS, type MarkdownExtension } from "./config.js"
 import { validateFilePath } from "./file-security.js"
+import { type ORIENTATIONS, type QUALITIES, resolveMedia, type SIDES } from "./print-settings.js"
 import { renderCodeToPdf, shouldRenderCode } from "./renderers/code.js"
 import { renderMarkdownToPdf } from "./renderers/markdown.js"
 import { hardenHtml, sanitizeUntrustedMarkdown } from "./untrusted-content.js"
@@ -283,10 +284,6 @@ export function shouldRenderToPdf(filePath: string): boolean {
   return MARKDOWN_EXTENSIONS.includes(ext as MarkdownExtension)
 }
 
-export const SIDES = ["one-sided", "two-sided-long-edge", "two-sided-short-edge"] as const
-export const ORIENTATIONS = ["portrait", "landscape"] as const
-export const QUALITIES = ["draft", "normal", "high"] as const
-
 /**
  * Print settings that map to CUPS options.
  * `sides`, `media` and `orientation` take precedence over `options` and the configured defaults.
@@ -349,7 +346,7 @@ export function buildCupsOptions({
     all.push(`sides=${sides}`)
   }
   if (media) {
-    all.push(`media=${media}`)
+    all.push(`media=${resolveMedia(media)}`)
   }
   if (orientation) {
     all.push(`orientation-requested=${ORIENTATION_REQUESTED[orientation]}`)

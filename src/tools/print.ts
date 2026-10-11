@@ -10,7 +10,8 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
-import { CONTENT_FORMATS, MAX_PDF_BYTES, ORIENTATIONS, QUALITIES, SIDES } from "../utils.js"
+import { ORIENTATIONS, QUALITIES, SIDES } from "../print-settings.js"
+import { CONTENT_FORMATS, MAX_PDF_BYTES } from "../utils.js"
 import {
   checkBatchSizeLimit,
   formatPageMetaResults,
@@ -74,7 +75,7 @@ const printSettingsSchema = {
     .regex(/^[^\s=]+$/, "Must not contain whitespace or '='")
     .optional()
     .describe(
-      "Paper size, e.g. 'A4' or 'Letter'. Accepted names depend on the printer (see 'lpoptions -p <printer> -l' on the server)."
+      "Paper size, e.g. 'A4' or 'Letter'. Accepted names depend on the printer: list_printers shows them, including 'JIS-B5', 'JIS-B6' and Custom.<W>x<H>mm where supported."
     ),
   orientation: z
     .enum(ORIENTATIONS)

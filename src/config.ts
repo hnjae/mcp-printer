@@ -19,8 +19,6 @@ export interface Config {
   httpPort: number
   /** Default printer name for print operations */
   defaultPrinter: string
-  /** Automatically enable duplex (two-sided) printing by default (can be overridden per-call) */
-  autoDuplex: boolean
   /** Default CUPS printing options (array of option strings) */
   defaultOptions: string[]
   /** Path to Chrome/Chromium executable for PDF rendering */
@@ -35,10 +33,6 @@ export interface Config {
   enableManagement: boolean
   /** Enable the tools that read documents from paths on the server (print_file, get_page_meta) */
   enableFileTools: boolean
-  /** Enable prompts (workflow templates that appear as slash commands) */
-  enablePrompts: boolean
-  /** Fallback to printing original file if PDF rendering fails (for markdown and code) */
-  fallbackOnRenderError: boolean
   /** List of directory paths that files must be under to be accessible (merged with defaults) */
   allowedPaths: string[]
   /** List of directory/file paths that are explicitly denied access (merged with defaults) */
@@ -49,8 +43,6 @@ export interface Config {
   confirmIfOverPages: number
   /** Code rendering configuration */
   code: {
-    /** File extensions to exclude from code rendering. All enabled by default. */
-    excludeExtensions: string[]
     /** Highlight.js color scheme for syntax highlighting */
     colorScheme: string
     /** Whether to automatically show line numbers in code rendering (can be overridden per-call) */
@@ -81,15 +73,12 @@ const DEFAULT_TRANSPORT = "stdio"
 const DEFAULT_HTTP_HOST = "127.0.0.1"
 const DEFAULT_HTTP_PORT = 3000
 const DEFAULT_PRINTER = ""
-const DEFAULT_AUTO_DUPLEX = false
 const DEFAULT_CHROME_PATH = ""
 const DEFAULT_CHROME_NO_SANDBOX = false
 const DEFAULT_AUTO_RENDER_MARKDOWN = true
 const DEFAULT_AUTO_RENDER_CODE = true
 const DEFAULT_ENABLE_MANAGEMENT = false
 const DEFAULT_ENABLE_FILE_TOOLS = true
-const DEFAULT_ENABLE_PROMPTS = true
-const DEFAULT_FALLBACK_ON_RENDER_ERROR = false
 const DEFAULT_MAX_COPIES = 10
 const DEFAULT_CONFIRM_IF_OVER_PAGES = 10
 const DEFAULT_CODE_COLOR_SCHEME = "atom-one-light"
@@ -164,7 +153,6 @@ export const config: Config = {
   httpHost: process.env.MCP_PRINTER_HTTP_HOST || DEFAULT_HTTP_HOST,
   httpPort: parseInt(process.env.MCP_PRINTER_HTTP_PORT || String(DEFAULT_HTTP_PORT), 10),
   defaultPrinter: process.env.MCP_PRINTER_DEFAULT_PRINTER || DEFAULT_PRINTER,
-  autoDuplex: yn(process.env.MCP_PRINTER_AUTO_DUPLEX, { default: DEFAULT_AUTO_DUPLEX }),
   defaultOptions: parseDelimitedString(process.env.MCP_PRINTER_DEFAULT_OPTIONS, /\s+/),
   chromePath: process.env.MCP_PRINTER_CHROME_PATH || DEFAULT_CHROME_PATH,
   chromeNoSandbox: yn(process.env.MCP_PRINTER_CHROME_NO_SANDBOX, {
@@ -182,12 +170,6 @@ export const config: Config = {
   enableFileTools: yn(process.env.MCP_PRINTER_ENABLE_FILE_TOOLS, {
     default: DEFAULT_ENABLE_FILE_TOOLS,
   }),
-  enablePrompts: yn(process.env.MCP_PRINTER_ENABLE_PROMPTS, {
-    default: DEFAULT_ENABLE_PROMPTS,
-  }),
-  fallbackOnRenderError: yn(process.env.MCP_PRINTER_FALLBACK_ON_RENDER_ERROR, {
-    default: DEFAULT_FALLBACK_ON_RENDER_ERROR,
-  }),
   // Use user-provided paths if set, otherwise use default allowed directories
   allowedPaths: hasUserPaths ? userAllowedPaths : [...defaultAllowedPaths],
   deniedPaths: [...defaultDeniedPaths, ...userDeniedPaths],
@@ -197,11 +179,6 @@ export const config: Config = {
     10
   ),
   code: {
-    excludeExtensions: parseDelimitedString(
-      process.env.MCP_PRINTER_CODE_EXCLUDE_EXTENSIONS,
-      ",",
-      (s) => s.toLowerCase()
-    ),
     colorScheme: process.env.MCP_PRINTER_CODE_COLOR_SCHEME || DEFAULT_CODE_COLOR_SCHEME,
     autoLineNumbers: yn(process.env.MCP_PRINTER_CODE_AUTO_LINE_NUMBERS, {
       default: DEFAULT_CODE_AUTO_LINE_NUMBERS,

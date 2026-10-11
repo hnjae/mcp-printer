@@ -64,7 +64,6 @@ export function registerPrinterTools(server: McpServer) {
         MCP_PRINTER_HTTP_HOST: config.httpHost,
         MCP_PRINTER_HTTP_PORT: String(config.httpPort),
         MCP_PRINTER_DEFAULT_PRINTER: config.defaultPrinter || "(not set)",
-        MCP_PRINTER_AUTO_DUPLEX: config.autoDuplex ? "true" : "false",
         MCP_PRINTER_DEFAULT_OPTIONS:
           config.defaultOptions.length > 0 ? config.defaultOptions.join(" ") : "(not set)",
         MCP_PRINTER_CHROME_PATH: config.chromePath || "(auto-detected)",
@@ -73,15 +72,10 @@ export function registerPrinterTools(server: McpServer) {
         MCP_PRINTER_AUTO_RENDER_CODE: config.autoRenderCode ? "true" : "false",
         MCP_PRINTER_ENABLE_MANAGEMENT: config.enableManagement ? "true" : "false",
         MCP_PRINTER_ENABLE_FILE_TOOLS: config.enableFileTools ? "true" : "false",
-        MCP_PRINTER_ENABLE_PROMPTS: config.enablePrompts ? "true" : "false",
         MCP_PRINTER_CONFIRM_IF_OVER_PAGES:
           config.confirmIfOverPages > 0 ? String(config.confirmIfOverPages) : "0 (disabled)",
         MCP_PRINTER_ALLOWED_PATHS: config.allowedPaths.join(":"),
         MCP_PRINTER_DENIED_PATHS: config.deniedPaths.join(":"),
-        MCP_PRINTER_CODE_EXCLUDE_EXTENSIONS:
-          config.code.excludeExtensions.length > 0
-            ? config.code.excludeExtensions.join(", ")
-            : "(not set)",
         MCP_PRINTER_CODE_COLOR_SCHEME: config.code.colorScheme,
         MCP_PRINTER_CODE_AUTO_LINE_NUMBERS: config.code.autoLineNumbers ? "true" : "false",
         MCP_PRINTER_CODE_FONT_SIZE: config.code.fontSize,

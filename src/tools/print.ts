@@ -11,7 +11,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
 import { ORIENTATIONS, QUALITIES, SIDES } from "../print-settings.js"
-import { CONTENT_FORMATS, MAX_PDF_BYTES } from "../utils.js"
+import { CONTENT_FORMATS, MAX_PDF_BYTES, RENDER_MODES } from "../utils.js"
 import {
   checkBatchSizeLimit,
   formatPageMetaResults,
@@ -25,38 +25,14 @@ import {
 } from "./batch-helpers.js"
 
 /**
- * Shared parameter schema for rendering options used by both print_file and get_page_meta.
+ * Shared parameter schema for rendering used by both print_file and get_page_meta.
  */
 const renderingParametersSchema = {
-  line_numbers: z
-    .boolean()
-    .optional()
-    .describe("Show line numbers when rendering code files (overrides global setting)"),
-  color_scheme: z
-    .string()
+  render: z
+    .enum(RENDER_MODES)
     .optional()
     .describe(
-      "Syntax highlighting color scheme for code files (e.g., 'github', 'monokai', 'atom-one-light')"
-    ),
-  font_size: z
-    .string()
-    .optional()
-    .describe("Font size for code files (e.g., '8pt', '10pt', '12pt')"),
-  line_spacing: z
-    .string()
-    .optional()
-    .describe("Line spacing for code files (e.g., '1', '1.5', '2')"),
-  force_markdown_render: z
-    .boolean()
-    .optional()
-    .describe(
-      "Force markdown rendering to PDF (true=always render, false=never render, undefined=use config)"
-    ),
-  force_code_render: z
-    .boolean()
-    .optional()
-    .describe(
-      "Force code rendering to PDF with syntax highlighting (true=always render, false=never render, undefined=use config)"
+      "How to render the file: 'markdown' or 'code' renders it to PDF as that kind of document whatever its extension, 'none' uses the file as it is. Omit to detect from the extension and the server configuration."
     ),
 }
 
@@ -148,10 +124,6 @@ export function registerContentPrintTools(server: McpServer) {
           .describe(
             "Skip page count confirmation check (bypasses MCP_PRINTER_CONFIRM_IF_OVER_PAGES threshold)"
           ),
-        line_numbers: renderingParametersSchema.line_numbers,
-        color_scheme: renderingParametersSchema.color_scheme,
-        font_size: renderingParametersSchema.font_size,
-        line_spacing: renderingParametersSchema.line_spacing,
       },
     },
     async (spec) => formatPrintResults([await handlePrintContent(spec)])

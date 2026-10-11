@@ -25,6 +25,7 @@ flowchart LR
 
 - Operations that only enrich a result, such as reading a printer's options, fail soft. The caller receives "unavailable" and carries on; one unreachable printer does not fail a listing or a print.
 - Operations that print or change state, such as submitting or cancelling a job and setting the default printer, fail loudly with CUPS's reason. They are never retried or reported as success.
+- Every contact with CUPS is bounded in time, so an unreachable CUPS server cannot stall a call. A timeout is a failure of that operation, handled as above: soft for enrichment, loud for printing and changes.
 
 ## Locale
 

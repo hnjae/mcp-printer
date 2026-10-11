@@ -8,12 +8,11 @@
 import { beforeEach, describe, expect, it, vi } from "bun:test"
 import { buildCupsOptions, isDuplexEnabled } from "../../src/utils.js"
 
-const mockConfig = { autoDuplex: false, defaultOptions: [] as string[] }
+const mockConfig = { defaultOptions: [] as string[] }
 
 vi.mock("../../src/config.js", () => ({ config: mockConfig }))
 
 beforeEach(() => {
-  mockConfig.autoDuplex = false
   mockConfig.defaultOptions = []
 })
 
@@ -82,10 +81,8 @@ describe("isDuplexEnabled", () => {
     expect(isDuplexEnabled({ options: "sides=two-sided-short-edge" })).toBe(true)
   })
 
-  it("applies auto-duplex unless the call chooses one-sided", () => {
-    mockConfig.autoDuplex = true
-    expect(isDuplexEnabled({})).toBe(true)
-    expect(isDuplexEnabled({ sides: "one-sided" })).toBe(false)
+  it("lets the call's options choose one-sided over a two-sided default", () => {
+    mockConfig.defaultOptions = ["sides=two-sided-long-edge"]
     expect(isDuplexEnabled({ options: "sides=one-sided" })).toBe(false)
   })
 

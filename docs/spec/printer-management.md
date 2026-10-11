@@ -1,5 +1,9 @@
 # Printer management
 
+## Time limits
+
+A CUPS query that does not finish within seconds, and a job submission or change that does not finish within a minute, fails instead of waiting indefinitely, for example when the CUPS server is unreachable. A submission that times out may already be queued, so check the queue with `get_print_queue` before printing the document again.
+
 ## Queries
 
 These tools are always available and change nothing.

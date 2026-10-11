@@ -15,29 +15,30 @@ A file is rendered with syntax highlighting when `MCP_PRINTER_AUTO_RENDER_CODE` 
 - its extension, or for a file without an extension its lowercase name, is recognized: `js`, `jsx`, `ts`, `tsx`, `py`, `rb`, `java`, `c`, `cpp`, `cc`, `cxx`, `h`, `hpp`, `cs`, `php`, `go`, `rs`, `swift`, `kt`, `scala`, `lua`, `perl`, `pl`, `r`, `sh`, `bash`, `zsh`, `fish`, `ps1`, `vim`, `yaml`, `yml`, `json`, `xml`, `html`, `css`, `scss`, `sass`, `less`, `sql`, `makefile`, `dockerfile`, `gemfile`, `rakefile`, `vagrantfile`; or
 - the file is not recognized by name but has a line starting with `#!` within its first 1,024 bytes.
 
-Names listed in `MCP_PRINTER_CODE_EXCLUDE_EXTENSIONS` (comma-separated, case-insensitive) are never rendered as code. A file with a Markdown extension is never selected for code rendering automatically, so when Markdown rendering is off it is printed as it is; `force_code_render: true` renders it as code.
+A file with a Markdown extension is never selected for code rendering automatically, so when Markdown rendering is off it is printed as it is; `render: code` renders it as code.
 
-Code rendering takes these settings, per call or by default:
+The look of the output comes from the configuration; a call cannot change it:
 
-| Parameter | Default | Effect |
+| Variable | Default | Effect |
 | --- | --- | --- |
-| `line_numbers` | `MCP_PRINTER_CODE_AUTO_LINE_NUMBERS` (`true`) | Show line numbers |
-| `color_scheme` | `MCP_PRINTER_CODE_COLOR_SCHEME` (`atom-one-light`) | highlight.js theme name; an unknown name falls back to the default theme |
-| `font_size` | `MCP_PRINTER_CODE_FONT_SIZE` (`10pt`) | CSS font size |
-| `line_spacing` | `MCP_PRINTER_CODE_LINE_SPACING` (`1.5`) | CSS line height |
+| `MCP_PRINTER_CODE_AUTO_LINE_NUMBERS` | `true` | Show line numbers |
+| `MCP_PRINTER_CODE_COLOR_SCHEME` | `atom-one-light` | highlight.js theme name; an unknown name falls back to the default theme |
+| `MCP_PRINTER_CODE_FONT_SIZE` | `10pt` | CSS font size |
+| `MCP_PRINTER_CODE_LINE_SPACING` | `1.5` | CSS line height |
 
-## Overriding detection
+## Choosing the renderer
 
-On `print_file` and `get_page_meta`:
+On `print_file` and `get_page_meta`, `render` chooses how a file is rendered whatever its extension and the automatic-rendering settings:
 
-- `force_markdown_render: true` renders a file with a Markdown extension as Markdown even when automatic Markdown rendering is off; `false` prints the file as it is, unless `force_code_render` is `true`. A file without a Markdown extension is never rendered as Markdown.
-- `force_code_render: true` renders any file as code; `false` never does.
+- `markdown` renders the file as Markdown.
+- `code` renders the file as code.
+- `none` sends the file to CUPS as it is.
 
-Unset flags follow the configuration.
+Without `render`, the detection above applies.
 
 ## Failure
 
-If rendering fails, the item fails with the reason. When `MCP_PRINTER_FALLBACK_ON_RENDER_ERROR` is `true`, the original file is sent to CUPS unchanged instead.
+If rendering fails, the item fails with the reason and nothing is sent to CUPS. To print the file as it is, call again with `render: none`.
 
 ## Everything else
 

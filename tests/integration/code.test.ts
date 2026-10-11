@@ -22,9 +22,8 @@ vi.mock("../../src/config.js", () => {
       autoRenderCode: true,
       chromePath: "",
       code: {
-        excludeExtensions: [],
         colorScheme: "atom-one-light",
-        enableLineNumbers: true,
+        autoLineNumbers: true,
         fontSize: "10pt",
         lineSpacing: "1.5",
       },
@@ -35,6 +34,7 @@ vi.mock("../../src/config.js", () => {
 
 mkdirSync(join(dirname(fileURLToPath(import.meta.url)), "../tmp"), { recursive: true })
 
+import { config } from "../../src/config.js"
 import {
   fixMultilineSpans,
   getLanguageFromExtension,
@@ -204,7 +204,7 @@ describe("renderCodeToPdf", () => {
     }
   })
 
-  it("should respect line numbers parameter", async () => {
+  it("should respect the line numbers setting", async () => {
     const { writeFileSync } = await import("node:fs")
     const { join, dirname } = await import("node:path")
     const { fileURLToPath } = await import("node:url")
@@ -216,12 +216,14 @@ describe("renderCodeToPdf", () => {
 
     try {
       // With line numbers
-      const pdfWithNumbers = await renderCodeToPdf(testFile, { lineNumbers: true })
+      config.code.autoLineNumbers = true
+      const pdfWithNumbers = await renderCodeToPdf(testFile)
       expect(pdfWithNumbers).toBeDefined()
       unlinkSync(pdfWithNumbers)
 
       // Without line numbers
-      const pdfWithoutNumbers = await renderCodeToPdf(testFile, { lineNumbers: false })
+      config.code.autoLineNumbers = false
+      const pdfWithoutNumbers = await renderCodeToPdf(testFile)
       expect(pdfWithoutNumbers).toBeDefined()
       unlinkSync(pdfWithoutNumbers)
 

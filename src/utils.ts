@@ -321,7 +321,7 @@ function dropOptions(all: string[], names: string[]): string[] {
 
 /**
  * Build the effective CUPS option list for a print job. When an option name occurs more than
- * once, the last occurrence wins, so the order is: auto-duplex, MCP_PRINTER_DEFAULT_OPTIONS,
+ * once, the last occurrence wins, so the order is: MCP_PRINTER_DEFAULT_OPTIONS,
  * the free-form `options` string, then the typed settings. A typed `orientation` or `quality`
  * also removes the alias `landscape` or `print-quality` from the defaults and `options`.
  *
@@ -336,9 +336,6 @@ export function buildCupsOptions({
   quality,
 }: PrintOptions): string[] {
   let all: string[] = []
-  if (config.autoDuplex) {
-    all.push("sides=two-sided-long-edge")
-  }
   all.push(...config.defaultOptions)
   if (options) {
     all.push(...options.split(/\s+/).filter(Boolean))
@@ -413,7 +410,8 @@ export async function executePrintJob(
   })
 
   // Determine the printer name used
-  const printerName = targetPrinter || (await getDefaultPrinter()) || "default"
+  const printerName =
+    targetPrinter || (await getDefaultPrinter().catch(() => undefined)) || "default"
 
   return { printerName, allOptions }
 }
@@ -477,19 +475,13 @@ export interface RenderResult {
 export interface RenderOptions {
   /** Path to the file to render */
   filePath: string
-  /** Show line numbers when rendering code files */
-  lineNumbers?: boolean
-  /** Syntax highlighting color scheme for code files */
-  colorScheme?: string
-  /** Font size for code files */
-  fontSize?: string
-  /** Line spacing for code files */
-  lineSpacing?: string
-  /** Force markdown rendering to PDF */
-  forceMarkdownRender?: boolean
-  /** Force code rendering to PDF with syntax highlighting */
-  forceCodeRender?: boolean
+  /** How to render the file; omitted means detect from the file and the configuration */
+  render?: RenderMode
 }
+
+export const RENDER_MODES = ["markdown", "code", "none"] as const
+
+export type RenderMode = (typeof RENDER_MODES)[number]
 
 /**
  * Prepares a file for printing by conditionally rendering it to PDF.
@@ -499,26 +491,21 @@ export interface RenderOptions {
  * or can be printed as-is.
  *
  * **Rendering Behavior:**
- * - **Markdown files** (`.md`, `.markdown`): Rendered to PDF with full formatting, unless
- *   auto-rendering is disabled or `forceMarkdownRender` is explicitly set to false
- * - **Code files**: Rendered to PDF with syntax highlighting, unless auto-rendering is
- *   disabled or `forceCodeRender` is explicitly set to false, or the extension is excluded
- * - **PDF files**: Used as-is (no re-rendering)
- * - **Other files** (text, images, etc.): Passed through without modification
+ * - **`render` given**: the file is rendered as Markdown or as code, or passed through for `none`,
+ *   whatever its extension
+ * - **`render` omitted, Markdown files** (`.md`, `.markdown`): Rendered to PDF with full
+ *   formatting, unless auto-rendering is disabled
+ * - **`render` omitted, code files**: Rendered to PDF with syntax highlighting, unless
+ *   auto-rendering is disabled
+ * - **Other files** (PDF, text, images, etc.): Passed through without modification
  *
  * **Security:** All file paths are validated against allowed/denied paths before processing.
  *
- * **Error Handling:** If rendering fails and `MCP_PRINTER_FALLBACK_ON_RENDER_ERROR` is enabled,
- * the original file is used. Otherwise, an error is thrown.
+ * **Error Handling:** If rendering fails, an error is thrown.
  *
  * @param options - File preparation options including path and rendering preferences
  * @param options.filePath - Absolute or relative path to the file to prepare
- * @param options.lineNumbers - Show line numbers in code rendering (overrides global setting)
- * @param options.colorScheme - Syntax highlighting theme for code (e.g., "atom-one-light", "monokai")
- * @param options.fontSize - Font size for code rendering (e.g., "10pt", "12pt")
- * @param options.lineSpacing - Line spacing multiplier for code (e.g., "1", "1.5", "2")
- * @param options.forceMarkdownRender - Explicitly enable/disable markdown rendering
- * @param options.forceCodeRender - Explicitly enable/disable code rendering
+ * @param options.render - Explicitly choose how to render the file
  *
  * @returns Promise resolving to a RenderResult object
  * @returns result.actualFilePath - The file path to actually print (original or rendered PDF)
@@ -527,7 +514,7 @@ export interface RenderOptions {
  *                               empty string if no rendering occurred
  *
  * @throws {Error} If file path validation fails (security check)
- * @throws {Error} If rendering fails and fallback is disabled
+ * @throws {Error} If rendering fails
  *
  * @example
  * // Prepare a markdown file (will be rendered to PDF)
@@ -551,50 +538,22 @@ export async function prepareFileForPrinting(options: RenderOptions): Promise<Re
   let renderedPdf: string | null = null
   let renderType = ""
 
-  // Check if file should be auto-rendered to PDF (markdown)
-  const shouldRenderMarkdown =
-    options.forceMarkdownRender !== undefined
-      ? options.forceMarkdownRender &&
-        MARKDOWN_EXTENSIONS.some((ext) => options.filePath.toLowerCase().endsWith(`.${ext}`))
-      : shouldRenderToPdf(options.filePath)
+  const render: RenderMode =
+    options.render ??
+    (shouldRenderToPdf(options.filePath)
+      ? "markdown"
+      : (await shouldRenderCode(options.filePath))
+        ? "code"
+        : "none")
 
-  if (shouldRenderMarkdown) {
-    try {
-      renderedPdf = await renderMarkdownToPdf(options.filePath)
-      actualFilePath = renderedPdf
-      renderType = "markdown → PDF"
-    } catch (error) {
-      // If fallback is enabled, use original file; otherwise throw error
-      if (config.fallbackOnRenderError) {
-        console.error(`Warning: Failed to render ${options.filePath}, using as-is:`, error)
-      } else {
-        throw error
-      }
-    }
-  }
-  // Check if file should be rendered as code with syntax highlighting
-  else if (
-    options.forceCodeRender !== undefined
-      ? options.forceCodeRender
-      : await shouldRenderCode(options.filePath)
-  ) {
-    try {
-      renderedPdf = await renderCodeToPdf(options.filePath, {
-        lineNumbers: options.lineNumbers,
-        colorScheme: options.colorScheme,
-        fontSize: options.fontSize,
-        lineSpacing: options.lineSpacing,
-      })
-      actualFilePath = renderedPdf
-      renderType = "code → PDF (syntax highlighted)"
-    } catch (error) {
-      // If fallback is enabled, use original file; otherwise throw error
-      if (config.fallbackOnRenderError) {
-        console.error(`Warning: Failed to render code ${options.filePath}, using as-is:`, error)
-      } else {
-        throw error
-      }
-    }
+  if (render === "markdown") {
+    renderedPdf = await renderMarkdownToPdf(options.filePath)
+    actualFilePath = renderedPdf
+    renderType = "markdown → PDF"
+  } else if (render === "code") {
+    renderedPdf = await renderCodeToPdf(options.filePath)
+    actualFilePath = renderedPdf
+    renderType = "code → PDF (syntax highlighted)"
   }
 
   return { actualFilePath, renderedPdf, renderType }
@@ -643,14 +602,6 @@ export interface ContentOptions {
   format: ContentFormat
   /** File extension or language id selecting syntax highlighting for format "code" (default: "txt") */
   language?: string
-  /** Show line numbers when rendering code */
-  lineNumbers?: boolean
-  /** Syntax highlighting color scheme for code */
-  colorScheme?: string
-  /** Font size for code rendering */
-  fontSize?: string
-  /** Line spacing for code rendering */
-  lineSpacing?: string
 }
 
 /**
@@ -697,12 +648,7 @@ export async function withPreparedContent<T>(
         }
         const file = join(tempDir, `code.${language}`)
         writeFileSync(file, options.content, "utf-8")
-        renderedPdf = await renderCodeToPdf(file, {
-          lineNumbers: options.lineNumbers,
-          colorScheme: options.colorScheme,
-          fontSize: options.fontSize,
-          lineSpacing: options.lineSpacing,
-        })
+        renderedPdf = await renderCodeToPdf(file)
         return await use({
           actualFilePath: renderedPdf,
           renderType: "code → PDF (syntax highlighted)",

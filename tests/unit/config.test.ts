@@ -24,10 +24,7 @@ describe("config", () => {
 
   it("should have boolean configs", () => {
     // Test that config has boolean properties with valid values
-    expect(typeof config.autoDuplex).toBe("boolean")
     expect(typeof config.enableManagement).toBe("boolean")
-    expect(typeof config.enablePrompts).toBe("boolean")
-    expect(typeof config.fallbackOnRenderError).toBe("boolean")
     expect(typeof config.autoRenderMarkdown).toBe("boolean")
     expect(typeof config.autoRenderCode).toBe("boolean")
   })
@@ -37,7 +34,6 @@ describe("config", () => {
     expect(Array.isArray(config.defaultOptions)).toBe(true)
     expect(Array.isArray(config.allowedPaths)).toBe(true)
     expect(Array.isArray(config.deniedPaths)).toBe(true)
-    expect(Array.isArray(config.code.excludeExtensions)).toBe(true)
   })
 
   it("should include default allowed directories in allowedPaths by default", () => {

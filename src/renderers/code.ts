@@ -37,7 +37,7 @@ import { convertHtmlToPdf, hasShebang } from "../utils.js"
 /**
  * Determines if a file should be rendered with syntax highlighting.
  * Uses strict whitelist approach - only known extensions and special extensionless
- * files will be auto-rendered. Unknown extensions require force_code_render=true.
+ * files will be auto-rendered. Unknown extensions require render=code.
  * Falls back to shebang detection for files without recognized extensions.
  *
  * @param filePath - Path to the file to check
@@ -53,13 +53,8 @@ export async function shouldRenderCode(filePath: string): Promise<boolean> {
   const fileExt = extname(filePath)
   const ext = fileExt ? fileExt.slice(1).toLowerCase() : basename(filePath).toLowerCase()
 
-  // Markdown files are rendered as Markdown or printed as they are; code rendering needs force_code_render
+  // Markdown files are rendered as Markdown or printed as they are; code rendering needs render=code
   if (MARKDOWN_EXTENSIONS.some((markdownExt) => markdownExt === ext)) {
-    return false
-  }
-
-  // Check if extension is in the exclusion list
-  if (ext && config.code.excludeExtensions.includes(ext)) {
     return false
   }
 
@@ -82,7 +77,7 @@ const __dirname = dirname(__filename)
  *
  * This is a strict whitelist - only files with these extensions will be automatically
  * rendered as code. Files with unknown extensions will not be rendered unless
- * force_code_render=true is explicitly passed.
+ * render=code is explicitly passed.
  *
  * Benefits of strict whitelist:
  * - 100% predictable (no false positives on plain text files)
@@ -393,29 +388,15 @@ function generateHTML(
 }
 
 /**
- * Options for rendering code to PDF.
- */
-export interface RenderCodeOptions {
-  lineNumbers?: boolean
-  colorScheme?: string
-  fontSize?: string
-  lineSpacing?: string
-}
-
-/**
  * Renders a source code file to PDF with syntax highlighting.
  * Uses highlight.js for syntax highlighting and Chrome for PDF generation.
- * Supports configurable color schemes, line numbers, font size, and line spacing.
+ * The color scheme, line numbers, font size, and line spacing come from the configuration.
  *
  * @param filePath - Path to the source code file to render
- * @param options - Optional rendering options (lineNumbers, colorScheme, fontSize, lineSpacing)
  * @returns Path to the generated temporary PDF file
  * @throws {Error} If Chrome is not found or PDF generation fails
  */
-export async function renderCodeToPdf(
-  filePath: string,
-  options?: RenderCodeOptions
-): Promise<string> {
+export async function renderCodeToPdf(filePath: string): Promise<string> {
   // Step 1: Read source code and identify language
   const sourceCode = readFileSync(filePath, "utf-8")
   const language = getLanguageFromExtension(filePath)
@@ -427,18 +408,16 @@ export async function renderCodeToPdf(
   const lines = fixMultilineSpans(highlightedCode).split("\n")
 
   // Step 4: Build HTML structure with configuration
-  const showLineNumbers = options?.lineNumbers ?? config.code.autoLineNumbers
-  const tableRows = buildTableRows(lines, showLineNumbers)
+  const tableRows = buildTableRows(lines, config.code.autoLineNumbers)
 
-  const selectedColorScheme = options?.colorScheme ?? config.code.colorScheme
-  const colorSchemeCSS = loadColorSchemeCSS(selectedColorScheme)
+  const colorSchemeCSS = loadColorSchemeCSS(config.code.colorScheme)
 
   const html = generateHTML(
     filePath,
     tableRows,
     colorSchemeCSS,
-    options?.fontSize ?? config.code.fontSize,
-    options?.lineSpacing ?? config.code.lineSpacing
+    config.code.fontSize,
+    config.code.lineSpacing
   )
 
   // Step 5: Convert HTML to PDF

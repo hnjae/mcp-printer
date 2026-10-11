@@ -1,6 +1,6 @@
 # MCP Printer
 
-Print documents from an AI assistant through the Model Context Protocol (MCP). MCP Printer uses CUPS on macOS and Linux to submit print jobs, query printers, and inspect queues.
+Print documents from an AI assistant through the Model Context Protocol (MCP). MCP Printer uses CUPS to submit print jobs, query printers, and inspect queues.
 
 [![License: AGPL-3.0-or-later](https://img.shields.io/badge/License-AGPL--3.0--or--later-blue.svg)](LICENSE)
 [![CI](https://github.com/hnjae/mcp-printer/actions/workflows/ci.yml/badge.svg)](https://github.com/hnjae/mcp-printer/actions/workflows/ci.yml)
@@ -15,7 +15,7 @@ Print documents from an AI assistant through the Model Context Protocol (MCP). M
 
 ## Install from source
 
-You need macOS or Linux, Bun **1.3.14 or later**, and access to a configured CUPS printer. The commands `lpr`, `lpstat`, `lpq`, `lprm`, and `lpoptions` must be on `PATH`. Chrome or Chromium is required for Markdown, HTML, code, and client-supplied text rendering. Windows is unsupported.
+You need Bun **1.3.14 or later** and access to a configured CUPS printer. The commands `lpr`, `lpstat`, `lpq`, `lprm`, and `lpoptions` must be on `PATH`. Chrome or Chromium is required for Markdown, HTML, code, and client-supplied text rendering.
 
 Check that CUPS can see your printers:
 
@@ -206,11 +206,7 @@ bun install --frozen-lockfile
 just ci
 ```
 
-For narrower checks, use `just typecheck`, `just test-unit`, or `just test-integration`. Integration tests render PDFs with Chrome/Chromium. Restart the running server to load source changes. `just format` applies formatters, and `just hooks-install` installs the formatting, typo, and Conventional Commit hooks.
-
-### Releasing
-
-Draft the release's `CHANGELOG.md` section from the commits with `cog changelog vPREVIOUS..HEAD` and edit it by hand; the changelog is not updated between releases. Set the `package.json` version, run `just ci`, then push a `vX.Y.Z` tag. The [image workflow](.github/workflows/image.yml) fails if the tag does not match the `package.json` version.
+Commands, conventions and the release procedure are in [AGENTS.md](AGENTS.md).
 
 ## License
 

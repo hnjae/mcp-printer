@@ -22,6 +22,9 @@ const NAMED_SIZES: Record<string, PageSize> = {
   a6: { widthMm: 105, heightMm: 148 },
   letter: { widthMm: 215.9, heightMm: 279.4 },
   legal: { widthMm: 215.9, heightMm: 355.6 },
+  executive: { widthMm: 184.15, heightMm: 266.7 },
+  oficio: { widthMm: 215.9, heightMm: 340.36 },
+  fanfoldgermanlegal: { widthMm: 215.9, heightMm: 330.2 },
   jis_b5_182x257mm: { widthMm: 182, heightMm: 257 },
   jis_b6_128x182mm: { widthMm: 128, heightMm: 182 },
 }

@@ -27,6 +27,15 @@ describe("pageSizeForMedia", () => {
     expect(near(legal.widthMm, 215.9) && near(legal.heightMm, 355.6)).toBe(true)
   })
 
+  it("knows the other paper names printers list", () => {
+    const executive = pageSizeForMedia("Executive")
+    expect(near(executive.widthMm, 184.15) && near(executive.heightMm, 266.7)).toBe(true)
+    const oficio = pageSizeForMedia("Oficio")
+    expect(near(oficio.widthMm, 215.9) && near(oficio.heightMm, 340.36)).toBe(true)
+    const fanfold = pageSizeForMedia("FanFoldGermanLegal")
+    expect(near(fanfold.widthMm, 215.9) && near(fanfold.heightMm, 330.2)).toBe(true)
+  })
+
   it("knows JIS B5 and B6 by their IPP names", () => {
     expect(pageSizeForMedia("jis_b5_182x257mm")).toEqual({ widthMm: 182, heightMm: 257 })
     expect(pageSizeForMedia("jis_b6_128x182mm")).toEqual({ widthMm: 128, heightMm: 182 })

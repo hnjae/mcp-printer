@@ -15,7 +15,7 @@ Print documents from an AI assistant through the Model Context Protocol (MCP). M
 - Print text supplied by the client as Markdown, HTML, highlighted code, or plain text.
 - Send small PDFs as base64, or print files already on the server.
 - Render Markdown with tables, KaTeX math, and Mermaid diagrams; render source files with syntax highlighting and optional line numbers.
-- Check PDF page counts before printing, choose CUPS options, and process files in batches.
+- Check PDF page counts before printing, choose sides, paper size, orientation, and quality, and process files in batches.
 - Connect over stdio or stateless Streamable HTTP; optionally enable job cancellation and default-printer management.
 
 ## Install from source
@@ -131,7 +131,7 @@ CUPS records jobs from the container as owned by `unknown`, so virtual printers 
 | `print_pdf` | Print a readable PDF supplied as `pdf_base64`, up to 5 MiB decoded. | Always |
 | `print_file` | Print server-side paths from a `files` array; Markdown and known code files render automatically. | File tools enabled |
 | `get_page_meta` | Get PDF pages and estimated physical sheets from a `files` array, rendering Markdown/code first when needed. | File tools enabled |
-| `list_printers` | List CUPS printers and their status. | Always |
+| `list_printers` | List CUPS printers, their status, and the `sides`, `media`, and `quality` values each accepts. | Always |
 | `get_default_printer` | Query the CUPS default printer. | Always |
 | `get_print_queue` | Inspect the queue, optionally for a named `printer`. | Always |
 | `get_config` | Inspect active server settings. | Always |
@@ -146,7 +146,7 @@ Print a document written in the conversation with `print_content`:
 {
   "content": "# Meeting notes\n\n- Review the proposal\n- Decide on next steps\n",
   "format": "markdown",
-  "options": "sides=two-sided-long-edge"
+  "sides": "two-sided-long-edge"
 }
 ```
 
@@ -158,7 +158,8 @@ Print a file on the server with `print_file`:
     {
       "file_path": "/home/alice/Documents/report.md",
       "copies": 1,
-      "options": "media=A4 sides=two-sided-long-edge"
+      "media": "A4",
+      "sides": "two-sided-long-edge"
     }
   ]
 }
@@ -166,7 +167,7 @@ Print a file on the server with `print_file`:
 
 Replace the example path with an allowed path on the server. File printing and page metadata calls use `files` arrays even for one file; cancellations use `jobs` arrays. Each batch processes at most 50 items per call. Larger batches return a warning without processing; split them into smaller calls. Individual failures do not stop the remaining items.
 
-Print calls accept `printer`, `copies`, and space-separated CUPS `options`, such as `landscape`, `media=A4`, or `sides=two-sided-long-edge`. Supported options depend on the printer; `lpoptions -l` lists them. Code rendering accepts `line_numbers`, `color_scheme`, `font_size`, and `line_spacing`; `print_content` with `format: "code"` also accepts `language`, such as `py` or `ts`. File tools accept `force_markdown_render` and `force_code_render` to override automatic detection.
+Print calls accept `printer`, `copies`, and these print settings: `sides` (`one-sided`, `two-sided-long-edge`, or `two-sided-short-edge`), `media` (paper size such as `A4` or `Letter`; `list_printers` shows the names each printer accepts), `orientation` (`portrait` or `landscape`), and `quality` (`draft`, `normal`, or `high`, sent as the CUPS `cupsPrintQuality` option). Any other CUPS option goes in the space-separated `options` string, such as `number-up=2`. Supported values depend on the printer; `list_printers` reports them from `lpoptions -l`. Printers that list custom page sizes also accept `Custom.<W>x<H>mm`, such as `Custom.182x257mm`. `list_printers` also offers `jis_b5_182x257mm` and `jis_b6_128x182mm` under that name on every printer that can print the size, whether it lists the size itself or not. A printer without its own listing gets the size when it lists A4 (B5) or A5 (B6) and custom page sizes. At print time the server sends the printer's own choice for the size if it has one, else a custom size. Whether a printer feeds and prints a custom size depends on the printer. `sides`, `media`, `orientation`, and `quality` override the same settings in `options`, `MCP_PRINTER_DEFAULT_OPTIONS`, and `MCP_PRINTER_AUTO_DUPLEX`. `get_page_meta` accepts `sides` for its sheet estimate. Code rendering accepts `line_numbers`, `color_scheme`, `font_size`, and `line_spacing`; `print_content` with `format: "code"` also accepts `language`, such as `py` or `ts`. File tools accept `force_markdown_render` and `force_code_render` to override automatic detection.
 
 When a readable PDF exceeds the configured sheet threshold, the server returns `PAGE_COUNT_CONFIRMATION_REQUIRED` without printing it. After the user approves, repeat the call with `skip_confirmation: true`. The default threshold is 10 sheets; the estimate accounts for duplex but does not multiply by copies. The check does not apply to file formats whose PDF page count cannot be read. `get_page_meta` requires a PDF or a file that can be rendered to PDF.
 
@@ -184,8 +185,8 @@ Set environment variables before starting the server. Restart it to apply change
 | `MCP_PRINTER_HTTP_HOST` | `127.0.0.1` | HTTP bind address. |
 | `MCP_PRINTER_HTTP_PORT` | `3000` | HTTP port. |
 | `MCP_PRINTER_DEFAULT_PRINTER` | Unset | Print target when no `printer` is supplied; otherwise CUPS chooses its default. |
-| `MCP_PRINTER_DEFAULT_OPTIONS` | Unset | Space-separated CUPS options; per-call options follow them. |
-| `MCP_PRINTER_AUTO_DUPLEX` | `false` | Add `sides=two-sided-long-edge` unless the call supplies a `sides=` option. |
+| `MCP_PRINTER_DEFAULT_OPTIONS` | Unset | Space-separated CUPS options; per-call settings override them. |
+| `MCP_PRINTER_AUTO_DUPLEX` | `false` | Add `sides=two-sided-long-edge` unless the call or `MCP_PRINTER_DEFAULT_OPTIONS` sets `sides`. |
 | `MCP_PRINTER_MAX_COPIES` | `10` | Maximum copies per job; `0` or a negative value removes the limit. |
 | `MCP_PRINTER_CONFIRM_IF_OVER_PAGES` | `10` | Physical-sheet threshold for PDF confirmation; `0` disables it. |
 | `MCP_PRINTER_ENABLE_MANAGEMENT` | `false` | Register `cancel_print_job` and `set_default_printer`, which change the server user's default printer and cancel queued jobs, including other users' jobs where CUPS permits. Printing remains available when disabled. |

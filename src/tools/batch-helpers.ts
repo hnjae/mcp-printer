@@ -16,6 +16,7 @@ import {
   executePrintJob,
   getPdfPageCount,
   isDuplexEnabled,
+  type PrintOptions,
   prepareFileForPrinting,
   shouldTriggerConfirmation,
   withPreparedContent,
@@ -68,11 +69,10 @@ const formatWouldRenderInfo = (renderType?: string) =>
 /**
  * Specification for a single file print operation in a batch.
  */
-export interface FilePrintSpec {
+export interface FilePrintSpec extends PrintOptions {
   file_path: string
   printer?: string
   copies?: number
-  options?: string
   skip_confirmation?: boolean
   line_numbers?: boolean
   color_scheme?: string
@@ -96,10 +96,9 @@ export interface PrintResult {
 /**
  * Print settings shared by every print operation.
  */
-interface PrintTarget {
+interface PrintTarget extends PrintOptions {
   printer?: string
   copies?: number
-  options?: string
   skip_confirmation?: boolean
 }
 
@@ -110,21 +109,21 @@ interface PrintTarget {
  * @param label - Source description shown in the result (file path or content description)
  * @param actualFilePath - File to send to the printer (original or rendered PDF)
  * @param renderType - Description of rendering performed (empty if none)
- * @param target - Printer, copies, CUPS options and confirmation override
+ * @param target - Printer, copies, CUPS settings and confirmation override
  * @returns PrintResult object with success status and details
  */
 async function printPreparedFile(
   label: string,
   actualFilePath: string,
   renderType: string,
-  { printer, copies = 1, options, skip_confirmation }: PrintTarget
+  { printer, copies = 1, skip_confirmation, ...settings }: PrintTarget
 ): Promise<PrintResult> {
   // Check if we need to trigger page count confirmation
   // Try to parse as PDF - if it works, do the page count check. If it fails, it's not a PDF.
   if (!skip_confirmation && config.confirmIfOverPages > 0) {
     try {
       const pdfPages = await getPdfPageCount(actualFilePath)
-      const isDuplex = isDuplexEnabled(options)
+      const isDuplex = isDuplexEnabled(settings)
       const physicalSheets = calculatePhysicalSheets(pdfPages, isDuplex)
 
       // If exceeds threshold, return error indicating confirmation needed
@@ -144,7 +143,7 @@ async function printPreparedFile(
   }
 
   // Execute print job
-  const { printerName } = await executePrintJob(actualFilePath, printer, copies, options)
+  const { printerName } = await executePrintJob(actualFilePath, printer, copies, settings)
 
   const copiesInfo = copies > 1 ? ` × ${copies} copies` : ""
   return {
@@ -179,6 +178,10 @@ export async function handlePrint(spec: FilePrintSpec): Promise<PrintResult> {
     printer,
     copies = 1,
     options,
+    sides,
+    media,
+    orientation,
+    quality,
     skip_confirmation,
     line_numbers,
     color_scheme,
@@ -205,6 +208,10 @@ export async function handlePrint(spec: FilePrintSpec): Promise<PrintResult> {
         printer,
         copies,
         options,
+        sides,
+        media,
+        orientation,
+        quality,
         skip_confirmation,
       })
     } finally {
@@ -245,7 +252,17 @@ export interface ContentPrintSpec
  * @throws Never throws - all errors are captured in the result object
  */
 export async function handlePrintContent(spec: ContentPrintSpec): Promise<PrintResult> {
-  const { printer, copies, options, skip_confirmation, ...content } = spec
+  const {
+    printer,
+    copies,
+    options,
+    sides,
+    media,
+    orientation,
+    quality,
+    skip_confirmation,
+    ...content
+  } = spec
   const label = `(content: ${spec.format})`
 
   try {
@@ -264,6 +281,10 @@ export async function handlePrintContent(spec: ContentPrintSpec): Promise<PrintR
           printer,
           copies,
           options,
+          sides,
+          media,
+          orientation,
+          quality,
           skip_confirmation,
         })
     )
@@ -293,7 +314,17 @@ export interface PdfPrintSpec extends PrintTarget {
  * @throws Never throws - all errors are captured in the result object
  */
 export async function handlePrintPdf(spec: PdfPrintSpec): Promise<PrintResult> {
-  const { pdf_base64, printer, copies, options, skip_confirmation } = spec
+  const {
+    pdf_base64,
+    printer,
+    copies,
+    options,
+    sides,
+    media,
+    orientation,
+    quality,
+    skip_confirmation,
+  } = spec
   const label = "(content: pdf)"
 
   try {
@@ -302,6 +333,10 @@ export async function handlePrintPdf(spec: PdfPrintSpec): Promise<PrintResult> {
         printer,
         copies,
         options,
+        sides,
+        media,
+        orientation,
+        quality,
         skip_confirmation,
       })
     )
@@ -373,9 +408,8 @@ export function formatPrintResults(results: PrintResult[]): {
 /**
  * Specification for a single file page metadata operation in a batch.
  */
-export interface FilePageMetaSpec {
+export interface FilePageMetaSpec extends Pick<PrintOptions, "options" | "sides"> {
   file_path: string
-  options?: string
   line_numbers?: boolean
   color_scheme?: string
   font_size?: string
@@ -421,6 +455,7 @@ export async function handlePageMeta(spec: FilePageMetaSpec): Promise<PageMetaRe
   const {
     file_path,
     options,
+    sides,
     line_numbers,
     color_scheme,
     font_size,
@@ -444,7 +479,7 @@ export async function handlePageMeta(spec: FilePageMetaSpec): Promise<PageMetaRe
     try {
       // Get page count from the file
       const pdfPages = await getPdfPageCount(actualFilePath)
-      const isDuplex = isDuplexEnabled(options)
+      const isDuplex = isDuplexEnabled({ options, sides })
       const physicalSheets = calculatePhysicalSheets(pdfPages, isDuplex)
 
       return {

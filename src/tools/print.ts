@@ -10,6 +10,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
+import { ORIENTATIONS, QUALITIES, SIDES } from "../print-settings.js"
 import { CONTENT_FORMATS, MAX_PDF_BYTES } from "../utils.js"
 import {
   checkBatchSizeLimit,
@@ -60,6 +61,41 @@ const renderingParametersSchema = {
 }
 
 /**
+ * Typed print settings shared by every tool that submits a job. They take precedence over `options`.
+ */
+const printSettingsSchema = {
+  sides: z
+    .enum(SIDES)
+    .optional()
+    .describe(
+      "Single- or double-sided printing: 'one-sided', 'two-sided-long-edge' (flips on the long edge, the usual book/report layout) or 'two-sided-short-edge'. Overrides the server's default duplex setting."
+    ),
+  media: z
+    .string()
+    .regex(/^[^\s=]+$/, "Must not contain whitespace or '='")
+    .optional()
+    .describe(
+      "Paper size, e.g. 'A4' or 'Letter'. Accepted names depend on the printer: list_printers shows them, including 'jis_b5_182x257mm', 'jis_b6_128x182mm' and Custom.<W>x<H>mm where supported."
+    ),
+  orientation: z
+    .enum(ORIENTATIONS)
+    .optional()
+    .describe("Page orientation: 'portrait' or 'landscape'"),
+  quality: z
+    .enum(QUALITIES)
+    .optional()
+    .describe(
+      "Print quality: 'draft', 'normal' or 'high' (CUPS cupsPrintQuality). Not every printer supports it."
+    ),
+  options: z
+    .string()
+    .optional()
+    .describe(
+      "Other CUPS options as a space-separated string (e.g., 'number-up=2'). Use sides, media, orientation and quality for those settings instead."
+    ),
+}
+
+/**
  * Maximum length of the content accepted by print_content, in characters.
  */
 const MAX_CONTENT_LENGTH = 1_000_000
@@ -105,10 +141,7 @@ export function registerContentPrintTools(server: McpServer) {
           .optional()
           .default(1)
           .describe("Number of copies to print (default: 1)"),
-        options: z
-          .string()
-          .optional()
-          .describe("Additional CUPS options (e.g., 'landscape', 'sides=two-sided-long-edge')"),
+        ...printSettingsSchema,
         skip_confirmation: z
           .boolean()
           .optional()
@@ -149,10 +182,7 @@ export function registerContentPrintTools(server: McpServer) {
           .optional()
           .default(1)
           .describe("Number of copies to print (default: 1)"),
-        options: z
-          .string()
-          .optional()
-          .describe("Additional CUPS options (e.g., 'landscape', 'sides=two-sided-long-edge')"),
+        ...printSettingsSchema,
         skip_confirmation: z
           .boolean()
           .optional()
@@ -178,7 +208,7 @@ export function registerFilePrintTools(server: McpServer) {
     {
       title: "Print File",
       description:
-        "Print a file to a specified printer. Supports PDF, text, and other common formats. Can specify number of copies and print options.",
+        "Print a file to a specified printer. Supports PDF, text, and other common formats. Can specify number of copies, sides, paper size (media), orientation and other CUPS options.",
       inputSchema: {
         files: z
           .array(
@@ -196,12 +226,7 @@ export function registerFilePrintTools(server: McpServer) {
                 .optional()
                 .default(1)
                 .describe("Number of copies to print (default: 1)"),
-              options: z
-                .string()
-                .optional()
-                .describe(
-                  "Additional CUPS options (e.g., 'landscape', 'sides=two-sided-long-edge')"
-                ),
+              ...printSettingsSchema,
               skip_confirmation: z
                 .boolean()
                 .optional()
@@ -244,11 +269,12 @@ export function registerFilePrintTools(server: McpServer) {
           .array(
             z.object({
               file_path: z.string().describe("Full path to the file to get page metadata for"),
+              sides: printSettingsSchema.sides,
               options: z
                 .string()
                 .optional()
                 .describe(
-                  "Additional CUPS options for duplex detection (e.g., 'sides=two-sided-long-edge')"
+                  "Additional CUPS options; only 'sides=' is used here, for duplex detection. Prefer the sides parameter."
                 ),
               ...renderingParametersSchema,
             })

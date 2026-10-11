@@ -28,11 +28,14 @@ export function registerPrompts(server: McpServer) {
           .string()
           .describe('What to print? "staged", "uncommitted", "branch", or branch name'),
 
-        options: z.string().optional().describe('Print options (e.g., "landscape", "two-sided")'),
+        options: z
+          .string()
+          .optional()
+          .describe('Print settings (e.g., "landscape", "A4", "two-sided", "high quality")'),
       },
     },
     ({ context, options }) => {
-      const printOpts = options ? `\nPRINT OPTIONS: ${options}` : ""
+      const printOpts = options ? `\nPRINT SETTINGS: ${options}` : ""
 
       return {
         messages: [
@@ -53,9 +56,8 @@ INSTRUCTIONS:
    - [branch name]: Use git diff main...[branch] --name-only
 
 2. For each changed file:
-   - Use print_file tool
-   - Apply consistent print settings${printOpts ? ` (${options})` : ""}
-   - Example: print_file("src/server.ts"${options ? `, options="${options}"` : ""})
+   - Use print_file tool, passing the paths in its "files" array
+   - Apply consistent print settings${printOpts ? ` (${options})` : ""}${options ? ", mapped to the sides, media, orientation and quality parameters; pass anything else in options" : ""}
 
 3. Report what was printed:
    - List file names

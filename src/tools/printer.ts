@@ -11,13 +11,29 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { execa } from "execa"
 import { z } from "zod"
 import { config } from "../config.js"
-import { execCommand } from "../utils.js"
+import {
+  describePrinterSettings,
+  formatPrinterSettings,
+  type PrinterSettings,
+} from "../print-settings.js"
+import { execCommand, readPpdOptions } from "../utils.js"
 import {
   type CancelJobResult,
   checkBatchSizeLimit,
   formatCancelResults,
   handleCancel,
 } from "./batch-helpers.js"
+
+/**
+ * Read the print settings a printer accepts from its PPD options.
+ *
+ * @param name - Printer name
+ * @returns The settings, or null if the options could not be read
+ */
+async function readPrinterSettings(name: string): Promise<PrinterSettings | null> {
+  const options = await readPpdOptions(name)
+  return options && describePrinterSettings(options)
+}
 
 /**
  * Registers printer management tools with the MCP server.
@@ -87,19 +103,24 @@ export function registerPrinterTools(server: McpServer) {
     {
       title: "List Printers",
       description:
-        "List all available printers on the system with their status. Returns printer names, states, and whether they're accepting jobs.",
+        "List all available printers on the system with their status, and the values each printer accepts for the sides, media (paper size) and quality parameters of the print tools. Returns printer names, states, and whether they're accepting jobs.",
       inputSchema: {},
     },
     async () => {
       const output = await execCommand("lpstat", ["-p", "-d"])
-      return {
-        content: [
-          {
-            type: "text",
-            text: output || "No printers found",
-          },
-        ],
+      if (!output) {
+        return { content: [{ type: "text", text: "No printers found" }] }
       }
+
+      const names = (await execCommand("lpstat", ["-e"]).catch(() => ""))
+        .split("\n")
+        .filter(Boolean)
+      const settings = await Promise.all(names.map(readPrinterSettings))
+      const details = names.map((name, i) => formatPrinterSettings(name, settings[i] ?? null))
+      const text =
+        details.length > 0 ? `${output}\n\nPrint settings:\n${details.join("\n")}` : output
+
+      return { content: [{ type: "text", text }] }
     }
   )
 

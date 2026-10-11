@@ -82,7 +82,7 @@ curl --fail-with-body http://127.0.0.1:3000/mcp \
 
 ## Run in a container
 
-The container includes Bun, CUPS client commands, Chromium, and CJK fonts. It connects to an existing CUPS server; it does not run a CUPS daemon.
+The container includes Bun, CUPS client commands, Chromium, CJK fonts, and the Sarasa Mono K code font. It connects to an existing CUPS server; it does not run a CUPS daemon.
 
 Build from this checkout and run with a CUPS server reachable from the container:
 

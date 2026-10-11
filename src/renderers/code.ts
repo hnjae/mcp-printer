@@ -347,7 +347,7 @@ function generateHTML(
     html, body {
       margin: 0;
       padding: 0;
-      font-family: Menlo, Monaco, 'Courier New', monospace;
+      font-family: ui-monospace, 'Sarasa Mono K', monospace;
       font-size: ${fontSize};
       line-height: ${lineSpacing}em;
     }

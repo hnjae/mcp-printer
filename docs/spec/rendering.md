@@ -26,6 +26,8 @@ The look of the output comes from the configuration; a call cannot change it:
 | `MCP_PRINTER_CODE_FONT_SIZE` | `10pt` | CSS font size |
 | `MCP_PRINTER_CODE_LINE_SPACING` | `1.5` | CSS line height |
 
+Code, and `print_content` with `format: text`, is set in the first available of `ui-monospace`, Sarasa Mono K and the system's generic monospace font. Sarasa Mono K sets Hangul and other CJK characters at exactly twice the width of Latin ones, so code with such comments stays aligned. The container image includes it; on other systems install it to get the same look.
+
 ## Page size
 
 Everything the server renders to PDF, whether Markdown, code, HTML or text, is laid out on the page size of the call's `media` ([print-settings](print-settings.md)), and on A4 when the call has no `media` or names a size the server does not know. The server knows:

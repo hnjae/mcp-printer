@@ -31,11 +31,11 @@ test: test-unit test-integration
 
 [group('test')]
 test-unit:
-    bun test tests/unit
+    bun test --isolate tests/unit
 
 [group('test')]
 test-integration:
-    bun test tests/integration --timeout=30000
+    bun test --isolate tests/integration --timeout=30000
 
 [group('test')]
 test-watch:

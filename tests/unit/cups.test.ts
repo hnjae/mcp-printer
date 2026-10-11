@@ -5,8 +5,13 @@
  * @fileoverview Unit tests for the CUPS access module.
  */
 
-import { describe, expect, it } from "bun:test"
-import { parseLpoptions } from "../../src/cups.js"
+import { beforeEach, describe, expect, it, vi } from "bun:test"
+import { parseLpoptions, submitJob } from "../../src/cups.js"
+
+const execa = vi.fn(async (..._args: unknown[]) => ({ stdout: "" }))
+vi.mock("execa", () => ({ execa }))
+
+beforeEach(() => execa.mockClear())
 
 // Trimmed `lpoptions -p <name> -l` output from an inkjet IPP queue.
 const INKJET = `PageSize/Media Size: 215x345mm 4x6 *A4 A4.Borderless A5 A6 Letter Custom.WIDTHxHEIGHT
@@ -33,5 +38,25 @@ describe("parseLpoptions", () => {
   it("returns nothing for empty or unrelated output", () => {
     expect(parseLpoptions("")).toEqual({})
     expect(parseLpoptions("lpoptions: Unable to get PPD file")).toEqual({})
+  })
+})
+
+describe("submitJob", () => {
+  it("sends the printer, copies, options and file to lpr", async () => {
+    await submitJob({
+      file: "/tmp/a.pdf",
+      printer: "athena",
+      copies: 3,
+      options: ["sides=one-sided", "media=A4"],
+    })
+    expect(execa.mock.calls[0]?.slice(0, 2)).toEqual([
+      "lpr",
+      ["-P", "athena", "-#3", "-o", "sides=one-sided", "-o", "media=A4", "/tmp/a.pdf"],
+    ])
+  })
+
+  it("leaves out the printer and the copy count when they are not needed", async () => {
+    await submitJob({ file: "/tmp/a.pdf", copies: 1, options: [] })
+    expect(execa.mock.calls[0]?.slice(0, 2)).toEqual(["lpr", ["/tmp/a.pdf"]])
   })
 })

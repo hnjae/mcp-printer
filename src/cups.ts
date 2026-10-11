@@ -127,3 +127,34 @@ export async function readPrinterOptions(
     return null
   }
 }
+
+/** A print job for CUPS. */
+export interface PrintJob {
+  file: string
+  /** Queue to print on, or undefined for the default destination */
+  printer?: string
+  copies: number
+  /** CUPS options in `name=value` or `name` form; later ones win */
+  options: string[]
+}
+
+/**
+ * Submit a print job.
+ *
+ * @param job - The file, destination, copies and options
+ * @throws If CUPS rejects the job
+ */
+export async function submitJob({ file, printer, copies, options }: PrintJob): Promise<void> {
+  const args: string[] = []
+  if (printer) {
+    args.push("-P", printer)
+  }
+  if (copies > 1) {
+    args.push(`-#${copies}`)
+  }
+  for (const option of options) {
+    args.push("-o", option)
+  }
+  args.push(file)
+  await run("lpr", args)
+}

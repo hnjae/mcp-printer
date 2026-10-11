@@ -15,7 +15,7 @@ import { type ExecaError, execa } from "execa"
 import { encode } from "he"
 import { PDFParse } from "pdf-parse"
 import { config, MARKDOWN_EXTENSIONS, type MarkdownExtension } from "./config.js"
-import { getDefaultPrinter, readPrinterOptions } from "./cups.js"
+import { getDefaultPrinter, readPrinterOptions, submitJob } from "./cups.js"
 import { validateFilePath } from "./file-security.js"
 import {
   JIS_SIZES,
@@ -401,29 +401,16 @@ export async function executePrintJob(
     )
   }
 
-  const args: string[] = []
-
   // Use configured default printer if none specified
   const targetPrinter = printer || config.defaultPrinter
-  if (targetPrinter) {
-    args.push("-P", targetPrinter)
-  }
-
-  if (copies > 1) {
-    args.push(`-#${copies}`)
-  }
 
   const allOptions = buildCupsOptions(await withResolvedMedia(settings, targetPrinter))
-
-  // Add each option with -o flag
-  for (const option of allOptions) {
-    args.push("-o", option)
-  }
-
-  // Add file path
-  args.push(filePath)
-
-  await execa("lpr", args)
+  await submitJob({
+    file: filePath,
+    printer: targetPrinter || undefined,
+    copies,
+    options: allOptions,
+  })
 
   // Determine the printer name used
   const printerName = targetPrinter || (await getDefaultPrinter()) || "default"

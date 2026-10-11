@@ -7,16 +7,17 @@
  * file type detection, and print job handling for the MCP Printer server.
  */
 
-import { constants, mkdtempSync, unlinkSync, writeFileSync } from "node:fs"
+import { constants, mkdtempSync, rmSync, unlinkSync, writeFileSync } from "node:fs"
 import { access, readFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
-import { extname, join } from "node:path"
+import { dirname, extname, join } from "node:path"
 import { type ExecaError, execa } from "execa"
 import { PDFParse } from "pdf-parse"
 import { config, MARKDOWN_EXTENSIONS, type MarkdownExtension } from "./config.js"
 import { validateFilePath } from "./file-security.js"
 import { renderCodeToPdf, shouldRenderCode } from "./renderers/code.js"
 import { renderMarkdownToPdf } from "./renderers/markdown.js"
+import { hardenHtml, sanitizeUntrustedMarkdown } from "./untrusted-content.js"
 
 /**
  * Parse a delimited string into an array of strings.
@@ -626,5 +627,105 @@ export function cleanupRenderedPdf(renderedPdf: string | null): void {
     } catch {
       // Ignore cleanup errors
     }
+  }
+}
+
+/** Formats accepted by print_content. */
+export const CONTENT_FORMATS = ["markdown", "html", "code", "text"] as const
+
+export type ContentFormat = (typeof CONTENT_FORMATS)[number]
+
+/**
+ * Options for preparing client-supplied content for printing.
+ */
+export interface ContentOptions {
+  /** Document text sent by the client */
+  content: string
+  /** How to interpret and render the content */
+  format: ContentFormat
+  /** File extension or language id selecting syntax highlighting for format "code" (default: "txt") */
+  language?: string
+  /** Show line numbers when rendering code */
+  lineNumbers?: boolean
+  /** Syntax highlighting color scheme for code */
+  colorScheme?: string
+  /** Font size for code rendering */
+  fontSize?: string
+  /** Line spacing for code rendering */
+  lineSpacing?: string
+}
+
+/**
+ * Prepares client-supplied content for printing and removes every temporary file afterwards.
+ *
+ * The content never carries a path from the client, so validateFilePath does not apply. Instead the
+ * markdown and HTML renderers get hardened input (see untrusted-content.ts).
+ *
+ * - **markdown**: rendered to PDF with crossnote
+ * - **html**: rendered to PDF with Chrome as a self-contained document
+ * - **code**: rendered to PDF with syntax highlighting
+ * - **text**: sent to the printer as plain text
+ *
+ * @param options - Content and rendering options
+ * @param use - Receives the file to print and a description of the rendering performed
+ * @returns Whatever `use` returns
+ * @throws {Error} If the language is invalid or rendering fails
+ */
+export async function withPreparedContent<T>(
+  options: ContentOptions,
+  use: (prepared: { actualFilePath: string; renderType: string }) => Promise<T>
+): Promise<T> {
+  const tempDir = mkdtempSync(join(tmpdir(), "mcp-printer-content-"))
+  let renderedPdf: string | null = null
+
+  try {
+    switch (options.format) {
+      case "markdown": {
+        const file = join(tempDir, "document.md")
+        writeFileSync(file, sanitizeUntrustedMarkdown(options.content), "utf-8")
+        renderedPdf = await renderMarkdownToPdf(file)
+        return await use({ actualFilePath: renderedPdf, renderType: "markdown → PDF" })
+      }
+      case "html": {
+        renderedPdf = await convertHtmlToPdf(hardenHtml(options.content))
+        return await use({ actualFilePath: renderedPdf, renderType: "HTML → PDF" })
+      }
+      case "code": {
+        const language = options.language ?? "txt"
+        if (!/^[A-Za-z0-9_+-]{1,20}$/.test(language)) {
+          throw new Error(
+            `Invalid language "${language}": use a file extension such as "py" or "ts"`
+          )
+        }
+        const file = join(tempDir, `code.${language}`)
+        writeFileSync(file, options.content, "utf-8")
+        renderedPdf = await renderCodeToPdf(file, {
+          lineNumbers: options.lineNumbers,
+          colorScheme: options.colorScheme,
+          fontSize: options.fontSize,
+          lineSpacing: options.lineSpacing,
+        })
+        return await use({
+          actualFilePath: renderedPdf,
+          renderType: "code → PDF (syntax highlighted)",
+        })
+      }
+      case "text": {
+        const file = join(tempDir, "document.txt")
+        writeFileSync(file, options.content, "utf-8")
+        return await use({ actualFilePath: file, renderType: "" })
+      }
+      default: {
+        const unsupported: never = options.format
+        throw new Error(`Unsupported format: ${unsupported}`)
+      }
+    }
+  } finally {
+    if (renderedPdf && options.format === "html") {
+      // convertHtmlToPdf creates a directory per call that holds only the PDF
+      rmSync(dirname(renderedPdf), { recursive: true, force: true })
+    }
+    cleanupRenderedPdf(renderedPdf)
+    rmSync(tempDir, { recursive: true, force: true })
   }
 }

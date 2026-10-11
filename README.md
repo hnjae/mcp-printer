@@ -228,6 +228,22 @@ Print Results: 3/3 successful
   Printed to HP_LaserJet_4001 (rendered: markdown → PDF)
 ```
 
+### `print_content`
+
+Print a document whose text the AI provides, without a file on the server. Intended for remote clients (see [Remote Access](#remote-access-http)) that cannot place files on the printer host.
+
+**Parameters:**
+
+- `content` (required) - The document text (at most 1,000,000 characters)
+- `format` (required) - `markdown` (rendered to PDF with tables, math and diagrams), `html` (rendered to PDF), `code` (rendered with syntax highlighting) or `text` (printed as plain text)
+- `language` (optional) - For `code`: file extension such as `py` or `ts` (default: `txt`)
+- `printer`, `copies`, `options`, `skip_confirmation` (optional) - Same as `print_file`
+- `line_numbers`, `color_scheme`, `font_size`, `line_spacing` (optional) - Same as `print_file`, for `code`
+
+Copy limits (`MCP_PRINTER_MAX_COPIES`) and the page count confirmation apply as for `print_file`.
+
+**Content restrictions:** Because the content comes from the client, it cannot read or write local files. `html` must be self-contained: inline CSS and `data:` images and fonts only, no scripts, frames or external resources. In `markdown`, file-including syntax (`@import`, `![[file]]`, standalone image lines), embedding tags (`<iframe>`, `<object>`, ...) and `chrome:`/`puppeteer:` front matter are neutralized, and front matter with a language specifier such as `---js` is rejected.
+
 ### `get_page_meta`
 
 Get page count and physical sheet information for one or more files before printing. This tool pre-renders files (markdown, code) if needed and returns page metadata. Supports batch operations.

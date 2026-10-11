@@ -4,17 +4,19 @@
 
 /**
  * @fileoverview File printing tool registration.
- * Registers print_file and get_page_meta tools with the MCP server.
+ * Registers print_file, print_content and get_page_meta tools with the MCP server.
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
+import { CONTENT_FORMATS } from "../utils.js"
 import {
   checkBatchSizeLimit,
   formatPageMetaResults,
   formatPrintResults,
   handlePageMeta,
   handlePrint,
+  handlePrintContent,
   type PageMetaResult,
   type PrintResult,
 } from "./batch-helpers.js"
@@ -54,6 +56,11 @@ const renderingParametersSchema = {
       "Force code rendering to PDF with syntax highlighting (true=always render, false=never render, undefined=use config)"
     ),
 }
+
+/**
+ * Maximum length of the content accepted by print_content, in characters.
+ */
+const MAX_CONTENT_LENGTH = 1_000_000
 
 /**
  * Registers the print_file tool with the MCP server.
@@ -120,6 +127,55 @@ export function registerPrintTools(server: McpServer) {
 
       return formatPrintResults(results)
     }
+  )
+
+  // Register print_content tool
+  server.registerTool(
+    "print_content",
+    {
+      title: "Print Content",
+      description:
+        "Print a document whose text you provide, without needing a file on the server. Use it to print text you wrote: markdown is rendered to PDF with formatting (tables, math, mermaid diagrams), html is rendered as a self-contained page (inline CSS and data: images only; no scripts, no external or local resources), code is rendered with syntax highlighting, and text is printed as plain text.",
+      inputSchema: {
+        content: z.string().min(1).max(MAX_CONTENT_LENGTH).describe("The document text to print"),
+        format: z
+          .enum(CONTENT_FORMATS)
+          .describe("How to interpret the content: markdown, html, code or text"),
+        language: z
+          .string()
+          .optional()
+          .describe(
+            "For format 'code': file extension or language id for syntax highlighting (e.g., 'py', 'ts'). Defaults to 'txt'."
+          ),
+        printer: z
+          .string()
+          .optional()
+          .describe(
+            "Printer name (use list_printers to see available printers). Optional if default printer is set."
+          ),
+        copies: z
+          .number()
+          .min(1)
+          .optional()
+          .default(1)
+          .describe("Number of copies to print (default: 1)"),
+        options: z
+          .string()
+          .optional()
+          .describe("Additional CUPS options (e.g., 'landscape', 'sides=two-sided-long-edge')"),
+        skip_confirmation: z
+          .boolean()
+          .optional()
+          .describe(
+            "Skip page count confirmation check (bypasses MCP_PRINTER_CONFIRM_IF_OVER_PAGES threshold)"
+          ),
+        line_numbers: renderingParametersSchema.line_numbers,
+        color_scheme: renderingParametersSchema.color_scheme,
+        font_size: renderingParametersSchema.font_size,
+        line_spacing: renderingParametersSchema.line_spacing,
+      },
+    },
+    async (spec) => formatPrintResults([await handlePrintContent(spec)])
   )
 
   // Register get_page_meta tool

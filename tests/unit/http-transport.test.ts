@@ -55,6 +55,7 @@ describe("HTTP transport", () => {
     const names = body.result.tools.map((tool: { name: string }) => tool.name)
     expect(names).toContain("print_file")
     expect(names).toContain("list_printers")
+    expect(names).toContain("print_content")
   })
 
   it("rejects GET and DELETE on /mcp with 405", async () => {

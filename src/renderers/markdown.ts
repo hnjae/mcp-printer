@@ -16,6 +16,7 @@ import { Notebook } from "crossnote"
 import matter from "gray-matter"
 import { encode } from "he"
 import { config } from "../config.js"
+import { assertNoFrontMatterEngine } from "../untrusted-content.js"
 import { findChrome } from "../utils.js"
 
 /**
@@ -100,6 +101,7 @@ function injectPageNumbering(content: string, filename: string): string {
 export async function renderMarkdownToPdf(filePath: string): Promise<string> {
   // Read the original markdown content
   const originalContent = readFileSync(filePath, "utf-8")
+  assertNoFrontMatterEngine(originalContent)
 
   // Inject page numbering configuration if not already present
   const contentWithPageNumbers = injectPageNumbering(originalContent, basename(filePath))

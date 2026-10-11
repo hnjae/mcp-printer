@@ -28,20 +28,40 @@ const HTML_CONTENT_SECURITY_POLICY =
 /** Tags that embed another document or reconfigure loading. */
 const EMBEDDING_TAGS = "iframe|frame|frameset|object|embed|portal|fencedframe|script|link|meta|base"
 
+/** Front matter opened with a language specifier, such as "---js", selects a non-YAML engine. */
+const FRONT_MATTER_WITH_ENGINE = /^\uFEFF?---(?!-)[ \t]*\S/
+
 /**
  * Restricts a client-supplied HTML document to self-contained content by prepending a
  * Content-Security-Policy. The policy goes after any doctype so the document stays out of quirks mode.
+ * Client <meta> tags are removed because a refresh can navigate to a local file, which the policy
+ * does not cover; a charset declaration replaces them.
  *
  * @param html - HTML document or fragment from the client
  * @returns HTML that cannot load local files, network resources or run scripts
  */
 export function hardenHtml(html: string): string {
-  const meta = `<meta http-equiv="Content-Security-Policy" content="${HTML_CONTENT_SECURITY_POLICY}">`
-  const doctype = html.match(/^\s*<!doctype[^>]*>/i)
+  const head = `<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${HTML_CONTENT_SECURITY_POLICY}">`
+  const withoutMeta = html.replace(/<meta\b[^>]*>/gi, "")
+  const doctype = withoutMeta.match(/^\s*<!doctype[^>]*>/i)
   if (!doctype) {
-    return meta + html
+    return head + withoutMeta
   }
-  return doctype[0] + meta + html.slice(doctype[0].length)
+  return doctype[0] + head + withoutMeta.slice(doctype[0].length)
+}
+
+/**
+ * Rejects front matter that selects a code-evaluating engine. gray-matter evaluates "---js"
+ * (or "---javascript") front matter as code, so this must run before any matter() call on
+ * content that is not fully trusted.
+ *
+ * @param markdown - Markdown to check
+ * @throws {Error} If the front matter selects a non-YAML engine
+ */
+export function assertNoFrontMatterEngine(markdown: string): void {
+  if (FRONT_MATTER_WITH_ENGINE.test(markdown)) {
+    throw new Error("Front matter with a language specifier (for example '---js') is not allowed")
+  }
 }
 
 /**
@@ -53,10 +73,7 @@ export function hardenHtml(html: string): string {
  * @throws {Error} If the front matter selects a non-YAML engine (for example `---js`)
  */
 export function sanitizeUntrustedMarkdown(markdown: string): string {
-  // gray-matter would evaluate "---js" (or "---javascript") front matter as code
-  if (/^﻿?---(?!-)[ \t]*\S/.test(markdown)) {
-    throw new Error("Front matter with a language specifier (for example '---js') is not allowed")
-  }
+  assertNoFrontMatterEngine(markdown)
 
   // Drop front matter that controls the PDF output path and Chrome page options
   let result = markdown
@@ -72,8 +89,8 @@ export function sanitizeUntrustedMarkdown(markdown: string): string {
       .replace(/@import/g, `@${ZERO_WIDTH_SPACE}import`)
       // "![[file]]" embeds
       .replace(/!\[\[/g, `![${ZERO_WIDTH_SPACE}[`)
-      // A line holding only an image is treated as a file import
-      .replace(/^(\s*!\[[^\]]*\]\([^)]+\)(?:\{[^}]*\})?)(\s*)$/gm, `$1${ZERO_WIDTH_SPACE}$2`)
+      // A line holding only an image is treated as a file import, also inside blockquotes
+      .replace(/^([\s>]*!\[[^\]]*\]\([^)]+\)(?:\{[^}]*\})?)(\s*)$/gm, `$1${ZERO_WIDTH_SPACE}$2`)
       // Raw HTML that embeds documents
       .replace(new RegExp(`<(?=/?(?:${EMBEDDING_TAGS})\\b)`, "gi"), `<${ZERO_WIDTH_SPACE}`)
   )

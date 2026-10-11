@@ -71,16 +71,12 @@ describe("withPreparedContent", () => {
     expect(result.existsAfter).toBe(false)
   })
 
-  it("passes text through unrendered and cleans up", async () => {
-    let text = ""
-    let path = ""
-    await withPreparedContent({ content: "plain words\n", format: "text" }, async (prepared) => {
-      path = prepared.actualFilePath
-      text = readFileSync(path, "utf-8")
-    })
+  it("renders text to a PDF and cleans up", async () => {
+    const result = await prepare({ content: "plain <b>words</b>\n", format: "text" })
 
-    expect(text).toBe("plain words\n")
-    expect(existsSync(path)).toBe(false)
+    expect(result.existedInside).toBe(true)
+    expect(result.header).toBe("%PDF-")
+    expect(result.existsAfter).toBe(false)
   })
 
   it("rejects a language that is not a plain extension", async () => {

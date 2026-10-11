@@ -80,6 +80,8 @@ describe("client markdown", () => {
     "@import in a comment": () => `<!-- @import "${traversal()}" -->`,
     "@import in a quote": () => `> @import "${traversal()}"`,
     "standalone image line": () => `![x](${traversal()})`,
+    "image line in a quote": () => `> ![x](${traversal()})`,
+    "image line in a nested quote": () => `> > ![x](${traversal()})`,
     "![[embed]]": () => `![[${traversal()}]]`,
     iframe: () => `<iframe src="file://${secretFile}" width="600" height="100"></iframe>`,
     object: () =>
@@ -94,6 +96,13 @@ describe("client markdown", () => {
       expect(text).not.toContain(SENTINEL)
     })
   }
+
+  it("rejects code-evaluating front matter in any markdown file", async () => {
+    const file = join(workDir, "engine.md")
+    writeFileSync(file, "---js\n({ a: 1 })\n---\n\n# Heading\n")
+
+    await expect(renderMarkdownToPdf(file)).rejects.toThrow(/language specifier/)
+  })
 
   it("does not let front matter choose where the PDF is written", async () => {
     const text = await renderClientMarkdown(
@@ -110,6 +119,7 @@ describe("client HTML", () => {
   const cases: Record<string, string> = {
     iframe: `<iframe src="file://${secretFile}" width="600" height="100"></iframe>`,
     object: `<object data="file://${secretFile}" type="text/plain" width="600" height="100"></object>`,
+    "meta refresh": `<meta http-equiv="refresh" content="0;url=file://${secretFile}">`,
   }
 
   for (const [name, body] of Object.entries(cases)) {

@@ -12,6 +12,7 @@ import { access, readFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { dirname, extname, join } from "node:path"
 import { type ExecaError, execa } from "execa"
+import { encode } from "he"
 import { PDFParse } from "pdf-parse"
 import { config, MARKDOWN_EXTENSIONS, type MarkdownExtension } from "./config.js"
 import { validateFilePath } from "./file-security.js"
@@ -664,7 +665,7 @@ export interface ContentOptions {
  * - **markdown**: rendered to PDF with crossnote
  * - **html**: rendered to PDF with Chrome as a self-contained document
  * - **code**: rendered to PDF with syntax highlighting
- * - **text**: sent to the printer as plain text
+ * - **text**: rendered to a monospace PDF without interpretation, so page limits apply
  *
  * @param options - Content and rendering options
  * @param use - Receives the file to print and a description of the rendering performed
@@ -711,9 +712,12 @@ export async function withPreparedContent<T>(
         })
       }
       case "text": {
-        const file = join(tempDir, "document.txt")
-        writeFileSync(file, options.content, "utf-8")
-        return await use({ actualFilePath: file, renderType: "" })
+        const html =
+          '<!DOCTYPE html><html><head><meta charset="utf-8"><style>' +
+          "pre{font:10pt/1.4 monospace;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}" +
+          `</style></head><body><pre>${encode(options.content)}</pre></body></html>`
+        renderedPdf = await convertHtmlToPdf(html)
+        return await use({ actualFilePath: renderedPdf, renderType: "text → PDF" })
       }
       default: {
         const unsupported: never = options.format
@@ -721,7 +725,7 @@ export async function withPreparedContent<T>(
       }
     }
   } finally {
-    if (renderedPdf && options.format === "html") {
+    if (renderedPdf && (options.format === "html" || options.format === "text")) {
       // convertHtmlToPdf creates a directory per call that holds only the PDF
       rmSync(dirname(renderedPdf), { recursive: true, force: true })
     }

@@ -235,14 +235,14 @@ Print a document whose text the AI provides, without a file on the server. Inten
 **Parameters:**
 
 - `content` (required) - The document text (at most 1,000,000 characters)
-- `format` (required) - `markdown` (rendered to PDF with tables, math and diagrams), `html` (rendered to PDF), `code` (rendered with syntax highlighting) or `text` (printed as plain text)
+- `format` (required) - `markdown` (rendered to PDF with tables, math and diagrams), `html` (rendered to PDF), `code` (rendered with syntax highlighting) or `text` (printed as monospace text, not interpreted)
 - `language` (optional) - For `code`: file extension such as `py` or `ts` (default: `txt`)
 - `printer`, `copies`, `options`, `skip_confirmation` (optional) - Same as `print_file`
 - `line_numbers`, `color_scheme`, `font_size`, `line_spacing` (optional) - Same as `print_file`, for `code`
 
 Copy limits (`MCP_PRINTER_MAX_COPIES`) and the page count confirmation apply as for `print_file`.
 
-**Content restrictions:** Because the content comes from the client, it cannot read or write local files. `html` must be self-contained: inline CSS and `data:` images and fonts only, no scripts, frames or external resources. In `markdown`, file-including syntax (`@import`, `![[file]]`, standalone image lines), embedding tags (`<iframe>`, `<object>`, ...) and `chrome:`/`puppeteer:` front matter are neutralized, and front matter with a language specifier such as `---js` is rejected.
+**Content restrictions:** The content comes from the client, so the renderers are hardened against reading or writing files through it. `html` must be self-contained: inline CSS and `data:` images and fonts only, with no scripts, frames, `<meta>` tags or external resources. In `markdown`, file-including syntax (`@import`, `![[file]]`, standalone image lines), embedding tags (`<iframe>`, `<object>`, ...) and `chrome:`/`puppeteer:` front matter are neutralized, and front matter with a language specifier such as `---js` is rejected. Markdown can still embed image files that the server process can read (for example `![x](../photo.png)` or `<img src="file://...">`), so run the server where only intended paths exist, such as a container that mounts only the directories you want.
 
 ### `get_page_meta`
 

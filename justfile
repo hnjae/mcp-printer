@@ -54,6 +54,7 @@ ci: lint typos format-check test build
 lint:
     bun x biome lint src tests package.json tsconfig.json biome.jsonc
     hadolint Containerfile
+    actionlint
 
 [group('lint')]
 typos:

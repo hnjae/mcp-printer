@@ -5,6 +5,7 @@
 }:
 pkgs.mkShellNoCC {
   packages = with pkgs; [
+    actionlint
     bun
     chromium
     cocogitto

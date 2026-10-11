@@ -6,7 +6,13 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "bun:test"
-import { parseLpoptions, submitJob } from "../../src/cups.js"
+import {
+  cancelAllJobs,
+  cancelJob,
+  parseLpoptions,
+  setDefaultPrinter,
+  submitJob,
+} from "../../src/cups.js"
 
 const execa = vi.fn(async (..._args: unknown[]) => ({ stdout: "" }))
 vi.mock("execa", () => ({ execa }))
@@ -58,5 +64,31 @@ describe("submitJob", () => {
   it("leaves out the printer and the copy count when they are not needed", async () => {
     await submitJob({ file: "/tmp/a.pdf", copies: 1, options: [] })
     expect(execa.mock.calls[0]?.slice(0, 2)).toEqual(["lpr", ["/tmp/a.pdf"]])
+  })
+})
+
+describe("changes to CUPS state", () => {
+  it("cancels one job, naming the queue when it is known", async () => {
+    await cancelJob("42", "athena")
+    await cancelJob("43")
+    expect(execa.mock.calls.map((call) => call.slice(0, 2))).toEqual([
+      ["lprm", ["-P", "athena", "42"]],
+      ["lprm", ["43"]],
+    ])
+  })
+
+  it("cancels every job on a queue", async () => {
+    await cancelAllJobs("athena")
+    expect(execa.mock.calls[0]?.slice(0, 2)).toEqual(["lprm", ["-P", "athena", "-"]])
+  })
+
+  it("sets the default printer", async () => {
+    await setDefaultPrinter("athena")
+    expect(execa.mock.calls[0]?.slice(0, 2)).toEqual(["lpoptions", ["-d", "athena"]])
+  })
+
+  it("lets a CUPS failure reach the caller", async () => {
+    execa.mockRejectedValueOnce(new Error("lprm: not authorized"))
+    await expect(cancelJob("42")).rejects.toThrow("not authorized")
   })
 })

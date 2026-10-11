@@ -158,3 +158,34 @@ export async function submitJob({ file, printer, copies, options }: PrintJob): P
   args.push(file)
   await run("lpr", args)
 }
+
+/**
+ * Cancel one job.
+ *
+ * @param jobId - The job to cancel
+ * @param printer - Queue the job is on, if known
+ * @throws If CUPS refuses, for example for a job the user may not cancel
+ */
+export async function cancelJob(jobId: string, printer?: string): Promise<void> {
+  await run("lprm", [...(printer ? ["-P", printer] : []), jobId])
+}
+
+/**
+ * Cancel every job on a queue.
+ *
+ * @param printer - The queue to clear
+ * @throws If CUPS refuses
+ */
+export async function cancelAllJobs(printer: string): Promise<void> {
+  await run("lprm", ["-P", printer, "-"])
+}
+
+/**
+ * Make a queue the default printer of the user the server runs as.
+ *
+ * @param printer - The queue to make the default
+ * @throws If CUPS refuses
+ */
+export async function setDefaultPrinter(printer: string): Promise<void> {
+  await run("lpoptions", ["-d", printer])
+}

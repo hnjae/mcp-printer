@@ -8,7 +8,6 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
-import { execa } from "execa"
 import { z } from "zod"
 import { config } from "../config.js"
 import {
@@ -16,6 +15,7 @@ import {
   getDefaultPrinter,
   listPrinterNames,
   readPrinterOptions,
+  setDefaultPrinter,
   showQueue,
 } from "../cups.js"
 import {
@@ -236,7 +236,7 @@ export function registerPrinterTools(server: McpServer) {
         },
       },
       async ({ printer }) => {
-        await execa("lpoptions", ["-d", printer])
+        await setDefaultPrinter(printer)
         return {
           content: [
             {

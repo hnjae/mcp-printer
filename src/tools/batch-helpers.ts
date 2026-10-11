@@ -7,8 +7,8 @@
  * Provides interfaces, processing functions, and result formatting for batch tool operations.
  */
 
-import { execa } from "execa"
 import { config } from "../config.js"
+import { cancelAllJobs, cancelJob } from "../cups.js"
 import {
   type ContentOptions,
   calculatePhysicalSheets,
@@ -585,7 +585,6 @@ export interface CancelJobResult {
  * @remarks
  * - Requires either job_id OR (printer + cancel_all=true)
  * - Invalid parameters return success=false with error message
- * - Uses lprm command for cancellation
  */
 export async function handleCancel(spec: JobCancelSpec): Promise<CancelJobResult> {
   const { job_id, printer, cancel_all = false } = spec
@@ -594,15 +593,10 @@ export async function handleCancel(spec: JobCancelSpec): Promise<CancelJobResult
   const actionDescription = cancel_all ? `all jobs for printer: ${printer}` : `job: ${job_id}`
 
   try {
-    const lprmArgs: string[] = []
-
     if (cancel_all && printer) {
-      lprmArgs.push("-P", printer, "-")
+      await cancelAllJobs(printer)
     } else if (job_id) {
-      if (printer) {
-        lprmArgs.push("-P", printer)
-      }
-      lprmArgs.push(job_id)
+      await cancelJob(job_id, printer)
     } else {
       return {
         success: false,
@@ -610,8 +604,6 @@ export async function handleCancel(spec: JobCancelSpec): Promise<CancelJobResult
         error: "Must provide either job_id or set cancel_all=true with printer",
       }
     }
-
-    await execa("lprm", lprmArgs)
 
     return {
       success: true,

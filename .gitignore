@@ -5,3 +5,6 @@
 
 # Cache files:
 .rumdl_cache/
+
+# Temporary files:
+/tests/tmp/

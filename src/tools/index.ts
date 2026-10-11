@@ -19,7 +19,7 @@ import { registerPrompts } from "./prompts.js"
  * Write operations (set_default_printer, cancel_print_job) are conditionally
  * registered based on the MCP_PRINTER_ENABLE_MANAGEMENT configuration, and the tools that read
  * from server paths (print_file, get_page_meta) based on MCP_PRINTER_ENABLE_FILE_TOOLS.
- * Prompts are conditionally registered based on the MCP_PRINTER_ENABLE_PROMPTS configuration.
+ * The prompt is registered together with the file tools, because it instructs the model to call print_file.
  *
  * @param server - The McpServer instance to register tools and prompts with
  */
@@ -28,9 +28,6 @@ export function registerAllTools(server: McpServer) {
   registerContentPrintTools(server)
   if (config.enableFileTools) {
     registerFilePrintTools(server)
-  }
-  // The only prompt instructs the model to call print_file
-  if (config.enablePrompts && config.enableFileTools) {
     registerPrompts(server)
   }
 }

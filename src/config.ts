@@ -35,8 +35,6 @@ export interface Config {
   enableManagement: boolean
   /** Enable the tools that read documents from paths on the server (print_file, get_page_meta) */
   enableFileTools: boolean
-  /** Enable prompts (workflow templates that appear as slash commands) */
-  enablePrompts: boolean
   /** List of directory paths that files must be under to be accessible (merged with defaults) */
   allowedPaths: string[]
   /** List of directory/file paths that are explicitly denied access (merged with defaults) */
@@ -84,7 +82,6 @@ const DEFAULT_AUTO_RENDER_MARKDOWN = true
 const DEFAULT_AUTO_RENDER_CODE = true
 const DEFAULT_ENABLE_MANAGEMENT = false
 const DEFAULT_ENABLE_FILE_TOOLS = true
-const DEFAULT_ENABLE_PROMPTS = true
 const DEFAULT_MAX_COPIES = 10
 const DEFAULT_CONFIRM_IF_OVER_PAGES = 10
 const DEFAULT_CODE_COLOR_SCHEME = "atom-one-light"
@@ -176,9 +173,6 @@ export const config: Config = {
   }),
   enableFileTools: yn(process.env.MCP_PRINTER_ENABLE_FILE_TOOLS, {
     default: DEFAULT_ENABLE_FILE_TOOLS,
-  }),
-  enablePrompts: yn(process.env.MCP_PRINTER_ENABLE_PROMPTS, {
-    default: DEFAULT_ENABLE_PROMPTS,
   }),
   // Use user-provided paths if set, otherwise use default allowed directories
   allowedPaths: hasUserPaths ? userAllowedPaths : [...defaultAllowedPaths],

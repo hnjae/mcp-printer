@@ -1,6 +1,6 @@
 # Prompts
 
-The server offers one prompt, `print-changed`, which a client can present as a command. It is registered only when prompts and file tools are enabled ([tool-availability](tool-availability.md)).
+The server offers one prompt, `print-changed`, which a client can present as a command. It is registered only when file tools are enabled ([tool-availability](tool-availability.md)).
 
 Arguments:
 

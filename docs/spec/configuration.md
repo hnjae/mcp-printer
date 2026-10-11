@@ -16,7 +16,6 @@ The server is configured with environment variables, read once at startup; resta
 | `MCP_PRINTER_CONFIRM_IF_OVER_PAGES` | `10` | Sheet threshold for [page confirmation](page-confirmation.md); `0` disables it. |
 | `MCP_PRINTER_ENABLE_MANAGEMENT` | `false` | Register `cancel_print_job` and `set_default_printer` ([tool-availability](tool-availability.md)). |
 | `MCP_PRINTER_ENABLE_FILE_TOOLS` | `true` | Register `print_file` and `get_page_meta`; disabling also removes the `print-changed` prompt. |
-| `MCP_PRINTER_ENABLE_PROMPTS` | `true` | Register prompts, which also requires file tools. |
 
 ## File access
 

@@ -7,11 +7,13 @@ COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 COPY tsconfig.json ./
 COPY src ./src
-RUN bun x tsc
-RUN bun install --frozen-lockfile --production
+RUN bun x tsc \
+    && bun install --frozen-lockfile --production
 
 FROM docker.io/oven/bun:1-debian
-# cups-bsd provides lpr/lpq/lprm, cups-client provides lpstat/lpoptions
+# cups-bsd provides lpr/lpq/lprm, cups-client provides lpstat/lpoptions. Versions stay unpinned
+# (DL3008): Debian drops superseded package versions, so pins would break rebuilds.
+# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends cups-client cups-bsd chromium fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*

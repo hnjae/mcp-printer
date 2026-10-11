@@ -66,13 +66,14 @@ describe("describePrinterSettings", () => {
   })
 
   it("shows a size the printer lists itself under the JIS name, without duplicates", () => {
-    // A driver PPD names it JISB5; a PPD CUPS generated from IPP names it by its size
-    for (const [ppdName, native] of [
-      [CUPS_PDF, "JISB5"],
-      ["PageSize/x: *A4 182x257mm", "182x257mm"],
+    // A driver PPD names B5 JISB5; a PPD CUPS generated from IPP names it B5, and B6 B6
+    for (const [ppdName, jis, native] of [
+      [CUPS_PDF, "jis_b5_182x257mm", "JISB5"],
+      ["PageSize/x: *A4 B5", "jis_b5_182x257mm", "B5"],
+      ["PageSize/x: *A4 B6", "jis_b6_128x182mm", "B6"],
     ] as const) {
       const media = values(describePrinterSettings(parseLpoptions(ppdName)).media)
-      expect(media.filter((value) => value === "jis_b5_182x257mm")).toHaveLength(1)
+      expect(media.filter((value) => value === jis)).toHaveLength(1)
       expect(media).not.toContain(native)
     }
   })
@@ -114,7 +115,8 @@ describe("resolveMedia", () => {
 
   it("sends the printer's own choice when it lists the size", () => {
     expect(resolveMedia("jis_b5_182x257mm", [...withCustom, "JISB5"])).toBe("JISB5")
-    expect(resolveMedia("jis_b6_128x182mm", ["A5", "128x182mm"])).toBe("128x182mm")
+    expect(resolveMedia("jis_b5_182x257mm", ["A4", "B5"])).toBe("B5")
+    expect(resolveMedia("jis_b6_128x182mm", ["A5", "B6"])).toBe("B6")
   })
 
   it("passes a JIS name through when the printer has no custom sizes or no options", () => {

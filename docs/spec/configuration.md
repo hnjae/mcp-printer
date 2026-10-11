@@ -10,8 +10,7 @@ The server is configured with environment variables, read once at startup; resta
 | `MCP_PRINTER_HTTP_HOST` | `127.0.0.1` | HTTP bind address. |
 | `MCP_PRINTER_HTTP_PORT` | `3000` | HTTP port. |
 | `MCP_PRINTER_DEFAULT_PRINTER` | Unset | Print target when a call has no `printer`; otherwise CUPS chooses its default. |
-| `MCP_PRINTER_DEFAULT_OPTIONS` | Unset | Space-separated CUPS options applied to every job; the call's settings override them ([print-settings](print-settings.md)). |
-| `MCP_PRINTER_AUTO_DUPLEX` | `false` | Print two-sided on the long edge unless a call, or `MCP_PRINTER_DEFAULT_OPTIONS`, sets `sides`. |
+| `MCP_PRINTER_DEFAULT_OPTIONS` | Unset | Space-separated CUPS options applied to every job, such as `sides=two-sided-long-edge` to print two-sided by default; the call's settings override them ([print-settings](print-settings.md)). |
 | `MCP_PRINTER_MAX_COPIES` | `10` | Maximum `copies` per job; `0` or a negative value removes the limit. |
 | `MCP_PRINTER_CONFIRM_IF_OVER_PAGES` | `10` | Sheet threshold for [page confirmation](page-confirmation.md); `0` disables it. |
 | `MCP_PRINTER_ENABLE_MANAGEMENT` | `false` | Register `cancel_print_job` and `set_default_printer` ([tool-availability](tool-availability.md)). |

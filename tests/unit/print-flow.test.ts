@@ -17,7 +17,6 @@ const config = {
   autoRenderMarkdown: true,
   autoRenderCode: true,
   defaultPrinter: "",
-  autoDuplex: false,
   defaultOptions: [] as string[],
   maxCopies: 10,
   confirmIfOverPages: 10,
@@ -71,7 +70,6 @@ beforeEach(() => {
   readPrinterOptions.mockResolvedValue(null)
   getDefaultPrinter.mockReset()
   getDefaultPrinter.mockResolvedValue("office")
-  config.autoDuplex = false
   config.defaultOptions = []
   config.maxCopies = 10
   config.confirmIfOverPages = 10
@@ -173,8 +171,8 @@ describe("page confirmation", () => {
     ).toBe(true)
   })
 
-  it("applies the threshold to one-sided jobs even when auto-duplex is on", async () => {
-    config.autoDuplex = true
+  it("applies the threshold to one-sided jobs even when two-sided is the default", async () => {
+    config.defaultOptions = ["sides=two-sided-long-edge"]
 
     expect((await handlePrintPdf({ pdf_base64: eleven })).success).toBe(true)
     const oneSided = await handlePrintPdf({ pdf_base64: eleven, sides: "one-sided" })

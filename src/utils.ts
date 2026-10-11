@@ -321,7 +321,7 @@ function dropOptions(all: string[], names: string[]): string[] {
 
 /**
  * Build the effective CUPS option list for a print job. When an option name occurs more than
- * once, the last occurrence wins, so the order is: auto-duplex, MCP_PRINTER_DEFAULT_OPTIONS,
+ * once, the last occurrence wins, so the order is: MCP_PRINTER_DEFAULT_OPTIONS,
  * the free-form `options` string, then the typed settings. A typed `orientation` or `quality`
  * also removes the alias `landscape` or `print-quality` from the defaults and `options`.
  *
@@ -336,9 +336,6 @@ export function buildCupsOptions({
   quality,
 }: PrintOptions): string[] {
   let all: string[] = []
-  if (config.autoDuplex) {
-    all.push("sides=two-sided-long-edge")
-  }
   all.push(...config.defaultOptions)
   if (options) {
     all.push(...options.split(/\s+/).filter(Boolean))

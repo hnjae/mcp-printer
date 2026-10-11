@@ -24,7 +24,6 @@ describe("config", () => {
 
   it("should have boolean configs", () => {
     // Test that config has boolean properties with valid values
-    expect(typeof config.autoDuplex).toBe("boolean")
     expect(typeof config.enableManagement).toBe("boolean")
     expect(typeof config.autoRenderMarkdown).toBe("boolean")
     expect(typeof config.autoRenderCode).toBe("boolean")

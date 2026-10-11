@@ -19,8 +19,6 @@ export interface Config {
   httpPort: number
   /** Default printer name for print operations */
   defaultPrinter: string
-  /** Automatically enable duplex (two-sided) printing by default (can be overridden per-call) */
-  autoDuplex: boolean
   /** Default CUPS printing options (array of option strings) */
   defaultOptions: string[]
   /** Path to Chrome/Chromium executable for PDF rendering */
@@ -75,7 +73,6 @@ const DEFAULT_TRANSPORT = "stdio"
 const DEFAULT_HTTP_HOST = "127.0.0.1"
 const DEFAULT_HTTP_PORT = 3000
 const DEFAULT_PRINTER = ""
-const DEFAULT_AUTO_DUPLEX = false
 const DEFAULT_CHROME_PATH = ""
 const DEFAULT_CHROME_NO_SANDBOX = false
 const DEFAULT_AUTO_RENDER_MARKDOWN = true
@@ -156,7 +153,6 @@ export const config: Config = {
   httpHost: process.env.MCP_PRINTER_HTTP_HOST || DEFAULT_HTTP_HOST,
   httpPort: parseInt(process.env.MCP_PRINTER_HTTP_PORT || String(DEFAULT_HTTP_PORT), 10),
   defaultPrinter: process.env.MCP_PRINTER_DEFAULT_PRINTER || DEFAULT_PRINTER,
-  autoDuplex: yn(process.env.MCP_PRINTER_AUTO_DUPLEX, { default: DEFAULT_AUTO_DUPLEX }),
   defaultOptions: parseDelimitedString(process.env.MCP_PRINTER_DEFAULT_OPTIONS, /\s+/),
   chromePath: process.env.MCP_PRINTER_CHROME_PATH || DEFAULT_CHROME_PATH,
   chromeNoSandbox: yn(process.env.MCP_PRINTER_CHROME_NO_SANDBOX, {

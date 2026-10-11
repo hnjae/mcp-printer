@@ -16,10 +16,9 @@ Which values a printer accepts depends on the printer; [list_printers](#values-r
 
 The options of a job are assembled in this order, and when an option name occurs more than once the last occurrence wins:
 
-1. `sides=two-sided-long-edge`, if `MCP_PRINTER_AUTO_DUPLEX` is `true`.
-2. `MCP_PRINTER_DEFAULT_OPTIONS`.
-3. The call's `options`.
-4. The call's `sides`, `media`, `orientation` and `quality`.
+1. `MCP_PRINTER_DEFAULT_OPTIONS`.
+2. The call's `options`.
+3. The call's `sides`, `media`, `orientation` and `quality`.
 
 So a typed setting always overrides the same setting from the other sources. A typed `orientation` also removes `landscape` and a typed `quality` also removes `print-quality` from the defaults and `options`, because CUPS treats those as separate keys that order alone cannot override.
 

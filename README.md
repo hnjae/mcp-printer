@@ -49,7 +49,7 @@ For clients that use an `mcpServers` configuration, add:
       "args": ["/absolute/path/to/mcp-printer/src/index.ts"],
       "env": {
         "MCP_PRINTER_ALLOWED_PATHS": "~/Documents:~/Downloads:~/Desktop",
-        "MCP_PRINTER_AUTO_DUPLEX": "true"
+        "MCP_PRINTER_DEFAULT_OPTIONS": "sides=two-sided-long-edge"
       }
     }
   }
@@ -174,7 +174,7 @@ Set `MCP_PRINTER_*` environment variables before starting the server, and restar
 
 - `MCP_PRINTER_DEFAULT_PRINTER`: print target when a call names no printer.
 - `MCP_PRINTER_ALLOWED_PATHS`: colon-separated directories that file tools may read. A nonempty value **replaces** the default `~/Documents:~/Downloads:~/Desktop`.
-- `MCP_PRINTER_AUTO_DUPLEX`: print two-sided unless a call says otherwise.
+- `MCP_PRINTER_DEFAULT_OPTIONS`: CUPS options for every job, for example `sides=two-sided-long-edge` to print two-sided by default.
 - `MCP_PRINTER_ENABLE_FILE_TOOLS` and `MCP_PRINTER_ENABLE_MANAGEMENT`: choose which tools are registered. Management enables `cancel_print_job`, which can cancel other users' jobs where CUPS permits, and `set_default_printer`.
 
 Defaults describe a source installation; the container overrides transport, HTTP host, and file-tool availability as described above.

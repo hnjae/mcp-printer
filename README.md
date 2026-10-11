@@ -1,907 +1,59 @@
 <!--
 SPDX-License-Identifier: AGPL-3.0-or-later
-SPDX-FileCopyrightText: 2025 Steve CLARKE
 SPDX-FileCopyrightText: 2026 KIM Hyunjae
 -->
 
-# MCP Printer Server 🖨️
+# MCP Printer
 
-An MCP server for printing documents on macOS/Linux. Provides AI assistants with the ability to print files, manage print queues, and control printers via the CUPS printing system.
+Print documents from an AI assistant through the Model Context Protocol (MCP). MCP Printer uses CUPS on macOS and Linux to submit print jobs, query printers, and inspect queues.
 
-## Why?
+[![License: AGPL-3.0-or-later](https://img.shields.io/badge/License-AGPL--3.0--or--later-blue.svg)](LICENSE)
+[![CI](https://github.com/hnjae/mcp-printer/actions/workflows/ci.yml/badge.svg)](https://github.com/hnjae/mcp-printer/actions/workflows/ci.yml)
 
-In the era of AI-assisted development, we're generating more documentation, specs, guides, and code than ever before. When working with AI on complex projects, it's often valuable to review generated artifacts offline on paper. This tool makes it effortless to ask your AI assistant: *"Print all the markdown files you just created"* or *"Print the README and all TypeScript files in this directory"* — streamlining the workflow from AI generation to offline review.
+[Install](#install-from-source) · [Connect](#connect-an-mcp-client) · [Container](#run-in-a-container) · [Tools](#tools-and-examples) · [Configuration](#configuration)
 
-- [Features](#features)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Remote Access (HTTP)](#remote-access-http)
-- [Available Tools](#available-tools)
-- [Available Prompts](#available-prompts)
-- [Usage Examples](#usage-examples)
-- [CUPS Options](#cups-options)
-- [Supported File Types](#supported-file-types)
-- [Code Rendering](#code-rendering)
-- [Troubleshooting](#troubleshooting)
-- [Security](#security)
-- [Development](#development)
-- [Requirements](#requirements)
-- [Contributing](#contributing)
+- Print text supplied by the client as Markdown, HTML, highlighted code, or plain text.
+- Send small PDFs as base64, or print files already on the server.
+- Render Markdown with tables, KaTeX math, and Mermaid diagrams; render source files with syntax highlighting and optional line numbers.
+- Check PDF page counts before printing, choose CUPS options, and process files in batches.
+- Connect over stdio or stateless Streamable HTTP; optionally enable job cancellation and default-printer management.
 
-## Features
+## Install from source
 
-- 📄 **Print files** - PDF, text, and other formats
-- 📝 **Render markdown** - Convert markdown to beautifully formatted PDFs
-- 📊 **Mermaid diagrams** - Flowcharts, sequence diagrams, and more render as visual graphics in markdown
-- 💻 **Syntax-highlighted code** - Automatically render code files with syntax highlighting, line numbers, and proper formatting
-- 🔍 **Page count preview** - Check how many pages a document will print before sending to printer (prevents accidental 200-page printouts!)
-- 🖨️ **List printers** - See all available printers and their status
-- 📋 **Manage queue** - View and cancel print jobs
-- ⚙️ **Configure** - Set default printers
-- 🎯 **Smart** - Supports multiple copies, landscape, duplex, and more
+You need macOS or Linux, Bun **1.3.14 or later**, and access to a configured CUPS printer. The commands `lpr`, `lpstat`, `lpq`, `lprm`, and `lpoptions` must be on `PATH`. Chrome or Chromium is required for Markdown, HTML, code, and client-supplied text rendering. Windows is unsupported.
 
-## Installation
-
-This fork is distributed from its source repository and has no npm package or fork release. The unscoped npm package `mcp-printer` belongs to the upstream project. Build this fork locally:
-
-```bash
-git clone https://github.com/hnjae/mcp-printer.git
-cd mcp-printer
-bun install --frozen-lockfile
-just build
-```
-
-Add the local build to your MCP configuration file (e.g., `~/.cursor/mcp.json` for Cursor):
-
-```json
-{
-  "mcpServers": {
-    "Printer": {
-      "command": "bun",
-      "args": ["/absolute/path/to/mcp-printer/dist/index.js"]
-    }
-  }
-}
-```
-
-> **🖥️ Platform Support:** This server currently supports **macOS and Linux only**. Windows is not currently supported (contributions welcome!).
->
-> **📋 Requirements:** Google Chrome or Chromium is required for rendering markdown and code files to PDF. The server will auto-detect Chrome/Chromium installations on macOS/Linux. See [Requirements](#requirements) for details.
->
-> **⚠️ Security:** This server allows AI assistants to print files from allowed directories (`~/Documents`, `~/Downloads`, `~/Desktop` by default, customizable via `MCP_PRINTER_ALLOWED_PATHS`). Dotfiles and hidden directories are always blocked. Only use with trusted AI assistants on your local machine. See [Security](#security) for configuration options.
-
-## Configuration
-
-All configuration is optional. Add an `env` object to customize behavior:
-
-| Variable | Default | Description |
-| -------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `MCP_PRINTER_TRANSPORT` | `stdio` | `"stdio"` (spawned by the MCP client) or `"http"` (Streamable HTTP server, see [Remote Access](#remote-access-http)) |
-| `MCP_PRINTER_HTTP_HOST` | `127.0.0.1` | Interface the HTTP transport binds to (only with `MCP_PRINTER_TRANSPORT=http`) |
-| `MCP_PRINTER_HTTP_PORT` | `3000` | Port the HTTP transport listens on (only with `MCP_PRINTER_TRANSPORT=http`) |
-| `MCP_PRINTER_DEFAULT_PRINTER` | *(none)* | Default printer to use when none specified (falls back to system default) |
-| `MCP_PRINTER_AUTO_DUPLEX` | `false` | Set to `"true"` to automatically print double-sided by default (can be overridden per-call) |
-| `MCP_PRINTER_DEFAULT_OPTIONS` | *(none)* | Additional CUPS options (e.g., `"fit-to-page"`, `"landscape"`) |
-| `MCP_PRINTER_CHROME_PATH` | *(auto-detected)* | Path to Chrome/Chromium for PDF rendering (override if auto-detection fails) |
-| `MCP_PRINTER_CHROME_NO_SANDBOX` | `false` | Set to `"true"` to start Chrome with `--no-sandbox`. Required when running as root inside a container; it removes Chrome's own sandbox, so rely on the container for isolation |
-| `MCP_PRINTER_AUTO_RENDER_MARKDOWN` | `true` | Automatically render markdown files (`.md`, `.markdown`) to PDF (can be overridden with `force_markdown_render`) |
-| `MCP_PRINTER_AUTO_RENDER_CODE` | `true` | Automatically render code files to PDF with syntax highlighting (can be overridden with `force_code_render`) |
-| `MCP_PRINTER_ENABLE_MANAGEMENT` | `false` | Management operations are **disabled by default** for security. Set to `"true"` to enable `set_default_printer` and `cancel_print_job` tools |
-| `MCP_PRINTER_ENABLE_FILE_TOOLS` | `true` | Set to `"false"` to hide the tools that read files from paths on the server (`print_file`, `get_page_meta`) and the `/print-changed` prompt, leaving `print_content` and `print_pdf`. The container image sets it to `false` |
-| `MCP_PRINTER_ENABLE_PROMPTS` | `true` | Enable prompts (workflow templates). Set to `"false"` to disable prompt registration if you don't want prompts in your MCP client |
-| `MCP_PRINTER_ALLOWED_PATHS` | `~/Documents`, `~/Downloads`, `~/Desktop` | Colon-separated paths allowed for printing. **Overrides** default allowed directories when set (e.g., `"$HOME/Documents:$HOME/src"`) |
-| `MCP_PRINTER_DENIED_PATHS` | *(system dirs)* | Colon-separated paths denied for printing. **Merged with** system directory defaults like `/etc`, `/var`, etc. (e.g., `"/home/user/private"`) |
-| `MCP_PRINTER_FALLBACK_ON_RENDER_ERROR` | `false` | Set to `"true"` to print original file if PDF rendering fails (markdown/code). When false, errors will be thrown instead |
-| `MCP_PRINTER_MAX_COPIES` | `10` | Maximum copies allowed per print job (set to `0` for unlimited) |
-| `MCP_PRINTER_CONFIRM_IF_OVER_PAGES` | `10` | If set > 0, print jobs exceeding this many physical sheets will trigger a confirmation prompt from the AI before printing. Set to `0` to disable. (PDF files only) |
-| `MCP_PRINTER_CODE_EXCLUDE_EXTENSIONS` | *(none)* | Extensions to exclude from code rendering (e.g., `"json,yaml,html"`) - only applies when code rendering is enabled |
-| `MCP_PRINTER_CODE_COLOR_SCHEME` | `"atom-one-light"` | Syntax highlighting color scheme (see [Available Themes](#color-schemes)) |
-| `MCP_PRINTER_CODE_AUTO_LINE_NUMBERS` | `true` | Automatically show line numbers in code printouts (can be overridden per-call with the `line_numbers` parameter) |
-| `MCP_PRINTER_CODE_FONT_SIZE` | `"10pt"` | Font size for code (e.g., `"8pt"`, `"12pt"`) |
-| `MCP_PRINTER_CODE_LINE_SPACING` | `"1.5"` | Line spacing multiplier for code (e.g., `"1"`, `"1.5"`, `"2"`) |
-
-**Example configuration:**
-
-```json
-{
-  "mcpServers": {
-    "Printer": {
-      "command": "bun",
-      "args": ["/absolute/path/to/mcp-printer/dist/index.js"],
-      "env": {
-        "MCP_PRINTER_DEFAULT_PRINTER": "HP_LaserJet_Pro",
-        "MCP_PRINTER_AUTO_DUPLEX": "true",
-        "MCP_PRINTER_DEFAULT_OPTIONS": "fit-to-page",
-        "MCP_PRINTER_AUTO_RENDER_MARKDOWN": "true",
-        "MCP_PRINTER_AUTO_RENDER_CODE": "true",
-        "MCP_PRINTER_ENABLE_PROMPTS": "true",
-        "MCP_PRINTER_CODE_COLOR_SCHEME": "github",
-        "MCP_PRINTER_CODE_FONT_SIZE": "9pt",
-        "MCP_PRINTER_ALLOWED_PATHS": "/Users/myname/Documents:/Users/myname/Downloads:/Users/myname/projects"
-      }
-    }
-  }
-}
-```
-
-💡 **Note:** The `MCP_PRINTER_ALLOWED_PATHS` example above **replaces** the default allowed directories. If you set this variable, you must explicitly include any default directories you want to keep (like Documents, Downloads, Desktop) plus any additional directories like your projects folder. Use colon-separated absolute paths (`:`).
-
-💡 **Tip:** You can use the `list_printers` tool to see all available printers and their exact names.
-
-User-specified options in prompts always override these defaults.
-
-## Remote Access (HTTP)
-
-Set `MCP_PRINTER_TRANSPORT=http` to serve MCP over Streamable HTTP at `POST /mcp` instead of stdio. The server is stateless and answers with plain JSON.
-
-> **⚠️ The HTTP transport has no authentication.** Anyone who can reach the port can print. Keep it on loopback or an internal network and put an authenticating reverse proxy or gateway in front of it. Do not bind it to a public interface.
+Check that CUPS can see your printers:
 
 ```sh
-MCP_PRINTER_TRANSPORT=http MCP_PRINTER_HTTP_HOST=127.0.0.1 MCP_PRINTER_HTTP_PORT=3000 bun dist/index.js
+lpstat -p -d
 ```
 
-### Running in a container
-
-The `Containerfile` builds an image with the CUPS client commands, Chromium and CJK fonts, serving MCP over HTTP on port 3000 as the non-root `bun` user (about 2 GB).
-
-```sh
-podman build -t mcp-printer -f Containerfile .
-
-podman run -d --name mcp-printer \
-    --userns=keep-id:uid=1000,gid=1000 \
-    --shm-size=1g \
-    -v /run/cups/cups.sock:/run/cups/cups.sock \
-    -v "$HOME/Documents/print:/home/bun/Documents:ro" \
-    -p 127.0.0.1:3000:3000 \
-    mcp-printer
-```
-
-- The server has no authentication: publish the port on loopback only, or attach the container to an internal network that only your authenticating proxy can reach.
-- Mount the host CUPS socket at `/run/cups/cups.sock`. Rootless podman maps your host user to the image's `bun` user (uid 1000) with `--userns=keep-id:uid=1000,gid=1000`; add `:z` to the mounts on SELinux hosts.
-- Chrome keeps its sandbox as the non-root user. If Chrome fails to start, or you run the container as root, set `MCP_PRINTER_CHROME_NO_SANDBOX=true`; this removes Chrome's own sandbox, so rely on the container for isolation. Give Chrome enough shared memory (`--shm-size=1g`).
-- The image sets `MCP_PRINTER_ENABLE_FILE_TOOLS=false`, so only `print_content` and `print_pdf` are offered. To use `print_file`, set it to `true` and mount documents; `print_file` reads from `/home/bun/Documents` by default, and `MCP_PRINTER_ALLOWED_PATHS` selects other mount points. `/root` and `/tmp` are always denied. Mount only directories you are willing to print: markdown content can still embed image files readable by the server.
-- CUPS records print jobs from the container as owned by `unknown`. That does not affect printing, but virtual printers that write per-user output, such as `cups-pdf`, then have nowhere to write.
-- `set_default_printer` writes the container user's CUPS settings, not the host's.
-
-## Available Tools
-
-### `get_config`
-
-Get the current MCP Printer configuration settings. Only returns non-sensitive configuration values.
-
-**Example:**
-
-```text
-User: What are my printer settings?
-AI: Current MCP Printer Configuration:
-
-MCP_PRINTER_DEFAULT_PRINTER: HP_LaserJet_4001
-MCP_PRINTER_AUTO_DUPLEX: true
-MCP_PRINTER_DEFAULT_OPTIONS: (not set)
-MCP_PRINTER_CHROME_PATH: (auto-detected)
-MCP_PRINTER_AUTO_RENDER_MARKDOWN: true
-MCP_PRINTER_AUTO_RENDER_CODE: true
-MCP_PRINTER_ENABLE_MANAGEMENT: false
-MCP_PRINTER_ENABLE_PROMPTS: true
-```
-
-### `list_printers`
-
-List all available printers with their status.
-
-**Example:**
-
-```text
-User: What printers do I have available?
-AI: Let me check what printers you have...
-→ HP_LaserJet_4001 is idle and accepting jobs
-→ Canon_Pixma is disabled
-```
-
-### `print_file`
-
-Print one or more files to a specified printer. Supports batch operations to reduce tool call costs. Not offered when `MCP_PRINTER_ENABLE_FILE_TOOLS=false`.
-
-**Parameters:**
-
-- `files` (required) - Array of file specifications (use single-element array for one file):
-    - `file_path` (required) - Full path to file
-    - `printer` (optional) - Printer name
-    - `copies` (optional) - Number of copies (default: 1)
-    - `options` (optional) - CUPS options like `landscape`, `sides=two-sided-long-edge`
-    - `skip_confirmation` (optional) - Skip page count confirmation check (bypasses `MCP_PRINTER_CONFIRM_IF_OVER_PAGES` threshold)
-    - `line_numbers` (optional) - Show line numbers when rendering code files (boolean, overrides global setting)
-    - `color_scheme` (optional) - Syntax highlighting theme for code files (e.g., `github`, `monokai`, `atom-one-light`)
-    - `font_size` (optional) - Font size for code files (e.g., `8pt`, `10pt`, `12pt`)
-    - `line_spacing` (optional) - Line spacing for code files (e.g., `1`, `1.5`, `2`)
-    - `force_markdown_render` (optional) - Force markdown rendering to PDF (boolean: `true`=always render, `false`=never render, `undefined`=use config)
-    - `force_code_render` (optional) - Force code rendering to PDF with syntax highlighting (boolean: `true`=always render, `false`=never render, `undefined`=use config)
-
-**Note:** The code rendering parameters (`line_numbers`, `color_scheme`, `font_size`, `line_spacing`) only apply when printing code files that are automatically rendered to PDF with syntax highlighting.
-
-**Batch Operations:** To print multiple files efficiently, pass an array of file specifications. Each file is processed independently, and the operation continues even if individual files fail. The response shows success/failure status for each file.
-
-**Batch Size Limit:** Batches are limited to 50 items per operation for reliability. If you need to process more items, the AI will automatically split them into multiple tool calls.
-
-**Page Count Confirmation:** By default, print jobs exceeding 10 physical sheets will trigger a confirmation prompt from the AI before printing. You can adjust this threshold with `MCP_PRINTER_CONFIRM_IF_OVER_PAGES` or set it to `0` to disable. If you confirm, the AI will automatically retry the print with the confirmation bypassed. This feature only works for PDF files (including auto-rendered markdown and code files).
-
-**Example (single file):**
-
-```text
-User: Print README.md to my HP LaserJet, 2 copies
-AI: *prints file*
-Print Results: 1/1 successful
-
-✓ /path/to/README.md
-  Printed to HP_LaserJet_4001 × 2 copies (rendered: markdown → PDF)
-```
-
-**Example (batch):**
-
-```text
-User: Print all markdown files in docs/
-AI: *prints multiple files in one tool call*
-Print Results: 3/3 successful
-
-✓ /path/to/docs/setup.md
-  Printed to HP_LaserJet_4001 (rendered: markdown → PDF)
-
-✓ /path/to/docs/guide.md
-  Printed to HP_LaserJet_4001 (rendered: markdown → PDF)
-
-✓ /path/to/docs/reference.md
-  Printed to HP_LaserJet_4001 (rendered: markdown → PDF)
-```
-
-### `print_content`
-
-Print a document whose text the AI provides, without a file on the server. Intended for remote clients (see [Remote Access](#remote-access-http)) that cannot place files on the printer host.
-
-**Parameters:**
-
-- `content` (required) - The document text (at most 1,000,000 characters)
-- `format` (required) - `markdown` (rendered to PDF with tables, math and diagrams), `html` (rendered to PDF), `code` (rendered with syntax highlighting) or `text` (printed as monospace text, not interpreted)
-- `language` (optional) - For `code`: file extension such as `py` or `ts` (default: `txt`)
-- `printer`, `copies`, `options`, `skip_confirmation` (optional) - Same as `print_file`
-- `line_numbers`, `color_scheme`, `font_size`, `line_spacing` (optional) - Same as `print_file`, for `code`
-
-Copy limits (`MCP_PRINTER_MAX_COPIES`) and the page count confirmation apply as for `print_file`.
-
-**Content restrictions:** The content comes from the client, so the renderers are hardened against reading or writing files through it. `html` must be self-contained: inline CSS and `data:` images and fonts only, with no scripts, frames, `<meta>` tags or external resources. In `markdown`, file-including syntax (`@import`, `![[file]]`, standalone image lines), embedding tags (`<iframe>`, `<object>`, ...) and `chrome:`/`puppeteer:` front matter are neutralized, and front matter with a language specifier such as `---js` is rejected. Markdown can still embed image files that the server process can read (for example `![x](../photo.png)` or `<img src="file://...">`), so run the server where only intended paths exist, such as a container that mounts only the directories you want.
-
-### `print_pdf`
-
-Print a PDF whose bytes the client sends as base64, for PDFs that exist only on the client side. Prefer `print_content` when the document can be sent as markdown or HTML: the AI has to write out the whole base64 text, so this is only practical for small PDFs.
-
-**Parameters:**
-
-- `pdf_base64` (required) - The PDF file contents encoded as base64 (at most 5 MB decoded)
-- `printer`, `copies`, `options`, `skip_confirmation` (optional) - Same as `print_file`
-
-The data must start with `%PDF-` and its page count must be readable; otherwise it is rejected. Copy limits and the page count confirmation apply as for `print_file`.
-
-### `get_page_meta`
-
-Get page count and physical sheet information for one or more files before printing. This tool pre-renders files (markdown, code) if needed and returns page metadata. Supports batch operations. Not offered when `MCP_PRINTER_ENABLE_FILE_TOOLS=false`.
-
-**Parameters:**
-
-- `files` (required) - Array of file specifications (use single-element array for one file):
-    - `file_path` (required) - Full path to file
-    - `options` (optional) - CUPS options for duplex detection (e.g., `sides=two-sided-long-edge`)
-    - `line_numbers` (optional) - Show line numbers when rendering code files (boolean, overrides global setting)
-    - `color_scheme` (optional) - Syntax highlighting theme for code files
-    - `font_size` (optional) - Font size for code files (e.g., `8pt`, `10pt`, `12pt`)
-    - `line_spacing` (optional) - Line spacing for code files (e.g., `1`, `1.5`, `2`)
-    - `force_markdown_render` (optional) - Force markdown rendering to PDF
-    - `force_code_render` (optional) - Force code rendering to PDF with syntax highlighting
-
-**Note:** Page counting only works for PDF files, including:
-
-- Markdown files (auto-rendered to PDF)
-- Code files with syntax highlighting (auto-rendered to PDF)
-- Existing PDF files
-
-Plain text files, images, and other non-PDF formats cannot have their page count determined.
-
-**Batch Operations:** Check page counts for multiple files in a single tool call. Each file is processed independently, and the operation continues even if individual files fail.
-
-**Batch Size Limit:** Batches are limited to 50 items per operation for reliability. If you need to process more items, the AI will automatically split them into multiple tool calls.
-
-**Example (single file):**
-
-```text
-User: How many pages would README.md be?
-AI: *gets page metadata*
-Page Metadata Results: 1/1 successful
-
-✓ /path/to/README.md
-  32 pages (16 sheets, duplex) (rendered: markdown → PDF)
-```
-
-**Example (batch):**
-
-```text
-User: How many pages would all the markdown files in docs/ be?
-AI: *gets metadata for multiple files*
-Page Metadata Results: 3/3 successful
-
-✓ /path/to/docs/setup.md
-  8 pages (4 sheets, duplex) (rendered: markdown → PDF)
-
-✓ /path/to/docs/guide.md
-  24 pages (12 sheets, duplex) (rendered: markdown → PDF)
-
-✓ /path/to/docs/reference.md
-  16 pages (8 sheets, duplex) (rendered: markdown → PDF)
-```
-
-**Use cases:**
-
-- Check page count before printing large documents
-- Estimate paper usage for duplex vs single-sided printing
-- Preview rendered output of markdown or code files
-- Calculate total pages across multiple documents
-
-### `get_print_queue`
-
-Check the print queue for pending jobs.
-
-**Parameters:**
-
-- `printer` (optional) - Specific printer to check
-
-**Example:**
-
-```text
-User: What's in my print queue?
-AI: Let me check your print queue...
-→ Job 123: document.pdf (active)
-→ Job 124: notes.txt (pending)
-```
-
-### `cancel_print_job`
-
-Cancel one or more print jobs. Supports batch operations.
-
-**Parameters:**
-
-- `jobs` (required) - Array of job cancellation specifications (use single-element array for one job):
-    - `job_id` (optional) - Specific job to cancel
-    - `printer` (optional) - Printer name
-    - `cancel_all` (optional) - Cancel all jobs for printer
-
-**Batch Operations:** Cancel multiple jobs in a single tool call. Each cancellation is processed independently, and the operation continues even if individual cancellations fail.
-
-**Batch Size Limit:** Batches are limited to 50 items per operation for reliability. If you need to process more items, the AI will automatically split them into multiple tool calls.
-
-**Example (single job):**
-
-```text
-User: Cancel job 123
-AI: Cancel Results: 1/1 successful
-
-✓ Cancelled job: 123
-```
-
-**Example (batch):**
-
-```text
-User: Cancel jobs 123, 124, and 125
-AI: Cancel Results: 3/3 successful
-
-✓ Cancelled job: 123
-
-✓ Cancelled job: 124
-
-✓ Cancelled job: 125
-```
-
-### `get_default_printer`
-
-Get the system's default printer (not the MCP_PRINTER_DEFAULT_PRINTER config setting).
-
-**Example:**
-
-```text
-User: What's my default printer?
-AI: Your default printer is: HP_LaserJet_4001
-```
-
-### `set_default_printer`
-
-Set a printer as the default.
-
-**Parameters:**
-
-- `printer` (required) - Printer name
-
-**Example:**
-
-```text
-User: Make HP LaserJet my default printer
-AI: ✓ Set default printer to: HP_LaserJet_4001
-```
-
-## Available Prompts
-
-Prompts are workflow templates that appear as slash commands in your AI assistant (e.g., Cursor). They provide guided workflows for common printing tasks.
-
-### `/print-changed`
-
-Print files that have changed in your git repository for offline review.
-
-**What it does:**
-
-- Finds files that have changed based on git context (staged, uncommitted, or in a branch)
-- Prints all changed files with consistent settings
-- Perfect for reviewing code changes on paper before committing or merging
-
-**Parameters:**
-
-- `context` - What to print: `"staged"`, `"uncommitted"`, `"branch"`, or a specific branch name
-- `options` (optional) - Print options (e.g., `"landscape"`, `"two-sided"`)
-
-**Examples:**
-
-```text
-User: /print-changed
-[Form appears]
-context: staged
-options:
-
-AI: [Finds staged files using git diff --cached --name-only, prints each file]
-✓ Printed 3 files: src/server.ts, src/config.ts, README.md
-
-User: /print-changed
-context: branch
-options: two-sided
-
-AI: [Finds files changed in current branch vs main]
-✓ Printed 8 files with duplex printing enabled
-```
-
-**Use cases:**
-
-- Review staged changes before committing
-- Print uncommitted work for offline debugging
-- Review all changes in a feature branch
-- Create paper copies for code review meetings
-
-## Usage Examples
-
-### Print Code with Syntax Highlighting
-
-```text
-User: Print src/index.ts
-AI: *automatically renders with syntax highlighting*
-✓ File sent to printer: HP_LaserJet_Pro
-  Rendered: code → PDF (syntax highlighted)
-```
-
-### Print Documentation (Batch)
-
-```text
-User: Print all the markdown files in docs/
-AI: *prints all files in one batch operation*
-Print Results: 3/3 successful
-
-✓ /path/to/docs/setup.md
-  Printed to HP_LaserJet_Pro (rendered: markdown → PDF)
-
-✓ /path/to/docs/guide.md
-  Printed to HP_LaserJet_Pro (rendered: markdown → PDF)
-
-✓ /path/to/docs/reference.md
-  Printed to HP_LaserJet_Pro (rendered: markdown → PDF)
-```
-
-### Force Rendering
-
-```text
-User: Print this .ts file without syntax highlighting
-AI: *prints with force_code_render=false*
-✓ File sent as plain text
-
-User: Print this README.md with formatting even though I don't have auto-render enabled
-AI: *prints with force_markdown_render=true*
-✓ Rendered markdown → PDF
-```
-
-### Print with Options
-
-```text
-User: Print this PDF in landscape, double-sided
-AI: *prints with options: landscape, sides=two-sided-long-edge*
-```
-
-### Manage Queue
-
-```text
-User: What's in my print queue?
-AI: You have 2 jobs:
-- Job 125: report.pdf (printing)
-- Job 126: invoice.pdf (pending)
-
-User: Cancel job 126
-AI: ✓ Cancelled job: 126
-```
-
-### Page Count Preview and Confirmation
-
-```text
-User: How many pages would this markdown file be?
-AI: *previews file*
-📄 Preview: 32 pages (16 sheets, duplex)
-  File: /path/to/document.md
-  Rendered: markdown → PDF
-
-# With MCP_PRINTER_CONFIRM_IF_OVER_PAGES=10 set:
-User: Print document.md
-AI: *checks page count before printing*
-📄 Preview: This document will print 32 pages (16 sheets, duplex)
-  File: /path/to/document.md
-  Rendered: markdown → PDF
-
-⚠️  This exceeds the configured page threshold.
-This is a large document. Are you sure you want to print 32 pages?
-
-User: Yes, print it
-AI: *automatically retries print with confirmation bypassed*
-✓ File sent to printer: HP_LaserJet_4001
-  File: /path/to/document.md
-  Rendered: markdown → PDF
-```
-
-## CUPS Options
-
-Any valid CUPS/lpr options can be passed via the `options` parameter. Common examples:
-
-- `landscape` - Print in landscape orientation
-- `sides=two-sided-long-edge` - Double-sided (long edge)
-- `sides=two-sided-short-edge` - Double-sided (short edge)
-- `page-ranges=1-5` - Print specific pages (e.g., `page-ranges=3-5,7,10-12`)
-- `media=Letter` or `media=A4` - Paper size
-- `fit-to-page` - Scale to fit page
-- `number-up=2` - Print multiple pages per sheet
-
-**Natural Language Requests:** Thanks to the flexibility of the underlying CUPS printing system and the AI's knowledge of print options, you don't need to memorize these options. Simply ask naturally—*"print pages 3 to 5 in landscape on letter size paper"* or *"print this double-sided"*—and the AI will translate your request into the appropriate CUPS options automatically. Feel free to experiment with common printing scenarios; the AI is smart enough to figure out what you need.
-
-For a complete list of available options:
-
-- Run `lpoptions -l` in your terminal to see printer-specific options
-- See the [CUPS documentation](https://www.cups.org/doc/options.html) for standard printing options
-- Check `man lpr` for command-line options
-
-## Supported File Types
-
-The server uses CUPS, which supports:
-
-- ✅ PDF
-- ✅ Plain text
-- ✅ Images (JPEG, PNG)
-- ✅ Markdown
-- ✅ Code files (see [Code Rendering](#code-rendering) for details)
-- ⚠️ PostScript (printer-dependent - some printers may not support it)
-
-Other document formats may need conversion to PDF first.
-
-## Markdown Rendering
-
-Markdown files are rendered to beautifully formatted PDFs using [crossnote](https://github.com/shd101wyy/crossnote).
-
-### Features
-
-- ✨ **Beautiful styling** - Clean, modern GitHub-style theme optimized for printing
-- 🔢 **Automatic page numbers** - Every page shows "Page X / Y" at the bottom
-- 📊 **Mermaid diagrams** - Flowcharts, sequence diagrams, class diagrams render as visual graphics
-- 🎨 **Syntax highlighting** - Code blocks within markdown are beautifully highlighted
-- ➕ **Math rendering** - KaTeX support for mathematical expressions
-- 📐 **Tables & formatting** - Table styling, blockquotes, and all standard markdown features
-
-### Diagram Support
-
-Markdown rendering includes support for:
-
-- **Mermaid** - Flowcharts, sequence diagrams, class diagrams, state diagrams, etc.
-- **WaveDrom** - Digital timing diagrams
-- **GraphViz** - Graph visualizations
-- **Vega & Vega-Lite** - Data visualizations
-
-All diagrams render as visual graphics in the PDF output, not code blocks.
-
-### Configuration
-
-- To enable/disable markdown rendering: Set `MCP_PRINTER_AUTO_RENDER_MARKDOWN` to `"true"` or `"false"` (default: true)
-- To force rendering on a per-call basis: Use the `force_markdown_render` parameter in `print_file`
-
-### Custom Page Numbering
-
-Page numbers are automatically added to the footer of every rendered markdown PDF. If you want to customize or disable page numbering for a specific file, you can add YAML front-matter:
-
-```markdown
----
-chrome:
-  displayHeaderFooter: false
----
-
-# Your Document
-
-Content without page numbers...
-```
-
-Or customize the footer template:
-
-```markdown
----
-chrome:
-  displayHeaderFooter: true
-  footerTemplate: '<div style="font-size:10px; text-align:right; width:100%; padding-right:1cm; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">Page <span class="pageNumber"></span></div>'
----
-
-# Your Document
-
-Content with custom page numbers...
-```
-
-## Code Rendering
-
-Code files are automatically rendered to PDF with syntax highlighting, line numbers, and proper formatting for optimal printing quality.
-
-### Supported Languages
-
-The system uses a **strict whitelist approach** - only files with recognized extensions or shebangs are automatically rendered as code. This prevents false positives on plain text files like LICENSE or README.
-
-**Programming Languages:**
-JavaScript (`.js`, `.jsx`), TypeScript (`.ts`, `.tsx`), Python (`.py`), Java (`.java`), C (`.c`, `.h`), C++ (`.cpp`, `.cc`, `.cxx`, `.hpp`), C# (`.cs`), Go (`.go`), Rust (`.rs`), Swift (`.swift`), Kotlin (`.kt`), Ruby (`.rb`), PHP (`.php`), Scala (`.scala`), Perl (`.pl`, `.perl`), Lua (`.lua`), R (`.r`)
-
-**Shell/Scripts:**
-Bash/Shell (`.sh`, `.bash`, `.zsh`, `.fish`), PowerShell (`.ps1`), Vim (`.vim`)
-
-**Markup/Data:**
-HTML (`.html`), CSS (`.css`), SCSS (`.scss`), Sass (`.sass` - uses SCSS highlighting), Less (`.less`), JSON (`.json`), YAML (`.yaml`, `.yml`), XML (`.xml`), Markdown (`.md`), SQL (`.sql`)
-
-**Special Files (no extension):**
-`Makefile`, `Dockerfile`, `Gemfile`, `Rakefile`, `Vagrantfile`
-
-**Shebang Detection:**
-Files without recognized extensions that contain a shebang (`#!/bin/bash`, `#!/usr/bin/env python3`, etc.) in the first 1024 bytes are automatically detected as code. This enables syntax-highlighted rendering of shell scripts and other executable files without extensions.
-
-**Unknown Extensions:**
-Files with unknown extensions (like `.txt`, `.bak`, `.weird`) and no shebang will NOT be automatically rendered. To render these files with syntax highlighting, the AI can use the `force_code_render=true` parameter in the `print_file` tool call.
-
-**💡 Tip:** You don't need to know the technical parameter names! Simply ask your AI assistant in natural language: *"Print this file and render it as code"* or *"Make sure to render that shell script with syntax highlighting"*. The AI will understand and use the `force_code_render` parameter automatically. This is especially useful for shell scripts without `.sh` extensions or other code files with non-standard names.
-
-**Configuration:**
-
-- To enable/disable automatic code rendering: Set `MCP_PRINTER_AUTO_RENDER_CODE` to `"true"` or `"false"` (default: true)
-- To disable automatic code rendering for specific extensions: `MCP_PRINTER_CODE_EXCLUDE_EXTENSIONS="json,yaml,html"`
-- To force code rendering for a specific file: Use the `force_code_render` parameter in `print_file`
-
-### Color Schemes
-
-The following light themes are recommended for printing (set via `MCP_PRINTER_CODE_COLOR_SCHEME`):
-
-- `atom-one-light` (default)
-- `github`
-- `googlecode`
-- `xcode`
-- `vs`
-- `stackoverflow-light`
-- `gruvbox-light`
-- `solarized-light`
-
-## Troubleshooting
-
-### "Printer not found"
-
-Run `lpstat -p` in terminal to see exact printer names. They often have underscores instead of spaces.
-
-### "Permission denied"
-
-Ensure CUPS is running: `sudo cupsctl`
-
-### "File format not supported"
-
-Some file formats need to be converted to PDF before printing. Export to PDF from the original application or use a conversion tool.
-
-### "Chrome not found"
-
-Chrome/Chromium is required for PDF rendering (markdown and code files). It should be auto-detected, but you can specify the path:
-
-```json
-{
-  "env": {
-    "MCP_PRINTER_CHROME_PATH": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-  }
-}
-```
-
-### Code not rendering with syntax highlighting
-
-1. Ensure Chrome/Chromium is installed (required for PDF generation)
-2. Verify `MCP_PRINTER_AUTO_RENDER_CODE` is set to `"true"` (it's enabled by default)
-3. Check that the file extension is recognized (see [Code Rendering](#code-rendering))
-4. Verify `MCP_PRINTER_CODE_EXCLUDE_EXTENSIONS` does not include your file's extension
-5. Try setting a different color scheme if the current one isn't working
-
-### Code prints but with wrong colors/theme
-
-The color scheme might not exist. Try these reliable options:
-
-- `atom-one-light` (default)
-- `github`
-- `vs`
-- `xcode`
-
-## Security
-
-MCP Printer includes multiple security protections to prevent unauthorized file access and system modifications:
-
-### File Access Control
-
-The server uses a secure-by-default approach with multiple layers of protection:
-
-#### Default Allowed Directories
-
-By default, printing is only allowed from these directories:
-
-- `~/Documents`
-- `~/Downloads`
-- `~/Desktop`
-
-This default configuration covers common use cases while being restrictive. You can configure additional directories as needed.
-
-#### Universal Dotfile/Dotdir Blocking
-
-**All dotfiles and hidden directories are blocked** from printing, with no way to override. This prevents access to:
-
-- `~/.ssh` (SSH keys)
-- `~/.gnupg` (GPG keys)
-- `~/.aws` (AWS credentials)
-- `~/.config` (application configurations)
-- `.env` files (environment variables)
-- Any file or directory starting with `.` (except `.` and `..`)
-
-This rule applies even if the path is within an allowed directory or specified via symlink. For example:
-
-- ❌ `~/Documents/.secrets.txt` (blocked - dotfile)
-- ❌ `~/Documents/link` → `~/.ssh/id_rsa` (blocked - resolves to dotfile)
-- ✅ `~/Documents/report.pdf` (allowed)
-
-#### System Directory Protection
-
-Common system directories are always blocked regardless of configuration, including:
-
-- `/etc`, `/var`, `/root`, `/sys`, `/proc`, `/bin`, `/boot`, `/tmp`, and more
-- `/System`, `/Library`, `/private/etc`, `/private/var` (macOS)
-
-### Custom Security Configuration
-
-You can configure additional allowed paths for specific workflows using environment variables.
-
-**Important:** When you set `MCP_PRINTER_ALLOWED_PATHS`, it **completely overrides** the default allowed directories. You must re-specify them if you want to keep them.
-
-**Environment Variable Expansion:**
-
-The `MCP_PRINTER_ALLOWED_PATHS` and `MCP_PRINTER_DENIED_PATHS` variables support environment variable expansion:
-
-- `~`, `$HOME`, or `${HOME}` expand to your home directory
-
-**Examples:**
-
-```json
-// Developer workflow - allow printing from source code directory
-"env": {
-  "MCP_PRINTER_ALLOWED_PATHS": "$HOME/Documents:$HOME/Downloads:$HOME/Desktop:$HOME/src"
-}
-```
-
-```json
-// Shared workspace - print from external mount
-"env": {
-  "MCP_PRINTER_ALLOWED_PATHS": "$HOME/Documents:$HOME/Downloads:/mnt/shared"
-}
-```
-
-Use colon (`:`) to separate multiple paths, just like the Unix `PATH` variable.
-
-**Additional denied paths** can be specified and will be merged with system directory defaults:
-
-```json
-"env": {
-  "MCP_PRINTER_DENIED_PATHS": "/home/user/private:/home/user/secrets"
-}
-```
-
-### Management Operations
-
-Management operations (`set_default_printer` and `cancel_print_job`) are **disabled by default**.
-
-To enable them, set the environment variable:
-
-```json
-{
-  "mcpServers": {
-    "Printer": {
-      "command": "bun",
-      "args": ["/absolute/path/to/mcp-printer/dist/index.js"],
-      "env": {
-        "MCP_PRINTER_ENABLE_MANAGEMENT": "true"
-      }
-    }
-  }
-}
-```
-
-**Note:** Only enable management operations if you understand the implications, as they can affect system-wide printer settings and other users' print jobs.
-
-### Other Security Features
-
-- **Secure temporary files:** All temporary files are created in randomly-named directories to prevent race conditions and symlink attacks
-- **HTML injection protection:** File paths are properly escaped when rendered to prevent script injection
-- **Symlink protection:** File paths are resolved to their real paths before validation to prevent bypassing security checks
-
-## Development
-
-### Setup
+Clone the server and install its dependencies:
 
 ```sh
 git clone https://github.com/hnjae/mcp-printer.git
 cd mcp-printer
 bun install --frozen-lockfile
-just build
 ```
 
-### Commands
+Run it with `bun src/index.ts`; Bun runs the TypeScript sources directly, so there is no build step. The default transport is stdio, so it waits for an MCP client rather than opening a web page. Logs go to stderr.
 
-```bash
-# Watch mode for development
-just dev
+This fork is not published to npm; the unscoped npm package `mcp-printer` is the upstream project.
 
-# Build
-just build
+## Connect an MCP client
 
-# Test locally
-echo "Hello from MCP Printer Server!" > test.txt
-# Then ask AI to print test.txt
-```
+### stdio
 
-### Testing Markdown Rendering
-
-The repository includes reference documents for testing markdown rendering:
-
-**Quick test (1 page):**
-
-```sh
-# Print markdown-test-short.md
-# Fast iteration during development
-# Tests: formatting, code blocks, Mermaid, tables, math, page numbers
-```
-
-**Comprehensive test (2-3 pages):**
-
-```sh
-# Print markdown-reference.md
-# Full feature verification
-# Tests: all text formatting, multiple diagram types, complex code blocks,
-#        blockquotes, nested lists, emoji, math equations, page numbering
-```
-
-Use these files to verify markdown rendering quality after making changes to the rendering pipeline.
-
-### Running Locally in MCP
-
-Configure your MCP client to run from your local development directory:
+For clients that use an `mcpServers` configuration, add:
 
 ```json
 {
   "mcpServers": {
-    "Printer": {
-      "command": "bun",
-      "args": ["/absolute/path/to/mcp-printer/dist/index.js"],
+    "printer": {
+      "command": "/absolute/path/to/bun",
+      "args": ["/absolute/path/to/mcp-printer/src/index.ts"],
       "env": {
-        "MCP_PRINTER_DEFAULT_PRINTER": "Your_Printer_Name",
+        "MCP_PRINTER_ALLOWED_PATHS": "~/Documents:~/Downloads:~/Desktop",
         "MCP_PRINTER_AUTO_DUPLEX": "true"
       }
     }
@@ -909,27 +61,194 @@ Configure your MCP client to run from your local development directory:
 }
 ```
 
-## Requirements
+Replace both executable paths with your local paths; `command -v bun` shows the Bun path. Restart or reload your client after changing its configuration. Use `list_printers` to discover printer names, then pass `printer` in a tool call or set `MCP_PRINTER_DEFAULT_PRINTER` in `env`.
 
-- **macOS or Linux** - Uses CUPS printing system
-    - macOS: CUPS is built-in
-    - Linux: Install CUPS if not present (`sudo apt install cups` on Ubuntu/Debian)
-    - **Windows is not currently supported** (contributions welcome!)
-- **Bun** 1.3+
-- **Google Chrome or Chromium** - Required for both code and markdown PDF rendering (auto-detected)
-    - Both Chrome and Chromium work equally well (same browser engine)
-    - Auto-detection searches for: Chrome, Chromium, chromium-browser (Linux), Chrome Canary
-    - Linux users: `chromium` or `chromium-browser` are fully supported
-    - You can specify a custom path by setting `MCP_PRINTER_CHROME_PATH`
-- Printers configured in your system
+### Streamable HTTP
 
-## Contributing
+Start the server from the repository directory:
 
-Contributions welcome! Areas for improvement:
+```sh
+MCP_PRINTER_TRANSPORT=http bun src/index.ts
+```
 
-- Windows support (using Windows Print Spooler)
-- More print options
+Configure your client's Streamable HTTP connection with `http://127.0.0.1:3000/mcp`. The endpoint accepts `POST` and returns JSON; it has no persistent sessions or GET event stream.
+
+Verify the connection without submitting a print job:
+
+```sh
+curl --fail-with-body http://127.0.0.1:3000/mcp \
+  --header 'content-type: application/json' \
+  --header 'accept: application/json, text/event-stream' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+> [!WARNING]
+> HTTP has no authentication. Keep the listener on loopback, or put it behind an authenticating proxy before making it reachable by other machines. A connected client can submit print jobs and invoke every enabled tool.
+
+## Run in a container
+
+The container includes Bun, CUPS client commands, Chromium, and CJK fonts. It connects to an existing CUPS server; it does not run a CUPS daemon.
+
+Build from this checkout and run with a CUPS server reachable from the container:
+
+```sh
+docker build -f Containerfile -t mcp-printer .
+docker run --rm --name mcp-printer \
+  -p 127.0.0.1:3000:3000 \
+  -e CUPS_SERVER=cups.example.internal:631 \
+  mcp-printer
+```
+
+Replace `cups.example.internal:631` with your CUPS server address and port. Its access rules must permit this client. Use the same HTTP connection and smoke check shown above. If Chrome crashes while rendering, add `--shm-size=1g`. Release tags matching `package.json` trigger image publication to `ghcr.io/hnjae/mcp-printer` through the [image workflow](.github/workflows/image.yml).
+
+The container runs as the `bun` user, listens on `0.0.0.0:3000` internally, and disables file tools by default. `print_content` and `print_pdf` work without document mounts. To print mounted files, add these options to `docker run`:
+
+```sh
+--mount type=bind,source=/absolute/path/to/documents,target=/documents,readonly \
+-e MCP_PRINTER_ENABLE_FILE_TOOLS=true \
+-e MCP_PRINTER_ALLOWED_PATHS=/documents
+```
+
+Mounted documents must be readable by the container user. If Chrome cannot start its sandbox under your container runtime, set `MCP_PRINTER_CHROME_NO_SANDBOX=true`; this disables Chrome's sandbox.
+
+To use the host's CUPS daemon instead of `CUPS_SERVER`, mount its socket. With rootless Podman, map your user to the container's `bun` user (uid 1000); on SELinux hosts, add `:z` to the mount:
+
+```sh
+podman run --rm --name mcp-printer \
+  --userns=keep-id:uid=1000,gid=1000 \
+  -v /run/cups/cups.sock:/run/cups/cups.sock \
+  -p 127.0.0.1:3000:3000 \
+  mcp-printer
+```
+
+CUPS records jobs from the container as owned by `unknown`, so virtual printers that write per-user output, such as `cups-pdf`, cannot deliver them. `set_default_printer` changes the container user's CUPS default, not the host's.
+
+## Tools and examples
+
+| Tool | Purpose | Availability |
+| --- | --- | --- |
+| `print_content` | Render and print supplied `content` with `format`: `markdown`, `html`, `code`, or `text`. | Always |
+| `print_pdf` | Print a readable PDF supplied as `pdf_base64`, up to 5 MiB decoded. | Always |
+| `print_file` | Print server-side paths from a `files` array; Markdown and known code files render automatically. | File tools enabled |
+| `get_page_meta` | Get PDF pages and estimated physical sheets from a `files` array, rendering Markdown/code first when needed. | File tools enabled |
+| `list_printers` | List CUPS printers and their status. | Always |
+| `get_default_printer` | Query the CUPS default printer. | Always |
+| `get_print_queue` | Inspect the queue, optionally for a named `printer`. | Always |
+| `get_config` | Inspect active server settings. | Always |
+| `cancel_print_job` | Cancel job IDs or all jobs for a printer through a `jobs` array. | Management enabled |
+| `set_default_printer` | Set the CUPS default printer. | Management enabled |
+
+The following JSON objects are tool arguments, not complete MCP requests. They submit print jobs when passed to the named tool.
+
+Print a document written in the conversation with `print_content`:
+
+```json
+{
+  "content": "# Meeting notes\n\n- Review the proposal\n- Decide on next steps\n",
+  "format": "markdown",
+  "options": "sides=two-sided-long-edge"
+}
+```
+
+Print a file on the server with `print_file`:
+
+```json
+{
+  "files": [
+    {
+      "file_path": "/home/alice/Documents/report.md",
+      "copies": 1,
+      "options": "media=A4 sides=two-sided-long-edge"
+    }
+  ]
+}
+```
+
+Replace the example path with an allowed path on the server. File printing and page metadata calls use `files` arrays even for one file; cancellations use `jobs` arrays. Each batch processes at most 50 items per call. Larger batches return a warning without processing; split them into smaller calls. Individual failures do not stop the remaining items.
+
+Print calls accept `printer`, `copies`, and space-separated CUPS `options`, such as `landscape`, `media=A4`, or `sides=two-sided-long-edge`. Supported options depend on the printer; `lpoptions -l` lists them. Code rendering accepts `line_numbers`, `color_scheme`, `font_size`, and `line_spacing`; `print_content` with `format: "code"` also accepts `language`, such as `py` or `ts`. File tools accept `force_markdown_render` and `force_code_render` to override automatic detection.
+
+When a readable PDF exceeds the configured sheet threshold, the server returns `PAGE_COUNT_CONFIRMATION_REQUIRED` without printing it. After the user approves, repeat the call with `skip_confirmation: true`. The default threshold is 10 sheets; the estimate accounts for duplex but does not multiply by copies. The check does not apply to file formats whose PDF page count cannot be read. `get_page_meta` requires a PDF or a file that can be rendered to PDF.
+
+The `print-changed` prompt guides the assistant through printing staged changes, unstaged changes (`uncommitted`), or the diff of the current or a named branch against `main`. It requires the client to discover changed files and is available when both prompts and file tools are enabled.
+
+## Configuration
+
+Set environment variables before starting the server. Restart it to apply changes. Booleans accept `true` or `false`. Defaults below describe a source installation; the container overrides transport, HTTP host, and file-tool availability as described above.
+
+### Connection and printing
+
+| Variable | Default | Effect |
+| --- | --- | --- |
+| `MCP_PRINTER_TRANSPORT` | `stdio` | `stdio` or `http`. |
+| `MCP_PRINTER_HTTP_HOST` | `127.0.0.1` | HTTP bind address. |
+| `MCP_PRINTER_HTTP_PORT` | `3000` | HTTP port. |
+| `MCP_PRINTER_DEFAULT_PRINTER` | Unset | Print target when no `printer` is supplied; otherwise CUPS chooses its default. |
+| `MCP_PRINTER_DEFAULT_OPTIONS` | Unset | Space-separated CUPS options; per-call options follow them. |
+| `MCP_PRINTER_AUTO_DUPLEX` | `false` | Add `sides=two-sided-long-edge` unless the call supplies a `sides=` option. |
+| `MCP_PRINTER_MAX_COPIES` | `10` | Maximum copies per job; `0` or a negative value removes the limit. |
+| `MCP_PRINTER_CONFIRM_IF_OVER_PAGES` | `10` | Physical-sheet threshold for PDF confirmation; `0` disables it. |
+| `MCP_PRINTER_ENABLE_MANAGEMENT` | `false` | Register `cancel_print_job` and `set_default_printer`, which change the server user's default printer and cancel queued jobs, including other users' jobs where CUPS permits. Printing remains available when disabled. |
+| `MCP_PRINTER_ENABLE_FILE_TOOLS` | `true` | Register `print_file` and `get_page_meta`; disabling also hides `print-changed`. |
+| `MCP_PRINTER_ENABLE_PROMPTS` | `true` | Enable workflow prompts when file tools are enabled. |
+
+### File access
+
+| Variable | Default | Effect |
+| --- | --- | --- |
+| `MCP_PRINTER_ALLOWED_PATHS` | `~/Documents:~/Downloads:~/Desktop` | Colon-separated allowed paths. A nonempty value **replaces** the defaults. Supports `~`, `$HOME`, and `${HOME}`. |
+| `MCP_PRINTER_DENIED_PATHS` | Built-in restricted paths | Colon-separated paths added to the built-in deny list; denial takes precedence. |
+
+File tools check original and resolved paths for hidden components and resolve symlinks before checking allowed and denied paths. Dotfiles, hidden directories, and built-in restricted paths cannot be allowed through configuration. The full deny list is in [src/config.ts](src/config.ts); it includes sensitive directories and system paths such as `/etc`, `/var`, and `/tmp`.
+
+> [!IMPORTANT]
+> File-path restrictions apply to the document passed to file tools, not every resource a renderer may embed. Client-supplied Markdown disables file-import directives and embedding tags, but can still embed image files readable by the server process. Run with only the filesystem access you intend to expose. Client-supplied HTML permits inline styles and `data:` images/fonts, and blocks scripts and external or local resource loads.
+
+### Rendering
+
+| Variable | Default | Effect |
+| --- | --- | --- |
+| `MCP_PRINTER_CHROME_PATH` | Auto-detected | Path to Chrome or Chromium. |
+| `MCP_PRINTER_CHROME_NO_SANDBOX` | `false` | Launch Chrome with `--no-sandbox`, needed when running as root. |
+| `MCP_PRINTER_AUTO_RENDER_MARKDOWN` | `true` | Render `.md` and `.markdown` files to PDF. |
+| `MCP_PRINTER_AUTO_RENDER_CODE` | `true` | Render known code files and detected shebang scripts to PDF. |
+| `MCP_PRINTER_FALLBACK_ON_RENDER_ERROR` | `false` | Submit the original file if automatic Markdown/code rendering fails. |
+| `MCP_PRINTER_CODE_EXCLUDE_EXTENSIONS` | Unset | Comma-separated extensions excluded from automatic code rendering. |
+| `MCP_PRINTER_CODE_COLOR_SCHEME` | `atom-one-light` | highlight.js theme. |
+| `MCP_PRINTER_CODE_AUTO_LINE_NUMBERS` | `true` | Include line numbers in code output. |
+| `MCP_PRINTER_CODE_FONT_SIZE` | `10pt` | Code font size. |
+| `MCP_PRINTER_CODE_LINE_SPACING` | `1.5` | Code line spacing. |
+
+The automatic-rendering switches and fallback setting govern file printing. `print_content` renders according to its explicit `format`; text content is escaped and rendered as a monospace PDF. Its limit is 1,000,000 characters. Markdown front matter that selects a non-YAML engine, such as `---js`, is rejected.
+
+Rendered Markdown files get a page-number footer. In a file printed through `print_file`, front matter can replace it with Chrome's PDF options, for example `chrome: { displayHeaderFooter: false }` to remove it or a custom `footerTemplate`.
+
+## Troubleshooting
+
+| Symptom | Action |
+| --- | --- |
+| No printers or CUPS connection failure | Run `lpstat -p -d` in the same host/container environment. Verify the CUPS service, `CUPS_SERVER`, and server access rules. |
+| Chrome not found or rendering fails | Install Chrome/Chromium or set `MCP_PRINTER_CHROME_PATH` to its executable. For container sandbox failures, see the container instructions. |
+| File access denied | Use an absolute path under an allowed directory. Custom allowed paths replace defaults; hidden components and built-in denied paths remain blocked. |
+| Expected tool is missing | Check `MCP_PRINTER_ENABLE_FILE_TOOLS` and `MCP_PRINTER_ENABLE_MANAGEMENT`, then restart the server and refresh the client's tool list. |
+| HTTP returns `405` | Use a Streamable HTTP client that sends `POST /mcp`; browser GET requests and SSE-only clients cannot use this endpoint. |
+
+## Development
+
+The [justfile](justfile) defines type-checking, test, formatting, and CI commands. `nix-shell` provides the development tools, including Chromium and CUPS clients, and installs Git hooks on entry. Without Nix, install the tools used by the recipes yourself.
+
+```sh
+nix-shell
+bun install --frozen-lockfile
+just ci
+```
+
+For narrower checks, use `just typecheck`, `just test-unit`, or `just test-integration`. Integration tests render PDFs with Chrome/Chromium. Restart the running server to load source changes. `just format` applies formatters, and `just hooks-install` installs the formatting, typo, and Conventional Commit hooks.
+
+### Releasing
+
+Update `CHANGELOG.md` and the `package.json` version, run `just ci`, then push a `vX.Y.Z` tag. The [image workflow](.github/workflows/image.yml) fails if the tag does not match the `package.json` version.
 
 ## License
 
-This fork is licensed under AGPL-3.0-or-later. It derives from [steveclarke/mcp-printer](https://github.com/steveclarke/mcp-printer); the original copyright and complete MIT notice are preserved in [LICENSE](LICENSE). Test fixtures retain their separate MIT notices.
+This fork is licensed under AGPL-3.0-or-later. It derives from [steveclarke/mcp-printer](https://github.com/steveclarke/mcp-printer); the upstream MIT copyright and permission notice are preserved in [LICENSE](LICENSE).

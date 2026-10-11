@@ -11,7 +11,6 @@ on:
       - .containerignore
       - package.json
       - bun.lock
-      - tsconfig.json
       - src/**
       - .github/workflows/image.yml
 jobs:

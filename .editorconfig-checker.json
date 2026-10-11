@@ -1,0 +1,4 @@
+{
+  "Exclude": ["^tests/fixtures/"],
+  "Disable": { "Indentation": true, "IndentSize": true }
+}

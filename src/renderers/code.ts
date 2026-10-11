@@ -334,15 +334,15 @@ function generateHTML(
     @page {
       margin: 0.5in;
     }
-    
+
     /* Highlight.js color scheme */
     ${colorSchemeCSS}
-    
+
     /* Custom styling */
     * {
       box-sizing: border-box;
     }
-    
+
     html, body {
       margin: 0;
       padding: 0;
@@ -350,28 +350,28 @@ function generateHTML(
       font-size: ${fontSize};
       line-height: ${lineSpacing}em;
     }
-    
+
     table {
       border-collapse: collapse;
     }
-    
+
     .hljs {
       background: transparent !important;
       background-color: transparent !important;
     }
-    
+
     .line-number {
       border-right: thin solid silver;
       padding-right: 0.3em;
       text-align: right;
       vertical-align: top;
     }
-    
+
     .line-text {
       padding-left: 0.7em;
       white-space: pre-wrap;
     }
-    
+
     h3.filepath {
       margin: 0 0 1em 0;
       font-weight: normal;

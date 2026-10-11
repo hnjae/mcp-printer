@@ -9,18 +9,6 @@ set lazy
 _:
     @just --list
 
-[group('build')]
-clean:
-    rm -rf dist
-
-[group('build')]
-build:
-    bun x tsc
-
-[group('build')]
-dev:
-    bun x tsc --watch
-
 [group('hooks')]
 hooks-install:
     prek install
@@ -46,7 +34,7 @@ test-coverage:
     bun test --coverage --timeout=30000
 
 [group('ci')]
-ci: lint typos format-check test build
+ci: lint typecheck typos format-check test
     reuse lint
     prek validate-config .pre-commit-config.yaml
 
@@ -55,6 +43,13 @@ lint:
     bun x biome lint src tests package.json tsconfig.json biome.jsonc
     hadolint Containerfile
     actionlint
+    editorconfig-checker
+    deadnix --fail --exclude node_modules
+    statix check
+
+[group('lint')]
+typecheck:
+    bun x tsc
 
 [group('lint')]
 typos:

@@ -210,7 +210,7 @@ For narrower checks, use `just typecheck`, `just test-unit`, or `just test-integ
 
 ### Releasing
 
-Update `CHANGELOG.md` and the `package.json` version, run `just ci`, then push a `vX.Y.Z` tag. The [image workflow](.github/workflows/image.yml) fails if the tag does not match the `package.json` version.
+Draft the release's `CHANGELOG.md` section from the commits with `cog changelog vPREVIOUS..HEAD` and edit it by hand; the changelog is not updated between releases. Set the `package.json` version, run `just ci`, then push a `vX.Y.Z` tag. The [image workflow](.github/workflows/image.yml) fails if the tag does not match the `package.json` version.
 
 ## License
 

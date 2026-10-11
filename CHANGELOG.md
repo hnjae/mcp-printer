@@ -4,15 +4,6 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### Changed
-
-- **BREAKING**: `MCP_PRINTER_CODE_EXCLUDE_EXTENSIONS` is removed. Pass `render: none` for a file that should be printed as it is, or set `MCP_PRINTER_AUTO_RENDER_CODE=false` to turn automatic code rendering off
-- **BREAKING**: `print_file` and `get_page_meta` take one `render` parameter (`markdown`, `code` or `none`) in place of `force_markdown_render` and `force_code_render`. It applies whatever the file's extension; omit it to detect from the extension and the configuration. `render: markdown` now also renders a file without a Markdown extension
-
-### Fixed
-
-- Calls no longer wait indefinitely when the CUPS server does not answer: queries time out after 10 seconds and job submissions and changes after 60 seconds
-
 ## [3.0.0-alpha] - 2026-10-11
 
 ### Added

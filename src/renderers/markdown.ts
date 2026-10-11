@@ -21,6 +21,16 @@ import { assertNoFrontMatterEngine } from "../untrusted-content.ts"
 import { findChrome, getChromeSandboxArgs } from "../utils.ts"
 
 /**
+ * Print styling on top of the themes: no filled backgrounds, so pages use little ink. Code blocks
+ * get an outline instead so they stay set apart from the text.
+ */
+const PRINT_CSS = `
+html body pre, html body code, html body blockquote, html body kbd,
+pre[class*="language-"], code[class*="language-"] { background: transparent !important; }
+html body pre, pre[class*="language-"] { border: 1px solid #d6d6d6; }
+`
+
+/**
  * Page numbering configuration function for Puppeteer PDF generation.
  * Generates header/footer templates with inline styles (required by Puppeteer).
  * Filename is HTML-escaped to prevent XSS and rendering issues.
@@ -141,6 +151,7 @@ export async function renderMarkdownToPdf(
         previewTheme: "github-light.css",
         codeBlockTheme: "github.css",
         mermaidTheme: "default",
+        globalCss: PRINT_CSS,
 
         // Math rendering
         mathRenderingOption: "KaTeX",

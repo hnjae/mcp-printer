@@ -31,7 +31,7 @@ import { basename, dirname, extname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { encode } from "he"
 import hljs from "highlight.js"
-import { config } from "../config.js"
+import { config, MARKDOWN_EXTENSIONS } from "../config.js"
 import { convertHtmlToPdf, hasShebang } from "../utils.js"
 
 /**
@@ -52,6 +52,11 @@ export async function shouldRenderCode(filePath: string): Promise<boolean> {
   // Extract extension (for files without extension, use the basename itself)
   const fileExt = extname(filePath)
   const ext = fileExt ? fileExt.slice(1).toLowerCase() : basename(filePath).toLowerCase()
+
+  // Markdown files are rendered as Markdown or printed as they are; code rendering needs force_code_render
+  if (MARKDOWN_EXTENSIONS.some((markdownExt) => markdownExt === ext)) {
+    return false
+  }
 
   // Check if extension is in the exclusion list
   if (ext && config.code.excludeExtensions.includes(ext)) {

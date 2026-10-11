@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - The sheet estimate and `PAGE_COUNT_CONFIRMATION_REQUIRED` check assumed duplex whenever `MCP_PRINTER_AUTO_DUPLEX` was on, even when the call printed one-sided. It now follows the effective `sides` setting
+- A Markdown file that was not rendered as Markdown (`force_markdown_render: false`, or `MCP_PRINTER_AUTO_RENDER_MARKDOWN=false`) was rendered as code instead. It is now printed as it is; `force_code_render: true` renders it as code
 
 ### Changed
 

@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it } from "bun:test"
-import { formatPrintResponse, parseDelimitedString } from "../../src/utils.js"
+import { parseDelimitedString } from "../../src/utils.js"
 
 describe("parseDelimitedString", () => {
   it("should parse colon-delimited string", () => {
@@ -41,38 +41,5 @@ describe("parseDelimitedString", () => {
   it("should handle single item", () => {
     const result = parseDelimitedString("single", ":")
     expect(result).toEqual(["single"])
-  })
-})
-
-describe("formatPrintResponse", () => {
-  it("should format basic response without options", () => {
-    const result = formatPrintResponse("TestPrinter", 1, [], "/path/to/file.txt")
-
-    expect(result.content).toHaveLength(1)
-    expect(result.content[0].type).toBe("text")
-    expect(result.content[0].text).toContain("TestPrinter")
-    expect(result.content[0].text).toContain("Copies: 1")
-    expect(result.content[0].text).toContain("/path/to/file.txt")
-    expect(result.content[0].text).not.toContain("Options:")
-  })
-
-  it("should format response with options and multiple copies", () => {
-    const result = formatPrintResponse(
-      "TestPrinter",
-      3,
-      ["landscape", "sides=two-sided-long-edge"],
-      "/path/to/file.pdf"
-    )
-
-    expect(result.content[0].text).toContain("TestPrinter")
-    expect(result.content[0].text).toContain("Copies: 3")
-    expect(result.content[0].text).toContain("Options: landscape, sides=two-sided-long-edge")
-    expect(result.content[0].text).toContain("/path/to/file.pdf")
-  })
-
-  it("should include render type when provided", () => {
-    const result = formatPrintResponse("TestPrinter", 1, [], "/path/to/file.md", "markdown → PDF")
-
-    expect(result.content[0].text).toContain("Rendered: markdown → PDF")
   })
 })

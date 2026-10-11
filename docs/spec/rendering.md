@@ -12,10 +12,10 @@ Rendered pages carry a footer with the document's name and the page number out o
 
 A file is rendered with syntax highlighting when `MCP_PRINTER_AUTO_RENDER_CODE` is `true` (default) and either:
 
-- its extension, or for a file without an extension its lowercase name, is recognized: `js`, `jsx`, `ts`, `tsx`, `py`, `rb`, `java`, `c`, `cpp`, `cc`, `cxx`, `h`, `hpp`, `cs`, `php`, `go`, `rs`, `swift`, `kt`, `scala`, `lua`, `perl`, `pl`, `r`, `sh`, `bash`, `zsh`, `fish`, `ps1`, `vim`, `yaml`, `yml`, `json`, `xml`, `html`, `css`, `scss`, `sass`, `less`, `md`, `sql`, `makefile`, `dockerfile`, `gemfile`, `rakefile`, `vagrantfile`; or
+- its extension, or for a file without an extension its lowercase name, is recognized: `js`, `jsx`, `ts`, `tsx`, `py`, `rb`, `java`, `c`, `cpp`, `cc`, `cxx`, `h`, `hpp`, `cs`, `php`, `go`, `rs`, `swift`, `kt`, `scala`, `lua`, `perl`, `pl`, `r`, `sh`, `bash`, `zsh`, `fish`, `ps1`, `vim`, `yaml`, `yml`, `json`, `xml`, `html`, `css`, `scss`, `sass`, `less`, `sql`, `makefile`, `dockerfile`, `gemfile`, `rakefile`, `vagrantfile`; or
 - the file is not recognized by name but has a line starting with `#!` within its first 1,024 bytes.
 
-Names listed in `MCP_PRINTER_CODE_EXCLUDE_EXTENSIONS` (comma-separated, case-insensitive) are never rendered as code. A file rendered as Markdown is not also rendered as code.
+Names listed in `MCP_PRINTER_CODE_EXCLUDE_EXTENSIONS` (comma-separated, case-insensitive) are never rendered as code. A file with a Markdown extension is never selected for code rendering automatically, so when Markdown rendering is off it is printed as it is; `force_code_render: true` renders it as code.
 
 Code rendering takes these settings, per call or by default:
 
@@ -30,7 +30,7 @@ Code rendering takes these settings, per call or by default:
 
 On `print_file` and `get_page_meta`:
 
-- `force_markdown_render: true` renders a file with a Markdown extension as Markdown even when automatic Markdown rendering is off; `false` disables Markdown rendering for the file. A file without a Markdown extension is never rendered as Markdown.
+- `force_markdown_render: true` renders a file with a Markdown extension as Markdown even when automatic Markdown rendering is off; `false` prints the file as it is, unless `force_code_render` is `true`. A file without a Markdown extension is never rendered as Markdown.
 - `force_code_render: true` renders any file as code; `false` never does.
 
 Unset flags follow the configuration.

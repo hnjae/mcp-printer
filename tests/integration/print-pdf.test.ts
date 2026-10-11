@@ -11,7 +11,7 @@ import { existsSync, readFileSync, rmSync } from "node:fs"
 import { dirname } from "node:path"
 
 // Mocks registered by other integration files persist for the whole run, so pin the config this file needs
-vi.mock("../../src/config.js", () => ({
+vi.mock("../../src/config.ts", () => ({
   config: {
     allowedPaths: [],
     deniedPaths: [],
@@ -21,7 +21,7 @@ vi.mock("../../src/config.js", () => ({
   MARKDOWN_EXTENSIONS: ["md", "markdown"],
 }))
 
-import { convertHtmlToPdf, MAX_PDF_BYTES, withPreparedPdf } from "../../src/utils.js"
+import { convertHtmlToPdf, MAX_PDF_BYTES, withPreparedPdf } from "../../src/utils.ts"
 
 async function samplePdfBase64(): Promise<string> {
   const pdf = await convertHtmlToPdf("<h1>Sample</h1>")

@@ -9,7 +9,7 @@
 
 import { createServer, type Server } from "node:http"
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js"
-import { createMcpServer } from "./mcp-server.js"
+import { createMcpServer } from "./mcp-server.ts"
 
 const MCP_PATH = "/mcp"
 

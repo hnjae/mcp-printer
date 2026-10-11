@@ -8,9 +8,9 @@
  */
 
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
-import { config } from "./config.js"
-import { startHttpServer } from "./http.js"
-import { createMcpServer } from "./mcp-server.js"
+import { config } from "./config.ts"
+import { startHttpServer } from "./http.ts"
+import { createMcpServer } from "./mcp-server.ts"
 
 /**
  * Starts the MCP Printer server on the configured transport (stdio by default,

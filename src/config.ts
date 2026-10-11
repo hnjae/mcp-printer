@@ -5,7 +5,7 @@
 import { homedir } from "node:os"
 import { join } from "node:path"
 import yn from "yn"
-import { parseDelimitedString } from "./utils.js"
+import { parseDelimitedString } from "./utils.ts"
 
 /**
  * Configuration interface for MCP Printer settings loaded from environment variables.

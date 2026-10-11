@@ -6,11 +6,11 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "bun:test"
-import { buildCupsOptions, isDuplexEnabled } from "../../src/utils.js"
+import { buildCupsOptions, isDuplexEnabled } from "../../src/utils.ts"
 
 const mockConfig = { defaultOptions: [] as string[] }
 
-vi.mock("../../src/config.js", () => ({ config: mockConfig }))
+vi.mock("../../src/config.ts", () => ({ config: mockConfig }))
 
 beforeEach(() => {
   mockConfig.defaultOptions = []

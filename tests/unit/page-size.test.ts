@@ -6,7 +6,7 @@
  */
 
 import { describe, expect, it } from "bun:test"
-import { A4, pageSizeForMedia, withPageSize } from "../../src/page-size.js"
+import { A4, pageSizeForMedia, withPageSize } from "../../src/page-size.ts"
 
 const near = (actual: number, expected: number) => Math.abs(actual - expected) < 0.1
 

@@ -17,7 +17,7 @@ import {
   parseLpoptions,
   setDefaultPrinter,
   submitJob,
-} from "../../src/cups.js"
+} from "../../src/cups.ts"
 
 const execa = vi.fn(async (..._args: unknown[]) => ({ stdout: "" }))
 vi.mock("execa", () => ({ execa }))

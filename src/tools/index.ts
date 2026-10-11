@@ -8,10 +8,10 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
-import { config } from "../config.js"
-import { registerContentPrintTools, registerFilePrintTools } from "./print.js"
-import { registerPrinterTools } from "./printer.js"
-import { registerPrompts } from "./prompts.js"
+import { config } from "../config.ts"
+import { registerContentPrintTools, registerFilePrintTools } from "./print.ts"
+import { registerPrinterTools } from "./printer.ts"
+import { registerPrompts } from "./prompts.ts"
 
 /**
  * Registers all available MCP tools and prompts with the given server.

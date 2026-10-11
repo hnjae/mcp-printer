@@ -13,7 +13,7 @@ import { dirname, join, relative } from "node:path"
 import { fileURLToPath } from "node:url"
 import { PDFParse } from "pdf-parse"
 
-vi.mock("../../src/config.js", () => ({
+vi.mock("../../src/config.ts", () => ({
   config: {
     allowedPaths: [],
     deniedPaths: [],
@@ -29,9 +29,9 @@ vi.mock("../../src/config.js", () => ({
   MARKDOWN_EXTENSIONS: ["md", "markdown"],
 }))
 
-import { renderMarkdownToPdf } from "../../src/renderers/markdown.js"
-import { hardenHtml, sanitizeUntrustedMarkdown } from "../../src/untrusted-content.js"
-import { convertHtmlToPdf } from "../../src/utils.js"
+import { renderMarkdownToPdf } from "../../src/renderers/markdown.ts"
+import { hardenHtml, sanitizeUntrustedMarkdown } from "../../src/untrusted-content.ts"
+import { convertHtmlToPdf } from "../../src/utils.ts"
 
 const SENTINEL = "SENTINEL-4c1e-DO-NOT-PRINT"
 const fixtureDir = join(dirname(fileURLToPath(import.meta.url)), "../tmp/untrusted")

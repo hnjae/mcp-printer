@@ -8,7 +8,7 @@ import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 // Mock config to allow access to test directory
-vi.mock("../../src/config.js", () => {
+vi.mock("../../src/config.ts", () => {
   const mockTestDir = join(dirname(fileURLToPath(import.meta.url)), "..")
 
   return {
@@ -24,10 +24,10 @@ vi.mock("../../src/config.js", () => {
 
 mkdirSync(join(dirname(fileURLToPath(import.meta.url)), "../tmp"), { recursive: true })
 
-import { renderMarkdownToPdf } from "../../src/renderers/markdown.js"
-import { cleanupRenderedPdf, prepareFileForPrinting } from "../../src/utils.js"
-import { pageSizeForMedia } from "../../src/page-size.js"
-import { A4, B5, firstPageSize, isSize, LETTER } from "../helpers/pdf-page-size.js"
+import { renderMarkdownToPdf } from "../../src/renderers/markdown.ts"
+import { cleanupRenderedPdf, prepareFileForPrinting } from "../../src/utils.ts"
+import { pageSizeForMedia } from "../../src/page-size.ts"
+import { A4, B5, firstPageSize, isSize, LETTER } from "../helpers/pdf-page-size.ts"
 
 describe("renderMarkdownToPdf", () => {
   it("should render a simple markdown file to PDF", async () => {

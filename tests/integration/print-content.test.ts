@@ -10,7 +10,7 @@ import { describe, expect, it, vi } from "bun:test"
 import { existsSync, readFileSync } from "node:fs"
 
 // Mocks registered by other integration files persist for the whole run, so pin the config this file needs
-vi.mock("../../src/config.js", () => ({
+vi.mock("../../src/config.ts", () => ({
   config: {
     allowedPaths: [],
     deniedPaths: [],
@@ -26,9 +26,9 @@ vi.mock("../../src/config.js", () => ({
   MARKDOWN_EXTENSIONS: ["md", "markdown"],
 }))
 
-import { withPreparedContent } from "../../src/utils.js"
-import { A4, B5, firstPageSize, isSize, LETTER } from "../helpers/pdf-page-size.js"
-import { pageSizeForMedia } from "../../src/page-size.js"
+import { withPreparedContent } from "../../src/utils.ts"
+import { A4, B5, firstPageSize, isSize, LETTER } from "../helpers/pdf-page-size.ts"
+import { pageSizeForMedia } from "../../src/page-size.ts"
 
 async function prepare(options: Parameters<typeof withPreparedContent>[0]) {
   let path = ""

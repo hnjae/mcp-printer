@@ -7,8 +7,8 @@
 
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test"
 import type { AddressInfo } from "node:net"
-import { config } from "../../src/config.js"
-import { startHttpServer } from "../../src/http.js"
+import { config } from "../../src/config.ts"
+import { startHttpServer } from "../../src/http.ts"
 
 const MCP_HEADERS = {
   "content-type": "application/json",

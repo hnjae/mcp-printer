@@ -8,7 +8,7 @@
  * Starts the Model Context Protocol server for printing operations via CUPS.
  */
 
-import { startServer } from "./server.js"
+import { startServer } from "./server.ts"
 
 // Start the MCP Printer server
 startServer().catch((error) => {

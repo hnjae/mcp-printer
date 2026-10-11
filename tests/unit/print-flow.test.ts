@@ -21,20 +21,20 @@ const config = {
   maxCopies: 10,
   confirmIfOverPages: 10,
 }
-vi.mock("../../src/config.js", () => ({ config, MARKDOWN_EXTENSIONS: ["md", "markdown"] }))
+vi.mock("../../src/config.ts", () => ({ config, MARKDOWN_EXTENSIONS: ["md", "markdown"] }))
 
 const submitJob = vi.fn(async (_job: unknown) => undefined)
 const readPrinterOptions = vi.fn(
   async (_printer?: string): Promise<Record<string, unknown> | null> => null
 )
 const getDefaultPrinter = vi.fn(async (): Promise<string | undefined> => "office")
-vi.mock("../../src/cups.js", () => ({
+vi.mock("../../src/cups.ts", () => ({
   submitJob,
   readPrinterOptions,
   getDefaultPrinter,
 }))
 
-import { handlePrint, handlePrintPdf } from "../../src/tools/batch-helpers.js"
+import { handlePrint, handlePrintPdf } from "../../src/tools/batch-helpers.ts"
 
 const NOTES = join(fixtures, "notes.txt")
 

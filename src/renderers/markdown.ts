@@ -15,10 +15,10 @@ import { basename, join } from "node:path"
 import { Notebook } from "crossnote"
 import matter from "gray-matter"
 import { encode } from "he"
-import { config } from "../config.js"
-import { A4, type PageSize } from "../page-size.js"
-import { assertNoFrontMatterEngine } from "../untrusted-content.js"
-import { findChrome, getChromeSandboxArgs } from "../utils.js"
+import { config } from "../config.ts"
+import { A4, type PageSize } from "../page-size.ts"
+import { assertNoFrontMatterEngine } from "../untrusted-content.ts"
+import { findChrome, getChromeSandboxArgs } from "../utils.ts"
 
 /**
  * Page numbering configuration function for Puppeteer PDF generation.

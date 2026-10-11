@@ -9,7 +9,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
-import { config } from "../config.js"
+import { config } from "../config.ts"
 import {
   describePrinters,
   getDefaultPrinter,
@@ -17,18 +17,18 @@ import {
   readPrinterOptions,
   setDefaultPrinter,
   showQueue,
-} from "../cups.js"
+} from "../cups.ts"
 import {
   describePrinterSettings,
   formatPrinterSettings,
   type PrinterSettings,
-} from "../print-settings.js"
+} from "../print-settings.ts"
 import {
   type CancelJobResult,
   checkBatchSizeLimit,
   formatCancelResults,
   handleCancel,
-} from "./batch-helpers.js"
+} from "./batch-helpers.ts"
 
 /**
  * Read the print settings a printer accepts from its PPD options.

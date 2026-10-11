@@ -7,9 +7,9 @@
  * Provides interfaces, processing functions, and result formatting for batch tool operations.
  */
 
-import { config } from "../config.js"
-import { cancelAllJobs, cancelJob } from "../cups.js"
-import { pageSizeForMedia } from "../page-size.js"
+import { config } from "../config.ts"
+import { cancelAllJobs, cancelJob } from "../cups.ts"
+import { pageSizeForMedia } from "../page-size.ts"
 import {
   type ContentOptions,
   calculatePhysicalSheets,
@@ -23,7 +23,7 @@ import {
   shouldTriggerConfirmation,
   withPreparedContent,
   withPreparedPdf,
-} from "../utils.js"
+} from "../utils.ts"
 
 /**
  * Error codes used in batch operations.

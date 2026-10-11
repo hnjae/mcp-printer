@@ -31,9 +31,9 @@ import { basename, dirname, extname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { encode } from "he"
 import hljs from "highlight.js"
-import { config, MARKDOWN_EXTENSIONS } from "../config.js"
-import type { PageSize } from "../page-size.js"
-import { convertHtmlToPdf, hasShebang } from "../utils.js"
+import { config, MARKDOWN_EXTENSIONS } from "../config.ts"
+import type { PageSize } from "../page-size.ts"
+import { convertHtmlToPdf, hasShebang } from "../utils.ts"
 
 /**
  * Determines if a file should be rendered with syntax highlighting.

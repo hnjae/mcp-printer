@@ -12,7 +12,7 @@ import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 // Mock config to allow access to test directory
-vi.mock("../../src/config.js", () => {
+vi.mock("../../src/config.ts", () => {
   const mockTestDir = join(dirname(fileURLToPath(import.meta.url)), "..")
 
   return {
@@ -34,12 +34,12 @@ vi.mock("../../src/config.js", () => {
 
 mkdirSync(join(dirname(fileURLToPath(import.meta.url)), "../tmp"), { recursive: true })
 
-import { config } from "../../src/config.js"
+import { config } from "../../src/config.ts"
 import {
   fixMultilineSpans,
   getLanguageFromExtension,
   renderCodeToPdf,
-} from "../../src/renderers/code.js"
+} from "../../src/renderers/code.ts"
 
 describe("getLanguageFromExtension", () => {
   it("should map whitelisted extensions to highlight.js language names", () => {

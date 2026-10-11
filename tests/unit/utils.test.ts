@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it } from "bun:test"
-import { parseDelimitedString } from "../../src/utils.js"
+import { parseDelimitedString } from "../../src/utils.ts"
 
 describe("parseDelimitedString", () => {
   it("should parse colon-delimited string", () => {

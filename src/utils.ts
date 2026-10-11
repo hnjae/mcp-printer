@@ -419,43 +419,6 @@ export async function executePrintJob(
 }
 
 /**
- * Format a print job response message.
- *
- * @param printerName - Name of the printer used
- * @param copies - Number of copies printed
- * @param allOptions - Array of print options used
- * @param sourceFile - Original file path to display
- * @param renderType - Optional rendering description (e.g., "markdown → PDF")
- * @returns Formatted MCP response object
- */
-export function formatPrintResponse(
-  printerName: string,
-  copies: number,
-  allOptions: string[],
-  sourceFile: string,
-  renderType?: string
-) {
-  let optionsInfo = ""
-  if (allOptions.length > 0) {
-    optionsInfo = `\n  Options: ${allOptions.join(", ")}`
-  }
-
-  const renderedNote = renderType ? `\n  Rendered: ${renderType}` : ""
-
-  return {
-    content: [
-      {
-        type: "text" as const,
-        text:
-          `✓ File sent to printer: ${printerName}\n` +
-          `  Copies: ${copies}${optionsInfo}\n` +
-          `  File: ${sourceFile}${renderedNote}`,
-      },
-    ],
-  }
-}
-
-/**
  * Gets the page count from a PDF file using pdf-parse.
  *
  * @param filePath - Path to the PDF file
@@ -494,46 +457,6 @@ export function calculatePhysicalSheets(pdfPages: number, isDuplex: boolean): nu
  */
 export function shouldTriggerConfirmation(physicalSheets: number): boolean {
   return config.confirmIfOverPages > 0 && physicalSheets > config.confirmIfOverPages
-}
-
-/**
- * Formats a preview response with optional threshold warning.
- *
- * @param pdfPages - Total number of PDF pages
- * @param physicalSheets - Number of physical sheets needed
- * @param isDuplex - Whether duplex printing is enabled
- * @param sourceFile - Original file path
- * @param renderType - Optional rendering description (e.g., "markdown → PDF")
- * @param isThresholdExceeded - Whether to include threshold warning (default: false)
- * @returns MCP response object with preview information
- */
-export function formatPreviewResponse(
-  pdfPages: number,
-  physicalSheets: number,
-  isDuplex: boolean,
-  sourceFile: string,
-  renderType?: string,
-  isThresholdExceeded = false
-) {
-  const duplexInfo = isDuplex ? ` (${physicalSheets} sheets, duplex)` : ""
-  const renderedNote = renderType ? `\n  Rendered: ${renderType}` : ""
-
-  const baseMessage =
-    `📄 Preview: ${isThresholdExceeded ? "This document will print " : ""}${pdfPages} pages${duplexInfo}\n` +
-    `  File: ${sourceFile}${renderedNote}`
-
-  const warningMessage = isThresholdExceeded
-    ? `\n\n⚠️  This exceeds the configured page threshold.\nAsk the user if they want to proceed with printing.`
-    : ""
-
-  return {
-    content: [
-      {
-        type: "text" as const,
-        text: baseMessage + warningMessage,
-      },
-    ],
-  }
 }
 
 /**

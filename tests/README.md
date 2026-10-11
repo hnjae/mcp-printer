@@ -29,7 +29,6 @@ just test-coverage
     - String parsing (`parseDelimitedString`)
     - Language mapping (`getLanguageFromExtension`)
     - HTML manipulation (`fixMultilineSpans`)
-    - Response formatting (`formatPrintResponse`)
 
 - **`file-detection.test.ts`** - File type detection logic
     - Markdown rendering detection (`shouldRenderToPdf`)

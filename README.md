@@ -39,6 +39,8 @@ bun x tsc
 
 Run it with `bun dist/index.js`. The default transport is stdio, so it waits for an MCP client rather than opening a web page. Logs go to stderr.
 
+This fork is not published to npm; the unscoped npm package `mcp-printer` is the upstream project.
+
 ## Connect an MCP client
 
 ### stdio
@@ -98,7 +100,7 @@ docker run --rm --name mcp-printer \
   mcp-printer
 ```
 
-Replace `cups.example.internal:631` with your CUPS server address and port. Its access rules must permit this client. Use the same HTTP connection and smoke check shown above. Release tags matching `package.json` trigger image publication to `ghcr.io/hnjae/mcp-printer` through the [image workflow](.github/workflows/image.yml).
+Replace `cups.example.internal:631` with your CUPS server address and port. Its access rules must permit this client. Use the same HTTP connection and smoke check shown above. If Chrome crashes while rendering, add `--shm-size=1g`. Release tags matching `package.json` trigger image publication to `ghcr.io/hnjae/mcp-printer` through the [image workflow](.github/workflows/image.yml).
 
 The container runs as the `bun` user, listens on `0.0.0.0:3000` internally, and disables file tools by default. `print_content` and `print_pdf` work without document mounts. To print mounted files, add these options to `docker run`:
 
@@ -109,6 +111,18 @@ The container runs as the `bun` user, listens on `0.0.0.0:3000` internally, and 
 ```
 
 Mounted documents must be readable by the container user. If Chrome cannot start its sandbox under your container runtime, set `MCP_PRINTER_CHROME_NO_SANDBOX=true`; this disables Chrome's sandbox.
+
+To use the host's CUPS daemon instead of `CUPS_SERVER`, mount its socket. With rootless Podman, map your user to the container's `bun` user (uid 1000); on SELinux hosts, add `:z` to the mount:
+
+```sh
+podman run --rm --name mcp-printer \
+  --userns=keep-id:uid=1000,gid=1000 \
+  -v /run/cups/cups.sock:/run/cups/cups.sock \
+  -p 127.0.0.1:3000:3000 \
+  mcp-printer
+```
+
+CUPS records jobs from the container as owned by `unknown`, so virtual printers that write per-user output, such as `cups-pdf`, cannot deliver them. `set_default_printer` changes the container user's CUPS default, not the host's.
 
 ## Tools and examples
 
@@ -153,11 +167,11 @@ Print a file on the server with `print_file`:
 
 Replace the example path with an allowed path on the server. File printing and page metadata calls use `files` arrays even for one file; cancellations use `jobs` arrays. Each batch processes at most 50 items per call. Larger batches return a warning without processing; split them into smaller calls. Individual failures do not stop the remaining items.
 
-Print calls accept `printer`, `copies`, and space-separated CUPS `options`, such as `landscape`, `media=A4`, or `sides=two-sided-long-edge`. Supported options depend on the printer. Code rendering accepts `line_numbers`, `color_scheme`, `font_size`, and `line_spacing`; `print_content` with `format: "code"` also accepts `language`, such as `py` or `ts`. File tools accept `force_markdown_render` and `force_code_render` to override automatic detection.
+Print calls accept `printer`, `copies`, and space-separated CUPS `options`, such as `landscape`, `media=A4`, or `sides=two-sided-long-edge`. Supported options depend on the printer; `lpoptions -l` lists them. Code rendering accepts `line_numbers`, `color_scheme`, `font_size`, and `line_spacing`; `print_content` with `format: "code"` also accepts `language`, such as `py` or `ts`. File tools accept `force_markdown_render` and `force_code_render` to override automatic detection.
 
 When a readable PDF exceeds the configured sheet threshold, the server returns `PAGE_COUNT_CONFIRMATION_REQUIRED` without printing it. After the user approves, repeat the call with `skip_confirmation: true`. The default threshold is 10 sheets; the estimate accounts for duplex but does not multiply by copies. The check does not apply to file formats whose PDF page count cannot be read. `get_page_meta` requires a PDF or a file that can be rendered to PDF.
 
-The `print-changed` prompt guides the assistant through printing staged changes, unstaged changes (`uncommitted`), or a branch diff against `main`. It requires the client to discover changed files and is available when both prompts and file tools are enabled.
+The `print-changed` prompt guides the assistant through printing staged changes, unstaged changes (`uncommitted`), or the diff of the current or a named branch against `main`. It requires the client to discover changed files and is available when both prompts and file tools are enabled.
 
 ## Configuration
 
@@ -175,7 +189,7 @@ Set environment variables before starting the server. Restart it to apply change
 | `MCP_PRINTER_AUTO_DUPLEX` | `false` | Add `sides=two-sided-long-edge` unless the call supplies a `sides=` option. |
 | `MCP_PRINTER_MAX_COPIES` | `10` | Maximum copies per job; `0` or a negative value removes the limit. |
 | `MCP_PRINTER_CONFIRM_IF_OVER_PAGES` | `10` | Physical-sheet threshold for PDF confirmation; `0` disables it. |
-| `MCP_PRINTER_ENABLE_MANAGEMENT` | `false` | Register `cancel_print_job` and `set_default_printer`. Printing remains available when disabled. |
+| `MCP_PRINTER_ENABLE_MANAGEMENT` | `false` | Register `cancel_print_job` and `set_default_printer`, which change the server user's default printer and cancel queued jobs, including other users' jobs where CUPS permits. Printing remains available when disabled. |
 | `MCP_PRINTER_ENABLE_FILE_TOOLS` | `true` | Register `print_file` and `get_page_meta`; disabling also hides `print-changed`. |
 | `MCP_PRINTER_ENABLE_PROMPTS` | `true` | Enable workflow prompts when file tools are enabled. |
 
@@ -208,6 +222,8 @@ File tools check original and resolved paths for hidden components and resolve s
 
 The automatic-rendering switches and fallback setting govern file printing. `print_content` renders according to its explicit `format`; text content is escaped and rendered as a monospace PDF. Its limit is 1,000,000 characters. Markdown front matter that selects a non-YAML engine, such as `---js`, is rejected.
 
+Rendered Markdown files get a page-number footer. In a file printed through `print_file`, front matter can replace it with Chrome's PDF options, for example `chrome: { displayHeaderFooter: false }` to remove it or a custom `footerTemplate`.
+
 ## Troubleshooting
 
 | Symptom | Action |
@@ -233,3 +249,7 @@ For narrower checks, use `just build`, `just test-unit`, or `just test-integrati
 ### Releasing
 
 Update `CHANGELOG.md` and the `package.json` version, run `just ci`, then push a `vX.Y.Z` tag. The [image workflow](.github/workflows/image.yml) fails if the tag does not match the `package.json` version.
+
+## License
+
+This fork is licensed under AGPL-3.0-or-later. It derives from [steveclarke/mcp-printer](https://github.com/steveclarke/mcp-printer); the upstream MIT copyright and permission notice are preserved in [LICENSE](LICENSE).

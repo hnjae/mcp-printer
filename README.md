@@ -87,8 +87,8 @@ The container includes Bun, CUPS client commands, Chromium, CJK fonts, and the S
 Build from this checkout and run with a CUPS server reachable from the container:
 
 ```sh
-docker build -f Containerfile -t mcp-printer .
-docker run --rm --name mcp-printer \
+podman build -f Containerfile -t mcp-printer .
+podman run --rm --name mcp-printer \
   -p 127.0.0.1:3000:3000 \
   -e CUPS_SERVER=cups.example.internal:631 \
   mcp-printer
@@ -96,7 +96,7 @@ docker run --rm --name mcp-printer \
 
 Replace `cups.example.internal:631` with your CUPS server address and port. Its access rules must permit this client. Use the same HTTP connection and smoke check shown above. If Chrome crashes while rendering, add `--shm-size=1g`. Release tags matching `package.json` trigger image publication to `ghcr.io/hnjae/mcp-printer` through the [image workflow](.github/workflows/image.yml).
 
-The container runs as the `bun` user, listens on `0.0.0.0:3000` internally, and disables file tools by default. `print_content` and `print_pdf` work without document mounts. To print mounted files, add these options to `docker run`:
+The container runs as the `bun` user, listens on `0.0.0.0:3000` internally, and disables file tools by default. `print_content` and `print_pdf` work without document mounts. To print mounted files, add these options to `podman run`:
 
 ```sh
 --mount type=bind,source=/absolute/path/to/documents,target=/documents,readonly \

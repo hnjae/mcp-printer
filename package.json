@@ -1,7 +1,7 @@
 {
   "version": "3.0.0",
   "private": true,
-  "description": "MCP server for printing documents on macOS/Linux via CUPS. Gives AI assistants the ability to print files, manage print queues, and control printers.",
+  "description": "MCP server for printing documents via CUPS. Gives AI assistants the ability to print files, manage print queues, and control printers.",
   "author": "KIM Hyunjae",
   "license": "AGPL-3.0-or-later",
   "repository": {

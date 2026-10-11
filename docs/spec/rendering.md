@@ -33,9 +33,10 @@ Everything the server renders to PDF, whether Markdown, code, HTML or text, is l
 - `A3`, `A4`, `A5`, `A6`, `Letter` and `Legal`, in any letter case, with a variant suffix such as `.Borderless` ignored;
 - `jis_b5_182x257mm` and `jis_b6_128x182mm`;
 - IPP names that carry their size, such as `iso_a4_210x297mm` and `na_letter_8.5x11in`;
+- a printer's own sizes named by their dimensions, such as `4x6` (inches) and `215x345mm`;
 - `Custom.<W>x<H>` with mm, cm, in or pt, points when no unit is given.
 
-Any other name, including a printer's own such as `4x6` or `JISB5`, renders on A4 while CUPS still receives the name unchanged. `get_page_meta` takes `media` for the same reason: the page count depends on the page size.
+Any other name, such as `JISB5` or `EnvDL`, renders on A4 while CUPS still receives the name unchanged. `get_page_meta` takes `media` for the same reason: the page count depends on the page size.
 
 A document can choose its own size. HTML sets it with an `@page { size: … }` rule; Markdown sets it in its front matter, for example `chrome: { format: Letter }`. A Markdown file that sets other `chrome` options without a size is still laid out on the size of the call. PDFs from `print_pdf` and files printed as they are keep their own size.
 

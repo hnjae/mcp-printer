@@ -13,7 +13,6 @@ const near = (actual: number, expected: number) => Math.abs(actual - expected) <
 describe("pageSizeForMedia", () => {
   it("renders on A4 without a media or for names it does not know", () => {
     expect(pageSizeForMedia(undefined)).toEqual(A4)
-    expect(pageSizeForMedia("4x6")).toEqual(A4)
     expect(pageSizeForMedia("EnvDL")).toEqual(A4)
     expect(pageSizeForMedia("JISB5")).toEqual(A4)
     expect(pageSizeForMedia("Custom.WIDTHxHEIGHT")).toEqual(A4)
@@ -42,6 +41,13 @@ describe("pageSizeForMedia", () => {
     expect(pageSizeForMedia("iso_a4_210x297mm")).toEqual(A4)
     const letter = pageSizeForMedia("na_letter_8.5x11in")
     expect(near(letter.widthMm, 215.9) && near(letter.heightMm, 279.4)).toBe(true)
+  })
+
+  it("reads a printer's own sizes named by their dimensions, in inches unless the name says mm", () => {
+    const photo = pageSizeForMedia("4x6")
+    expect(near(photo.widthMm, 101.6) && near(photo.heightMm, 152.4)).toBe(true)
+    expect(pageSizeForMedia("3.5x5.Borderless")).toEqual(pageSizeForMedia("3.5x5"))
+    expect(pageSizeForMedia("215x345mm")).toEqual({ widthMm: 215, heightMm: 345 })
   })
 
   it("reads custom sizes in millimetres, centimetres, inches and points", () => {

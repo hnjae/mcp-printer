@@ -36,8 +36,9 @@ const toMm = (value: string, unit: keyof typeof MM_PER_UNIT): number =>
  * Find the page size a `media` value stands for.
  *
  * Understood: the standard paper names above, IPP names that carry their size such as
- * `iso_a4_210x297mm`, and `Custom.<W>x<H>` with mm, cm, in or pt (points by default). A suffix such
- * as `.Borderless` is ignored. Any other name, including a printer's own, gives A4.
+ * `iso_a4_210x297mm`, printer names made of dimensions such as `4x6` (inches) and `215x345mm`, and
+ * `Custom.<W>x<H>` with mm, cm, in or pt (points by default). A suffix such as `.Borderless` is
+ * ignored. Any other name gives A4.
  *
  * @param media - The `media` value of the print call, if any
  * @returns The page size to render on
@@ -54,9 +55,18 @@ export function pageSizeForMedia(media: string | undefined): PageSize {
     return { widthMm: toMm(custom[1] ?? "0", unit), heightMm: toMm(custom[2] ?? "0", unit) }
   }
 
-  const named = NAMED_SIZES[name] ?? NAMED_SIZES[name.replace(/\.[a-z][a-z-]*$/, "")]
+  const base = NAMED_SIZES[name] ? name : name.replace(/\.[a-z][a-z-]*$/, "")
+  const named = NAMED_SIZES[base]
   if (named) {
     return named
+  }
+
+  // A printer's own size, named by its dimensions as CUPS does in a PPD it generates from IPP: inches
+  // unless the name says mm
+  const dimensions = /^(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)(mm|in)?$/.exec(base)
+  if (dimensions) {
+    const unit = (dimensions[3] ?? "in") as "mm" | "in"
+    return { widthMm: toMm(dimensions[1] ?? "0", unit), heightMm: toMm(dimensions[2] ?? "0", unit) }
   }
 
   const ipp = /_(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)(mm|in)$/.exec(name)

@@ -10,6 +10,7 @@ pkgs.mkShellNoCC {
     chromium
     cocogitto
     cups
+    editorconfig-checker
     hadolint
     just
     nixfmt

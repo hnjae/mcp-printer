@@ -2,7 +2,7 @@ version = 1
 
 [[annotations]]
 path = [
-  ".editorconfig",
+  ".editorconfig-checker.json",
   "biome.jsonc",
   "bun.lock",
   "package.json",

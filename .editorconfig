@@ -20,3 +20,7 @@ indent_style = space
 [{justfile,Justfile}]
 indent_size = 4
 indent_style = space
+
+[Containerfile]
+indent_size = 4
+indent_style = space

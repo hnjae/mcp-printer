@@ -43,6 +43,7 @@ lint:
     bun x biome lint src tests package.json tsconfig.json biome.jsonc
     hadolint Containerfile
     actionlint
+    editorconfig-checker
 
 [group('lint')]
 typecheck:

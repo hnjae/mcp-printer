@@ -7,10 +7,10 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "bun:test"
-import { calculatePhysicalSheets, shouldTriggerConfirmation } from "../../src/utils.js"
+import { calculatePhysicalSheets, shouldTriggerConfirmation } from "../../src/utils.ts"
 
 // Mock the config module
-vi.mock("../../src/config.js", () => ({
+vi.mock("../../src/config.ts", () => ({
   config: {
     confirmIfOverPages: 10, // Default test value
   },
@@ -43,7 +43,7 @@ describe("shouldTriggerConfirmation", () => {
 
   beforeEach(async () => {
     // Get the mocked config
-    const configModule = await import("../../src/config.js")
+    const configModule = await import("../../src/config.ts")
     config = configModule.config
     // Reset to default test value
     config.confirmIfOverPages = 10

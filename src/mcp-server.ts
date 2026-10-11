@@ -7,7 +7,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import packageJson from "../package.json" with { type: "json" }
-import { registerAllTools } from "./tools/index.js"
+import { registerAllTools } from "./tools/index.ts"
 
 /**
  * Creates an MCP server instance for printing via CUPS.

@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "bun:test"
 import matter from "gray-matter"
-import { hardenHtml, sanitizeUntrustedMarkdown } from "../../src/untrusted-content.js"
+import { hardenHtml, sanitizeUntrustedMarkdown } from "../../src/untrusted-content.ts"
 
 const INVISIBLE = /​/g
 

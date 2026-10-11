@@ -8,7 +8,7 @@
 
 import { realpathSync } from "node:fs"
 import { resolve, sep } from "node:path"
-import { config } from "./config.js"
+import { config } from "./config.ts"
 
 /**
  * Check if a path contains any dotfile or dotdir component.

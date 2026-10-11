@@ -8,8 +8,8 @@
 
 import { describe, expect, it } from "bun:test"
 import { join } from "node:path"
-import { shouldRenderCode } from "../../src/renderers/code.js"
-import { hasShebang, shouldRenderToPdf } from "../../src/utils.js"
+import { shouldRenderCode } from "../../src/renderers/code.ts"
+import { hasShebang, shouldRenderToPdf } from "../../src/utils.ts"
 
 describe("shouldRenderToPdf", () => {
   it("should return true for markdown extensions (based on config at load time)", () => {

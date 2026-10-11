@@ -14,20 +14,20 @@ import { dirname, extname, join } from "node:path"
 import { type ExecaError, execa } from "execa"
 import { encode } from "he"
 import { PDFParse } from "pdf-parse"
-import { config, MARKDOWN_EXTENSIONS, type MarkdownExtension } from "./config.js"
-import { getDefaultPrinter, readPrinterOptions, submitJob } from "./cups.js"
-import { validateFilePath } from "./file-security.js"
-import { A4, type PageSize, withPageSize } from "./page-size.js"
+import { config, MARKDOWN_EXTENSIONS, type MarkdownExtension } from "./config.ts"
+import { getDefaultPrinter, readPrinterOptions, submitJob } from "./cups.ts"
+import { validateFilePath } from "./file-security.ts"
+import { A4, type PageSize, withPageSize } from "./page-size.ts"
 import {
   JIS_SIZES,
   type ORIENTATIONS,
   type QUALITIES,
   resolveMedia,
   type SIDES,
-} from "./print-settings.js"
-import { renderCodeToPdf, shouldRenderCode } from "./renderers/code.js"
-import { renderMarkdownToPdf } from "./renderers/markdown.js"
-import { hardenHtml, sanitizeUntrustedMarkdown } from "./untrusted-content.js"
+} from "./print-settings.ts"
+import { renderCodeToPdf, shouldRenderCode } from "./renderers/code.ts"
+import { renderMarkdownToPdf } from "./renderers/markdown.ts"
+import { hardenHtml, sanitizeUntrustedMarkdown } from "./untrusted-content.ts"
 
 /**
  * Parse a delimited string into an array of strings.

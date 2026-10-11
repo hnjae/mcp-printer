@@ -9,7 +9,7 @@
 import { describe, expect, it, mock } from "bun:test"
 import { homedir } from "node:os"
 
-const configModulePath = "../../src/config.js"
+const configModulePath = "../../src/config.ts"
 const actualPath = await import("node:path")
 
 function createDefaultConfigMock() {
@@ -46,7 +46,7 @@ async function importFileSecurityWithWindows(config: WindowsConfig) {
   }))
   mock.module(configModulePath, () => ({ config }))
 
-  const module = await import("../../src/file-security.js")
+  const module = await import("../../src/file-security.ts")
 
   return {
     ...module,
@@ -59,7 +59,7 @@ async function importFileSecurityWithWindows(config: WindowsConfig) {
 
 describe("validateFilePath", () => {
   it("should allow files under home directory", async () => {
-    const { validateFilePath } = await import("../../src/file-security.js")
+    const { validateFilePath } = await import("../../src/file-security.ts")
     const homeDir = homedir()
     const testPath = actualPath.posix.join(homeDir, "Documents", "test.txt")
 
@@ -67,7 +67,7 @@ describe("validateFilePath", () => {
   })
 
   it("should deny files in sensitive directories via dotfile blocking", async () => {
-    const { validateFilePath } = await import("../../src/file-security.js")
+    const { validateFilePath } = await import("../../src/file-security.ts")
     const homeDir = homedir()
 
     expect(() => validateFilePath(actualPath.posix.join(homeDir, ".ssh", "id_rsa"))).toThrow(
@@ -82,7 +82,7 @@ describe("validateFilePath", () => {
   })
 
   it("should deny all .env files anywhere via dotfile blocking", async () => {
-    const { validateFilePath } = await import("../../src/file-security.js")
+    const { validateFilePath } = await import("../../src/file-security.ts")
     const homeDir = homedir()
 
     expect(() => validateFilePath(actualPath.posix.join(homeDir, "projects", ".env"))).toThrow(
@@ -97,7 +97,7 @@ describe("validateFilePath", () => {
   })
 
   it("should deny files in system directories", async () => {
-    const { validateFilePath } = await import("../../src/file-security.js")
+    const { validateFilePath } = await import("../../src/file-security.ts")
 
     expect(() => validateFilePath("/etc/passwd")).toThrow(/Access denied/)
     expect(() => validateFilePath("/var/log/system.log")).toThrow(/Access denied/)
@@ -113,7 +113,7 @@ describe("validateFilePath", () => {
     }))
 
     try {
-      const { validateFilePath } = await import("../../src/file-security.js")
+      const { validateFilePath } = await import("../../src/file-security.ts")
       expect(() => validateFilePath("/tmp/test.txt")).toThrow(
         /outside allowed directories.*MCP_PRINTER_ALLOWED_PATHS/
       )
@@ -123,7 +123,7 @@ describe("validateFilePath", () => {
   })
 
   it("should deny subdirectories of denied paths", async () => {
-    const { validateFilePath } = await import("../../src/file-security.js")
+    const { validateFilePath } = await import("../../src/file-security.ts")
     const homeDir = homedir()
 
     const deepSshPath = actualPath.posix.join(homeDir, ".ssh", "subfolder", "key.pem")

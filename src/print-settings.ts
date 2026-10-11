@@ -7,7 +7,7 @@
  * B-series sizes the server adds as custom sizes for printers that do not list them.
  */
 
-import type { PpdOption } from "./cups.js"
+import type { PpdOption } from "./cups.ts"
 
 export const SIDES = ["one-sided", "two-sided-long-edge", "two-sided-short-edge"] as const
 export const ORIENTATIONS = ["portrait", "landscape"] as const

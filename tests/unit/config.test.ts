@@ -9,7 +9,7 @@
 import { describe, expect, it } from "bun:test"
 import { homedir } from "node:os"
 import { join } from "node:path"
-import { config, MARKDOWN_EXTENSIONS } from "../../src/config.js"
+import { config, MARKDOWN_EXTENSIONS } from "../../src/config.ts"
 
 describe("config", () => {
   it("should have markdown extensions defined", () => {

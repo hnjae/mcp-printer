@@ -6,12 +6,12 @@
  */
 
 import { describe, expect, it } from "bun:test"
-import { parseLpoptions } from "../../src/cups.js"
+import { parseLpoptions } from "../../src/cups.ts"
 import {
   describePrinterSettings,
   formatPrinterSettings,
   resolveMedia,
-} from "../../src/print-settings.js"
+} from "../../src/print-settings.ts"
 
 // Trimmed `lpoptions -p <name> -l` output from an inkjet IPP queue and a cups-pdf queue.
 const INKJET = `PageSize/Media Size: 215x345mm 4x6 *A4 A4.Borderless A5 A6 Letter Custom.WIDTHxHEIGHT

@@ -10,8 +10,8 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
-import { ORIENTATIONS, QUALITIES, SIDES } from "../print-settings.js"
-import { CONTENT_FORMATS, MAX_PDF_BYTES, RENDER_MODES } from "../utils.js"
+import { ORIENTATIONS, QUALITIES, SIDES } from "../print-settings.ts"
+import { CONTENT_FORMATS, MAX_PDF_BYTES, RENDER_MODES } from "../utils.ts"
 import {
   checkBatchSizeLimit,
   formatPageMetaResults,
@@ -22,7 +22,7 @@ import {
   handlePrintPdf,
   type PageMetaResult,
   type PrintResult,
-} from "./batch-helpers.js"
+} from "./batch-helpers.ts"
 
 /**
  * Shared parameter schema for rendering used by both print_file and get_page_meta.

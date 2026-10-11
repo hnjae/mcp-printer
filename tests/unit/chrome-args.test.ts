@@ -6,8 +6,8 @@
  */
 
 import { afterEach, describe, expect, it } from "bun:test"
-import { config } from "../../src/config.js"
-import { getChromeSandboxArgs } from "../../src/utils.js"
+import { config } from "../../src/config.ts"
+import { getChromeSandboxArgs } from "../../src/utils.ts"
 
 const original = config.chromeNoSandbox
 

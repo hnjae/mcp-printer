@@ -12,7 +12,7 @@ import { join } from "node:path"
 
 const fixtures = join(import.meta.dir, "../fixtures")
 
-vi.mock("../../src/config.js", () => ({
+vi.mock("../../src/config.ts", () => ({
   config: {
     allowedPaths: [fixtures],
     deniedPaths: [],
@@ -22,8 +22,8 @@ vi.mock("../../src/config.js", () => ({
   MARKDOWN_EXTENSIONS: ["md", "markdown"],
 }))
 
-import { shouldRenderCode } from "../../src/renderers/code.js"
-import { prepareFileForPrinting } from "../../src/utils.js"
+import { shouldRenderCode } from "../../src/renderers/code.ts"
+import { prepareFileForPrinting } from "../../src/utils.ts"
 
 describe("code rendering selection", () => {
   it("does not pick Markdown files, which are recognized as code only for highlighting", async () => {

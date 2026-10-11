@@ -37,7 +37,6 @@ describe("config", () => {
     expect(Array.isArray(config.defaultOptions)).toBe(true)
     expect(Array.isArray(config.allowedPaths)).toBe(true)
     expect(Array.isArray(config.deniedPaths)).toBe(true)
-    expect(Array.isArray(config.code.excludeExtensions)).toBe(true)
   })
 
   it("should include default allowed directories in allowedPaths by default", () => {

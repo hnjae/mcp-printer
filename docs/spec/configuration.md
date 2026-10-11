@@ -34,7 +34,6 @@ The server is configured with environment variables, read once at startup; resta
 | `MCP_PRINTER_AUTO_RENDER_MARKDOWN` | `true` | Render `.md` and `.markdown` files to PDF. |
 | `MCP_PRINTER_AUTO_RENDER_CODE` | `true` | Render recognized code files and shebang scripts to PDF. |
 | `MCP_PRINTER_FALLBACK_ON_RENDER_ERROR` | `false` | Send the original file when rendering fails. |
-| `MCP_PRINTER_CODE_EXCLUDE_EXTENSIONS` | Unset | Comma-separated names excluded from code rendering. |
 | `MCP_PRINTER_CODE_COLOR_SCHEME` | `atom-one-light` | Default highlight.js theme. |
 | `MCP_PRINTER_CODE_AUTO_LINE_NUMBERS` | `true` | Default for line numbers in code output. |
 | `MCP_PRINTER_CODE_FONT_SIZE` | `10pt` | Default code font size. |

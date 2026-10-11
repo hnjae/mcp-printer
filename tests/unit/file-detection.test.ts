@@ -42,15 +42,8 @@ describe("shouldRenderToPdf", () => {
 })
 
 describe("shouldRenderCode", () => {
-  it("should return false for excluded extensions", async () => {
-    // Test with extensions that might be in the exclude list
-    // The actual result depends on MCP_PRINTER_CODE_EXCLUDE_EXTENSIONS
-    const result = await shouldRenderCode("file.txt")
-    expect(typeof result).toBe("boolean")
-  })
-
   it("should return true for whitelisted code extensions when enabled", async () => {
-    // Whitelisted code extensions should return true (unless excluded or autoRenderCode is off)
+    // Whitelisted code extensions should return true (unless autoRenderCode is off)
     const jsResult = await shouldRenderCode("script.js")
     const pyResult = await shouldRenderCode("app.py")
     const tsResult = await shouldRenderCode("component.ts")

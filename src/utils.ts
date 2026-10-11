@@ -507,7 +507,7 @@ export type RenderMode = (typeof RENDER_MODES)[number]
  * - **`render` omitted, Markdown files** (`.md`, `.markdown`): Rendered to PDF with full
  *   formatting, unless auto-rendering is disabled
  * - **`render` omitted, code files**: Rendered to PDF with syntax highlighting, unless
- *   auto-rendering is disabled or the extension is excluded
+ *   auto-rendering is disabled
  * - **Other files** (PDF, text, images, etc.): Passed through without modification
  *
  * **Security:** All file paths are validated against allowed/denied paths before processing.

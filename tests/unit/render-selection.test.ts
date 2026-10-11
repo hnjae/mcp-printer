@@ -19,7 +19,6 @@ vi.mock("../../src/config.js", () => ({
     autoRenderMarkdown: true,
     autoRenderCode: true,
     fallbackOnRenderError: false,
-    code: { excludeExtensions: [] },
   },
   MARKDOWN_EXTENSIONS: ["md", "markdown"],
 }))

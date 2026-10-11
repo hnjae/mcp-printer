@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- **BREAKING**: `MCP_PRINTER_CODE_EXCLUDE_EXTENSIONS` is removed. Pass `render: none` for a file that should be printed as it is, or set `MCP_PRINTER_AUTO_RENDER_CODE=false` to turn automatic code rendering off
 - **BREAKING**: `print_file` and `get_page_meta` take one `render` parameter (`markdown`, `code` or `none`) in place of `force_markdown_render` and `force_code_render`. It applies whatever the file's extension; omit it to detect from the extension and the configuration. `render: markdown` now also renders a file without a Markdown extension
 
 ### Fixed

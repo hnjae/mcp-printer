@@ -58,11 +58,6 @@ export async function shouldRenderCode(filePath: string): Promise<boolean> {
     return false
   }
 
-  // Check if extension is in the exclusion list
-  if (ext && config.code.excludeExtensions.includes(ext)) {
-    return false
-  }
-
   // Check if language is recognized (whitelist check)
   const language = getLanguageFromExtension(filePath)
   if (language !== "") {

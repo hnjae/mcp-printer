@@ -17,7 +17,6 @@ const config = {
   autoRenderMarkdown: true,
   autoRenderCode: true,
   fallbackOnRenderError: false,
-  code: { excludeExtensions: [] },
   defaultPrinter: "",
   autoDuplex: false,
   defaultOptions: [] as string[],

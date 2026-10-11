@@ -78,10 +78,6 @@ export function registerPrinterTools(server: McpServer) {
           config.confirmIfOverPages > 0 ? String(config.confirmIfOverPages) : "0 (disabled)",
         MCP_PRINTER_ALLOWED_PATHS: config.allowedPaths.join(":"),
         MCP_PRINTER_DENIED_PATHS: config.deniedPaths.join(":"),
-        MCP_PRINTER_CODE_EXCLUDE_EXTENSIONS:
-          config.code.excludeExtensions.length > 0
-            ? config.code.excludeExtensions.join(", ")
-            : "(not set)",
         MCP_PRINTER_CODE_COLOR_SCHEME: config.code.colorScheme,
         MCP_PRINTER_CODE_AUTO_LINE_NUMBERS: config.code.autoLineNumbers ? "true" : "false",
         MCP_PRINTER_CODE_FONT_SIZE: config.code.fontSize,

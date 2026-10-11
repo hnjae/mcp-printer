@@ -20,7 +20,6 @@ vi.mock("../../src/config.js", () => ({
     autoRenderMarkdown: true,
     chromePath: "",
     code: {
-      excludeExtensions: [],
       colorScheme: "atom-one-light",
       autoLineNumbers: true,
       fontSize: "10pt",

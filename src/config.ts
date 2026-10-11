@@ -49,8 +49,6 @@ export interface Config {
   confirmIfOverPages: number
   /** Code rendering configuration */
   code: {
-    /** File extensions to exclude from code rendering. All enabled by default. */
-    excludeExtensions: string[]
     /** Highlight.js color scheme for syntax highlighting */
     colorScheme: string
     /** Whether to automatically show line numbers in code rendering (can be overridden per-call) */
@@ -197,11 +195,6 @@ export const config: Config = {
     10
   ),
   code: {
-    excludeExtensions: parseDelimitedString(
-      process.env.MCP_PRINTER_CODE_EXCLUDE_EXTENSIONS,
-      ",",
-      (s) => s.toLowerCase()
-    ),
     colorScheme: process.env.MCP_PRINTER_CODE_COLOR_SCHEME || DEFAULT_CODE_COLOR_SCHEME,
     autoLineNumbers: yn(process.env.MCP_PRINTER_CODE_AUTO_LINE_NUMBERS, {
       default: DEFAULT_CODE_AUTO_LINE_NUMBERS,

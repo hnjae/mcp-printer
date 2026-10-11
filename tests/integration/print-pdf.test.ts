@@ -12,7 +12,12 @@ import { dirname } from "node:path"
 
 // Mocks registered by other integration files persist for the whole run, so pin the config this file needs
 vi.mock("../../src/config.js", () => ({
-  config: { allowedPaths: [], deniedPaths: [], chromePath: "", chromeNoSandbox: false },
+  config: {
+    allowedPaths: [],
+    deniedPaths: [],
+    chromePath: "",
+    chromeNoSandbox: false,
+  },
   MARKDOWN_EXTENSIONS: ["md", "markdown"],
 }))
 

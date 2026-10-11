@@ -12,4 +12,4 @@ The check applies to `print_content`, `print_pdf` and `print_file`. It does not 
 
 ## get_page_meta
 
-`get_page_meta` takes a `files` array with the same file, rendering and `sides`/`options` parameters as `print_file`, and prints nothing. For each file it returns the page count, the sheet count and whether duplex was assumed. Markdown and code files are rendered first, as for printing. A file that is not a PDF and cannot be rendered to one fails. It is available when file tools are enabled.
+`get_page_meta` takes a `files` array with the same file, rendering and `sides`/`media`/`options` parameters as `print_file`, and prints nothing. For each file it returns the page count, the sheet count and whether duplex was assumed. Markdown and code files are rendered first, as for printing. A file that is not a PDF and cannot be rendered to one fails. It is available when file tools are enabled.

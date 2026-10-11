@@ -26,6 +26,8 @@ mkdirSync(join(dirname(fileURLToPath(import.meta.url)), "../tmp"), { recursive: 
 
 import { renderMarkdownToPdf } from "../../src/renderers/markdown.js"
 import { cleanupRenderedPdf, prepareFileForPrinting } from "../../src/utils.js"
+import { pageSizeForMedia } from "../../src/page-size.js"
+import { A4, B5, firstPageSize, isSize, LETTER } from "../helpers/pdf-page-size.js"
 
 describe("renderMarkdownToPdf", () => {
   it("should render a simple markdown file to PDF", async () => {
@@ -422,5 +424,46 @@ This has an empty front-matter block.`
     } finally {
       unlinkSync(testFile)
     }
+  })
+
+  describe("page size", () => {
+    async function renderedSize(markdown: string, media?: string) {
+      const { writeFileSync } = await import("node:fs")
+      const file = join(dirname(fileURLToPath(import.meta.url)), "../tmp/page-size.md")
+      writeFileSync(file, markdown, "utf-8")
+      try {
+        const pdf = await renderMarkdownToPdf(file, pageSizeForMedia(media))
+        try {
+          return firstPageSize(pdf)
+        } finally {
+          unlinkSync(pdf)
+        }
+      } finally {
+        unlinkSync(file)
+      }
+    }
+
+    it("uses A4 unless told otherwise", async () => {
+      expect(isSize(await renderedSize("# Hello\n"), A4)).toBe(true)
+    })
+
+    it("uses the size of the call", async () => {
+      expect(isSize(await renderedSize("# Hello\n", "jis_b5_182x257mm"), B5)).toBe(true)
+    })
+
+    it("keeps the size of the call when the document sets other chrome options", async () => {
+      const size = await renderedSize(
+        "---\nchrome:\n  displayHeaderFooter: false\n---\n\n# Hello\n",
+        "jis_b5_182x257mm"
+      )
+
+      expect(isSize(size, B5)).toBe(true)
+    })
+
+    it("lets the document choose its own page size", async () => {
+      const size = await renderedSize("---\nchrome:\n  format: Letter\n---\n\n# Hello\n")
+
+      expect(isSize(size, LETTER)).toBe(true)
+    })
   })
 })

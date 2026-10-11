@@ -16,6 +16,7 @@ import { Notebook } from "crossnote"
 import matter from "gray-matter"
 import { encode } from "he"
 import { config } from "../config.js"
+import { A4, type PageSize } from "../page-size.js"
 import { assertNoFrontMatterEngine } from "../untrusted-content.js"
 import { findChrome, getChromeSandboxArgs } from "../utils.js"
 
@@ -62,30 +63,38 @@ function getPageNumberConfig(filename: string) {
 }
 
 /**
- * Injects page numbering configuration into markdown content.
+ * Injects the page size and page numbering into markdown content's `chrome` front matter.
  * Properly merges with existing front-matter if present.
  * Uses gray-matter's stringify for robust formatting.
+ *
+ * A document that sets its own `chrome` (or `puppeteer`) options keeps them, including the page
+ * numbering it chose; the page size of the call is added only if it names no size of its own.
+ *
  * @param content - Original markdown content
  * @param filename - Name of the file being rendered (displayed in footer)
- * @returns Markdown content with page numbering front-matter added/merged
+ * @param pageSize - The configured page size
+ * @returns Markdown content with the page size and page numbering added/merged
  */
-function injectPageNumbering(content: string, filename: string): string {
+function injectPageNumbering(content: string, filename: string, pageSize: PageSize): string {
   const { data, content: body } = matter(content)
+  const size = { width: `${pageSize.widthMm}mm`, height: `${pageSize.heightMm}mm` }
 
-  // Check if user already has chrome or puppeteer config in their frontmatter -
-  // respect their settings
-  if (data.chrome || data.puppeteer) {
-    return content // Don't modify user's existing config
+  const ownKey = data.chrome ? "chrome" : data.puppeteer ? "puppeteer" : undefined
+  if (!ownKey) {
+    // Merge in the chrome config with existing front-matter (even if empty)
+    return matter.stringify(body, {
+      ...data,
+      chrome: { ...getPageNumberConfig(filename), ...size },
+    })
   }
 
-  // Merge in the chrome config with existing front-matter (even if empty)
-  const mergedFrontMatter = {
-    ...data,
-    chrome: getPageNumberConfig(filename),
+  const own = data[ownKey]
+  const namesSize =
+    typeof own !== "object" || own === null || "format" in own || "width" in own || "height" in own
+  if (namesSize) {
+    return content
   }
-
-  // Use gray-matter's stringify to properly format the document
-  return matter.stringify(body, mergedFrontMatter)
+  return matter.stringify(body, { ...data, [ownKey]: { ...size, ...own } })
 }
 
 /**
@@ -95,16 +104,20 @@ function injectPageNumbering(content: string, filename: string): string {
  * Y) to the footer of each page.
  *
  * @param filePath - Path to the markdown file to render
+ * @param pageSize - Page size to render on (default: A4)
  * @returns Path to the generated temporary PDF file
  * @throws {Error} If Chrome is not found or rendering fails
  */
-export async function renderMarkdownToPdf(filePath: string): Promise<string> {
+export async function renderMarkdownToPdf(
+  filePath: string,
+  pageSize: PageSize = A4
+): Promise<string> {
   // Read the original markdown content
   const originalContent = readFileSync(filePath, "utf-8")
   assertNoFrontMatterEngine(originalContent)
 
   // Inject page numbering configuration if not already present
-  const contentWithPageNumbers = injectPageNumbering(originalContent, basename(filePath))
+  const contentWithPageNumbers = injectPageNumbering(originalContent, basename(filePath), pageSize)
 
   // Create a temporary directory for the modified markdown file
   const tempDir = mkdtempSync(join(tmpdir(), "mcp-printer-markdown-"))

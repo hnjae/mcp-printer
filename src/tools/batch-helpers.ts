@@ -9,6 +9,7 @@
 
 import { config } from "../config.js"
 import { cancelAllJobs, cancelJob } from "../cups.js"
+import { pageSizeForMedia } from "../page-size.js"
 import {
   type ContentOptions,
   calculatePhysicalSheets,
@@ -187,6 +188,7 @@ export async function handlePrint(spec: FilePrintSpec): Promise<PrintResult> {
     const { actualFilePath, renderedPdf, renderType } = await prepareFileForPrinting({
       filePath: file_path,
       render,
+      pageSize: pageSizeForMedia(media),
     })
 
     try {
@@ -250,6 +252,7 @@ export async function handlePrintContent(spec: ContentPrintSpec): Promise<PrintR
         content: content.content,
         format: content.format,
         language: content.language,
+        pageSize: pageSizeForMedia(media),
       },
       ({ actualFilePath, renderType }) =>
         printPreparedFile(label, actualFilePath, renderType, {
@@ -383,7 +386,7 @@ export function formatPrintResults(results: PrintResult[]): {
 /**
  * Specification for a single file page metadata operation in a batch.
  */
-export interface FilePageMetaSpec extends Pick<PrintOptions, "options" | "sides"> {
+export interface FilePageMetaSpec extends Pick<PrintOptions, "options" | "sides" | "media"> {
   file_path: string
   render?: RenderMode
 }
@@ -422,13 +425,14 @@ export interface PageMetaResult {
  * - Sheets is the physical paper count (pages/2 for duplex)
  */
 export async function handlePageMeta(spec: FilePageMetaSpec): Promise<PageMetaResult> {
-  const { file_path, options, sides, render } = spec
+  const { file_path, options, sides, media, render } = spec
 
   try {
     // Use shared rendering function
     const { actualFilePath, renderedPdf, renderType } = await prepareFileForPrinting({
       filePath: file_path,
       render,
+      pageSize: pageSizeForMedia(media),
     })
 
     try {

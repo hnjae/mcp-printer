@@ -17,6 +17,7 @@ import { PDFParse } from "pdf-parse"
 import { config, MARKDOWN_EXTENSIONS, type MarkdownExtension } from "./config.js"
 import { getDefaultPrinter, readPrinterOptions, submitJob } from "./cups.js"
 import { validateFilePath } from "./file-security.js"
+import { A4, type PageSize, withPageSize } from "./page-size.js"
 import {
   JIS_SIZES,
   type ORIENTATIONS,
@@ -214,14 +215,15 @@ export function getChromeSandboxArgs(): string[] {
  * @param options - Optional configuration
  * @param options.chromeFlags - Additional Chrome flags (e.g., ['--disable-javascript'])
  * @param options.tempDirPrefix - Prefix for temp directory name (default: 'mcp-printer-')
+ * @param options.pageSize - Page size to render on (default: A4)
  * @returns Path to the generated temporary PDF file
  * @throws {Error} If Chrome is not found or PDF generation fails
  */
 export async function convertHtmlToPdf(
   htmlContent: string,
-  options: { chromeFlags?: string[]; tempDirPrefix?: string } = {}
+  options: { chromeFlags?: string[]; tempDirPrefix?: string; pageSize?: PageSize } = {}
 ): Promise<string> {
-  const { chromeFlags = [], tempDirPrefix = "mcp-printer-" } = options
+  const { chromeFlags = [], tempDirPrefix = "mcp-printer-", pageSize = A4 } = options
 
   // Find Chrome/Chromium executable
   const chromePath = await findChrome()
@@ -233,7 +235,7 @@ export async function convertHtmlToPdf(
 
   try {
     // Write HTML to temp file
-    writeFileSync(tmpHtml, htmlContent, "utf-8")
+    writeFileSync(tmpHtml, withPageSize(htmlContent, pageSize), "utf-8")
 
     // Convert HTML to PDF with Chrome headless
     try {
@@ -477,6 +479,8 @@ export interface RenderOptions {
   filePath: string
   /** How to render the file; omitted means detect from the file and the configuration */
   render?: RenderMode
+  /** Page size of a rendered document (default: A4) */
+  pageSize?: PageSize
 }
 
 export const RENDER_MODES = ["markdown", "code", "none"] as const
@@ -506,6 +510,7 @@ export type RenderMode = (typeof RENDER_MODES)[number]
  * @param options - File preparation options including path and rendering preferences
  * @param options.filePath - Absolute or relative path to the file to prepare
  * @param options.render - Explicitly choose how to render the file
+ * @param options.pageSize - Page size of a rendered document (default: A4)
  *
  * @returns Promise resolving to a RenderResult object
  * @returns result.actualFilePath - The file path to actually print (original or rendered PDF)
@@ -547,11 +552,11 @@ export async function prepareFileForPrinting(options: RenderOptions): Promise<Re
         : "none")
 
   if (render === "markdown") {
-    renderedPdf = await renderMarkdownToPdf(options.filePath)
+    renderedPdf = await renderMarkdownToPdf(options.filePath, options.pageSize)
     actualFilePath = renderedPdf
     renderType = "markdown → PDF"
   } else if (render === "code") {
-    renderedPdf = await renderCodeToPdf(options.filePath)
+    renderedPdf = await renderCodeToPdf(options.filePath, options.pageSize)
     actualFilePath = renderedPdf
     renderType = "code → PDF (syntax highlighted)"
   }
@@ -602,6 +607,8 @@ export interface ContentOptions {
   format: ContentFormat
   /** File extension or language id selecting syntax highlighting for format "code" (default: "txt") */
   language?: string
+  /** Page size of the rendered document (default: A4) */
+  pageSize?: PageSize
 }
 
 /**
@@ -632,11 +639,13 @@ export async function withPreparedContent<T>(
       case "markdown": {
         const file = join(tempDir, "document.md")
         writeFileSync(file, sanitizeUntrustedMarkdown(options.content), "utf-8")
-        renderedPdf = await renderMarkdownToPdf(file)
+        renderedPdf = await renderMarkdownToPdf(file, options.pageSize)
         return await use({ actualFilePath: renderedPdf, renderType: "markdown → PDF" })
       }
       case "html": {
-        renderedPdf = await convertHtmlToPdf(hardenHtml(options.content))
+        renderedPdf = await convertHtmlToPdf(hardenHtml(options.content), {
+          pageSize: options.pageSize,
+        })
         return await use({ actualFilePath: renderedPdf, renderType: "HTML → PDF" })
       }
       case "code": {
@@ -648,7 +657,7 @@ export async function withPreparedContent<T>(
         }
         const file = join(tempDir, `code.${language}`)
         writeFileSync(file, options.content, "utf-8")
-        renderedPdf = await renderCodeToPdf(file)
+        renderedPdf = await renderCodeToPdf(file, options.pageSize)
         return await use({
           actualFilePath: renderedPdf,
           renderType: "code → PDF (syntax highlighted)",
@@ -659,7 +668,7 @@ export async function withPreparedContent<T>(
           '<!DOCTYPE html><html><head><meta charset="utf-8"><style>' +
           "pre{font:10pt/1.4 monospace;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}" +
           `</style></head><body><pre>${encode(options.content)}</pre></body></html>`
-        renderedPdf = await convertHtmlToPdf(html)
+        renderedPdf = await convertHtmlToPdf(html, { pageSize: options.pageSize })
         return await use({ actualFilePath: renderedPdf, renderType: "text → PDF" })
       }
       default: {

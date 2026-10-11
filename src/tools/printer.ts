@@ -46,6 +46,7 @@ export function registerPrinterTools(server: McpServer) {
         MCP_PRINTER_DEFAULT_OPTIONS:
           config.defaultOptions.length > 0 ? config.defaultOptions.join(" ") : "(not set)",
         MCP_PRINTER_CHROME_PATH: config.chromePath || "(auto-detected)",
+        MCP_PRINTER_CHROME_NO_SANDBOX: config.chromeNoSandbox ? "true" : "false",
         MCP_PRINTER_AUTO_RENDER_MARKDOWN: config.autoRenderMarkdown ? "true" : "false",
         MCP_PRINTER_AUTO_RENDER_CODE: config.autoRenderCode ? "true" : "false",
         MCP_PRINTER_ENABLE_MANAGEMENT: config.enableManagement ? "true" : "false",

@@ -25,6 +25,8 @@ export interface Config {
   defaultOptions: string[]
   /** Path to Chrome/Chromium executable for PDF rendering */
   chromePath: string
+  /** Launch Chrome with --no-sandbox (required when running as root in a container) */
+  chromeNoSandbox: boolean
   /** Automatically render markdown files to PDF (can be overridden per-call) */
   autoRenderMarkdown: boolean
   /** Automatically render code files to PDF with syntax highlighting (can be overridden per-call) */
@@ -79,6 +81,7 @@ const DEFAULT_HTTP_PORT = 3000
 const DEFAULT_PRINTER = ""
 const DEFAULT_AUTO_DUPLEX = false
 const DEFAULT_CHROME_PATH = ""
+const DEFAULT_CHROME_NO_SANDBOX = false
 const DEFAULT_AUTO_RENDER_MARKDOWN = true
 const DEFAULT_AUTO_RENDER_CODE = true
 const DEFAULT_ENABLE_MANAGEMENT = false
@@ -161,6 +164,9 @@ export const config: Config = {
   autoDuplex: yn(process.env.MCP_PRINTER_AUTO_DUPLEX, { default: DEFAULT_AUTO_DUPLEX }),
   defaultOptions: parseDelimitedString(process.env.MCP_PRINTER_DEFAULT_OPTIONS, /\s+/),
   chromePath: process.env.MCP_PRINTER_CHROME_PATH || DEFAULT_CHROME_PATH,
+  chromeNoSandbox: yn(process.env.MCP_PRINTER_CHROME_NO_SANDBOX, {
+    default: DEFAULT_CHROME_NO_SANDBOX,
+  }),
   autoRenderMarkdown: yn(process.env.MCP_PRINTER_AUTO_RENDER_MARKDOWN, {
     default: DEFAULT_AUTO_RENDER_MARKDOWN,
   }),

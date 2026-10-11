@@ -17,7 +17,7 @@ import matter from "gray-matter"
 import { encode } from "he"
 import { config } from "../config.js"
 import { assertNoFrontMatterEngine } from "../untrusted-content.js"
-import { findChrome } from "../utils.js"
+import { findChrome, getChromeSandboxArgs } from "../utils.js"
 
 /**
  * Page numbering configuration function for Puppeteer PDF generation.
@@ -141,6 +141,7 @@ export async function renderMarkdownToPdf(filePath: string): Promise<string> {
 
         // Chrome configuration
         chromePath,
+        puppeteerArgs: getChromeSandboxArgs(),
 
         // Security: disable script execution
         enableScriptExecution: false,

@@ -83,6 +83,7 @@ All configuration is optional. Add an `env` object to customize behavior:
 | `MCP_PRINTER_AUTO_DUPLEX` | `false` | Set to `"true"` to automatically print double-sided by default (can be overridden per-call) |
 | `MCP_PRINTER_DEFAULT_OPTIONS` | *(none)* | Additional CUPS options (e.g., `"fit-to-page"`, `"landscape"`) |
 | `MCP_PRINTER_CHROME_PATH` | *(auto-detected)* | Path to Chrome/Chromium for PDF rendering (override if auto-detection fails) |
+| `MCP_PRINTER_CHROME_NO_SANDBOX` | `false` | Set to `"true"` to start Chrome with `--no-sandbox`. Required when running as root inside a container; it removes Chrome's own sandbox, so rely on the container for isolation |
 | `MCP_PRINTER_AUTO_RENDER_MARKDOWN` | `true` | Automatically render markdown files (`.md`, `.markdown`) to PDF (can be overridden with `force_markdown_render`) |
 | `MCP_PRINTER_AUTO_RENDER_CODE` | `true` | Automatically render code files to PDF with syntax highlighting (can be overridden with `force_code_render`) |
 | `MCP_PRINTER_ENABLE_MANAGEMENT` | `false` | Management operations are **disabled by default** for security. Set to `"true"` to enable `set_default_printer` and `cancel_print_job` tools |
@@ -137,6 +138,14 @@ Set `MCP_PRINTER_TRANSPORT=http` to serve MCP over Streamable HTTP at `POST /mcp
 ```sh
 MCP_PRINTER_TRANSPORT=http MCP_PRINTER_HTTP_HOST=127.0.0.1 MCP_PRINTER_HTTP_PORT=3000 bun dist/index.js
 ```
+
+### Running in a container
+
+- Install the CUPS client commands (`cups-client`), Chrome or Chromium, and fonts for the languages you print (for example CJK).
+- Mount the host CUPS socket at `/run/cups/cups.sock`. Rootless podman also needs access to the socket, for example `--userns=keep-id` or a matching group, and `:z` on SELinux hosts.
+- Set `MCP_PRINTER_CHROME_NO_SANDBOX=true` when the process runs as root, and give Chrome enough shared memory (`--shm-size=1g`).
+- Set `MCP_PRINTER_ALLOWED_PATHS` for the container filesystem if you use `print_file`. `/root` and `/tmp` are always denied, so mount documents elsewhere. Mount only directories you are willing to print: markdown content can still embed image files readable by the server.
+- `set_default_printer` writes the container user's CUPS settings, not the host's.
 
 ## Available Tools
 

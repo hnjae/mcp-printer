@@ -189,6 +189,16 @@ export async function findChrome(): Promise<string> {
 }
 
 /**
+ * Chrome arguments that follow from configuration: --no-sandbox when
+ * MCP_PRINTER_CHROME_NO_SANDBOX is enabled (needed for root inside containers).
+ *
+ * @returns Arguments to pass to every Chrome launch
+ */
+export function getChromeSandboxArgs(): string[] {
+  return config.chromeNoSandbox ? ["--no-sandbox"] : []
+}
+
+/**
  * Converts HTML content to PDF using Chrome headless.
  * Handles Chrome detection, temp file creation, execution, error handling, and cleanup.
  *
@@ -222,6 +232,7 @@ export async function convertHtmlToPdf(
       await execa(chromePath, [
         "--headless",
         "--disable-gpu",
+        ...getChromeSandboxArgs(),
         ...chromeFlags,
         `--print-to-pdf=${tmpPdf}`,
         tmpHtml,

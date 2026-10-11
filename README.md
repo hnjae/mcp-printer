@@ -15,6 +15,7 @@ In the era of AI-assisted development, we're generating more documentation, spec
 - [Features](#features)
 - [Installation](#installation)
 - [Configuration](#configuration)
+- [Remote Access (HTTP)](#remote-access-http)
 - [Available Tools](#available-tools)
 - [Available Prompts](#available-prompts)
 - [Usage Examples](#usage-examples)
@@ -75,13 +76,18 @@ All configuration is optional. Add an `env` object to customize behavior:
 
 | Variable | Default | Description |
 | -------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `MCP_PRINTER_TRANSPORT` | `stdio` | `"stdio"` (spawned by the MCP client) or `"http"` (Streamable HTTP server, see [Remote Access](#remote-access-http)) |
+| `MCP_PRINTER_HTTP_HOST` | `127.0.0.1` | Interface the HTTP transport binds to (only with `MCP_PRINTER_TRANSPORT=http`) |
+| `MCP_PRINTER_HTTP_PORT` | `3000` | Port the HTTP transport listens on (only with `MCP_PRINTER_TRANSPORT=http`) |
 | `MCP_PRINTER_DEFAULT_PRINTER` | *(none)* | Default printer to use when none specified (falls back to system default) |
 | `MCP_PRINTER_AUTO_DUPLEX` | `false` | Set to `"true"` to automatically print double-sided by default (can be overridden per-call) |
 | `MCP_PRINTER_DEFAULT_OPTIONS` | *(none)* | Additional CUPS options (e.g., `"fit-to-page"`, `"landscape"`) |
 | `MCP_PRINTER_CHROME_PATH` | *(auto-detected)* | Path to Chrome/Chromium for PDF rendering (override if auto-detection fails) |
+| `MCP_PRINTER_CHROME_NO_SANDBOX` | `false` | Set to `"true"` to start Chrome with `--no-sandbox`. Required when running as root inside a container; it removes Chrome's own sandbox, so rely on the container for isolation |
 | `MCP_PRINTER_AUTO_RENDER_MARKDOWN` | `true` | Automatically render markdown files (`.md`, `.markdown`) to PDF (can be overridden with `force_markdown_render`) |
 | `MCP_PRINTER_AUTO_RENDER_CODE` | `true` | Automatically render code files to PDF with syntax highlighting (can be overridden with `force_code_render`) |
 | `MCP_PRINTER_ENABLE_MANAGEMENT` | `false` | Management operations are **disabled by default** for security. Set to `"true"` to enable `set_default_printer` and `cancel_print_job` tools |
+| `MCP_PRINTER_ENABLE_FILE_TOOLS` | `true` | Set to `"false"` to hide the tools that read files from paths on the server (`print_file`, `get_page_meta`) and the `/print-changed` prompt, leaving `print_content` and `print_pdf`. The container image sets it to `false` |
 | `MCP_PRINTER_ENABLE_PROMPTS` | `true` | Enable prompts (workflow templates). Set to `"false"` to disable prompt registration if you don't want prompts in your MCP client |
 | `MCP_PRINTER_ALLOWED_PATHS` | `~/Documents`, `~/Downloads`, `~/Desktop` | Colon-separated paths allowed for printing. **Overrides** default allowed directories when set (e.g., `"$HOME/Documents:$HOME/src"`) |
 | `MCP_PRINTER_DENIED_PATHS` | *(system dirs)* | Colon-separated paths denied for printing. **Merged with** system directory defaults like `/etc`, `/var`, etc. (e.g., `"/home/user/private"`) |
@@ -124,6 +130,39 @@ All configuration is optional. Add an `env` object to customize behavior:
 
 User-specified options in prompts always override these defaults.
 
+## Remote Access (HTTP)
+
+Set `MCP_PRINTER_TRANSPORT=http` to serve MCP over Streamable HTTP at `POST /mcp` instead of stdio. The server is stateless and answers with plain JSON.
+
+> **⚠️ The HTTP transport has no authentication.** Anyone who can reach the port can print. Keep it on loopback or an internal network and put an authenticating reverse proxy or gateway in front of it. Do not bind it to a public interface.
+
+```sh
+MCP_PRINTER_TRANSPORT=http MCP_PRINTER_HTTP_HOST=127.0.0.1 MCP_PRINTER_HTTP_PORT=3000 bun dist/index.js
+```
+
+### Running in a container
+
+The `Containerfile` builds an image with the CUPS client commands, Chromium and CJK fonts, serving MCP over HTTP on port 3000 as the non-root `bun` user (about 2 GB).
+
+```sh
+podman build -t mcp-printer -f Containerfile .
+
+podman run -d --name mcp-printer \
+    --userns=keep-id:uid=1000,gid=1000 \
+    --shm-size=1g \
+    -v /run/cups/cups.sock:/run/cups/cups.sock \
+    -v "$HOME/Documents/print:/home/bun/Documents:ro" \
+    -p 127.0.0.1:3000:3000 \
+    mcp-printer
+```
+
+- The server has no authentication: publish the port on loopback only, or attach the container to an internal network that only your authenticating proxy can reach.
+- Mount the host CUPS socket at `/run/cups/cups.sock`. Rootless podman maps your host user to the image's `bun` user (uid 1000) with `--userns=keep-id:uid=1000,gid=1000`; add `:z` to the mounts on SELinux hosts.
+- Chrome keeps its sandbox as the non-root user. If Chrome fails to start, or you run the container as root, set `MCP_PRINTER_CHROME_NO_SANDBOX=true`; this removes Chrome's own sandbox, so rely on the container for isolation. Give Chrome enough shared memory (`--shm-size=1g`).
+- The image sets `MCP_PRINTER_ENABLE_FILE_TOOLS=false`, so only `print_content` and `print_pdf` are offered. To use `print_file`, set it to `true` and mount documents; `print_file` reads from `/home/bun/Documents` by default, and `MCP_PRINTER_ALLOWED_PATHS` selects other mount points. `/root` and `/tmp` are always denied. Mount only directories you are willing to print: markdown content can still embed image files readable by the server.
+- CUPS records print jobs from the container as owned by `unknown`. That does not affect printing, but virtual printers that write per-user output, such as `cups-pdf`, then have nowhere to write.
+- `set_default_printer` writes the container user's CUPS settings, not the host's.
+
 ## Available Tools
 
 ### `get_config`
@@ -161,7 +200,7 @@ AI: Let me check what printers you have...
 
 ### `print_file`
 
-Print one or more files to a specified printer. Supports batch operations to reduce tool call costs.
+Print one or more files to a specified printer. Supports batch operations to reduce tool call costs. Not offered when `MCP_PRINTER_ENABLE_FILE_TOOLS=false`.
 
 **Parameters:**
 
@@ -214,9 +253,36 @@ Print Results: 3/3 successful
   Printed to HP_LaserJet_4001 (rendered: markdown → PDF)
 ```
 
+### `print_content`
+
+Print a document whose text the AI provides, without a file on the server. Intended for remote clients (see [Remote Access](#remote-access-http)) that cannot place files on the printer host.
+
+**Parameters:**
+
+- `content` (required) - The document text (at most 1,000,000 characters)
+- `format` (required) - `markdown` (rendered to PDF with tables, math and diagrams), `html` (rendered to PDF), `code` (rendered with syntax highlighting) or `text` (printed as monospace text, not interpreted)
+- `language` (optional) - For `code`: file extension such as `py` or `ts` (default: `txt`)
+- `printer`, `copies`, `options`, `skip_confirmation` (optional) - Same as `print_file`
+- `line_numbers`, `color_scheme`, `font_size`, `line_spacing` (optional) - Same as `print_file`, for `code`
+
+Copy limits (`MCP_PRINTER_MAX_COPIES`) and the page count confirmation apply as for `print_file`.
+
+**Content restrictions:** The content comes from the client, so the renderers are hardened against reading or writing files through it. `html` must be self-contained: inline CSS and `data:` images and fonts only, with no scripts, frames, `<meta>` tags or external resources. In `markdown`, file-including syntax (`@import`, `![[file]]`, standalone image lines), embedding tags (`<iframe>`, `<object>`, ...) and `chrome:`/`puppeteer:` front matter are neutralized, and front matter with a language specifier such as `---js` is rejected. Markdown can still embed image files that the server process can read (for example `![x](../photo.png)` or `<img src="file://...">`), so run the server where only intended paths exist, such as a container that mounts only the directories you want.
+
+### `print_pdf`
+
+Print a PDF whose bytes the client sends as base64, for PDFs that exist only on the client side. Prefer `print_content` when the document can be sent as markdown or HTML: the AI has to write out the whole base64 text, so this is only practical for small PDFs.
+
+**Parameters:**
+
+- `pdf_base64` (required) - The PDF file contents encoded as base64 (at most 5 MB decoded)
+- `printer`, `copies`, `options`, `skip_confirmation` (optional) - Same as `print_file`
+
+The data must start with `%PDF-` and its page count must be readable; otherwise it is rejected. Copy limits and the page count confirmation apply as for `print_file`.
+
 ### `get_page_meta`
 
-Get page count and physical sheet information for one or more files before printing. This tool pre-renders files (markdown, code) if needed and returns page metadata. Supports batch operations.
+Get page count and physical sheet information for one or more files before printing. This tool pre-renders files (markdown, code) if needed and returns page metadata. Supports batch operations. Not offered when `MCP_PRINTER_ENABLE_FILE_TOOLS=false`.
 
 **Parameters:**
 

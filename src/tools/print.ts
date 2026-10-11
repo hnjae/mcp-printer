@@ -3,18 +3,22 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 
 /**
- * @fileoverview File printing tool registration.
- * Registers print_file and get_page_meta tools with the MCP server.
+ * @fileoverview Print tool registration.
+ * Registers print_content and print_pdf (document sent by the client) and print_file and
+ * get_page_meta (document read from a path on the server) with the MCP server.
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
+import { CONTENT_FORMATS, MAX_PDF_BYTES } from "../utils.js"
 import {
   checkBatchSizeLimit,
   formatPageMetaResults,
   formatPrintResults,
   handlePageMeta,
   handlePrint,
+  handlePrintContent,
+  handlePrintPdf,
   type PageMetaResult,
   type PrintResult,
 } from "./batch-helpers.js"
@@ -56,13 +60,119 @@ const renderingParametersSchema = {
 }
 
 /**
- * Registers the print_file tool with the MCP server.
- * Supports automatic rendering of markdown and code files to PDF before printing.
- * Accepts an array of files to print in batch operations.
- *
- * @param server - The McpServer instance to register the tool with
+ * Maximum length of the content accepted by print_content, in characters.
  */
-export function registerPrintTools(server: McpServer) {
+const MAX_CONTENT_LENGTH = 1_000_000
+
+/**
+ * Maximum length of the base64 text accepted by print_pdf (base64 encodes 3 bytes in 4 characters).
+ */
+const MAX_PDF_BASE64_LENGTH = Math.ceil((MAX_PDF_BYTES * 4) / 3) + 4
+
+/**
+ * Registers the tools that receive the document from the client: print_content and print_pdf.
+ *
+ * @param server - The McpServer instance to register the tools with
+ */
+export function registerContentPrintTools(server: McpServer) {
+  // Register print_content tool
+  server.registerTool(
+    "print_content",
+    {
+      title: "Print Content",
+      description:
+        "Print a document whose text you provide, without needing a file on the server. Use it to print text you wrote: markdown is rendered to PDF with formatting (tables, math, mermaid diagrams), html is rendered as a self-contained page (inline CSS and data: images only; no scripts, no external or local resources), code is rendered with syntax highlighting, and text is printed as plain text.",
+      inputSchema: {
+        content: z.string().min(1).max(MAX_CONTENT_LENGTH).describe("The document text to print"),
+        format: z
+          .enum(CONTENT_FORMATS)
+          .describe("How to interpret the content: markdown, html, code or text"),
+        language: z
+          .string()
+          .optional()
+          .describe(
+            "For format 'code': file extension or language id for syntax highlighting (e.g., 'py', 'ts'). Defaults to 'txt'."
+          ),
+        printer: z
+          .string()
+          .optional()
+          .describe(
+            "Printer name (use list_printers to see available printers). Optional if default printer is set."
+          ),
+        copies: z
+          .number()
+          .min(1)
+          .optional()
+          .default(1)
+          .describe("Number of copies to print (default: 1)"),
+        options: z
+          .string()
+          .optional()
+          .describe("Additional CUPS options (e.g., 'landscape', 'sides=two-sided-long-edge')"),
+        skip_confirmation: z
+          .boolean()
+          .optional()
+          .describe(
+            "Skip page count confirmation check (bypasses MCP_PRINTER_CONFIRM_IF_OVER_PAGES threshold)"
+          ),
+        line_numbers: renderingParametersSchema.line_numbers,
+        color_scheme: renderingParametersSchema.color_scheme,
+        font_size: renderingParametersSchema.font_size,
+        line_spacing: renderingParametersSchema.line_spacing,
+      },
+    },
+    async (spec) => formatPrintResults([await handlePrintContent(spec)])
+  )
+
+  // Register print_pdf tool
+  server.registerTool(
+    "print_pdf",
+    {
+      title: "Print PDF",
+      description:
+        "Print a PDF file whose bytes you provide as base64, for PDFs that exist only on your side and not on the server. Only practical for small PDFs because you must write out the whole base64 text; prefer print_content when you can supply the document as markdown or html.",
+      inputSchema: {
+        pdf_base64: z
+          .string()
+          .min(1)
+          .max(MAX_PDF_BASE64_LENGTH)
+          .describe("The PDF file contents encoded as base64"),
+        printer: z
+          .string()
+          .optional()
+          .describe(
+            "Printer name (use list_printers to see available printers). Optional if default printer is set."
+          ),
+        copies: z
+          .number()
+          .min(1)
+          .optional()
+          .default(1)
+          .describe("Number of copies to print (default: 1)"),
+        options: z
+          .string()
+          .optional()
+          .describe("Additional CUPS options (e.g., 'landscape', 'sides=two-sided-long-edge')"),
+        skip_confirmation: z
+          .boolean()
+          .optional()
+          .describe(
+            "Skip page count confirmation check (bypasses MCP_PRINTER_CONFIRM_IF_OVER_PAGES threshold)"
+          ),
+      },
+    },
+    async (spec) => formatPrintResults([await handlePrintPdf(spec)])
+  )
+}
+
+/**
+ * Registers the tools that read documents from paths on the server: print_file and get_page_meta.
+ * print_file supports automatic rendering of markdown and code files to PDF before printing and
+ * accepts an array of files to print in batch operations.
+ *
+ * @param server - The McpServer instance to register the tools with
+ */
+export function registerFilePrintTools(server: McpServer) {
   server.registerTool(
     "print_file",
     {

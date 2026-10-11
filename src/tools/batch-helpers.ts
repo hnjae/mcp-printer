@@ -10,6 +10,7 @@
 import { execa } from "execa"
 import { config } from "../config.js"
 import {
+  type ContentOptions,
   calculatePhysicalSheets,
   cleanupRenderedPdf,
   executePrintJob,
@@ -17,6 +18,8 @@ import {
   isDuplexEnabled,
   prepareFileForPrinting,
   shouldTriggerConfirmation,
+  withPreparedContent,
+  withPreparedPdf,
 } from "../utils.js"
 
 /**
@@ -91,6 +94,68 @@ export interface PrintResult {
 }
 
 /**
+ * Print settings shared by every print operation.
+ */
+interface PrintTarget {
+  printer?: string
+  copies?: number
+  options?: string
+  skip_confirmation?: boolean
+}
+
+/**
+ * Check the page count threshold and send a ready-to-print file to the printer.
+ * Shared by print_file and print_content. Print job failures propagate to the caller.
+ *
+ * @param label - Source description shown in the result (file path or content description)
+ * @param actualFilePath - File to send to the printer (original or rendered PDF)
+ * @param renderType - Description of rendering performed (empty if none)
+ * @param target - Printer, copies, CUPS options and confirmation override
+ * @returns PrintResult object with success status and details
+ */
+async function printPreparedFile(
+  label: string,
+  actualFilePath: string,
+  renderType: string,
+  { printer, copies = 1, options, skip_confirmation }: PrintTarget
+): Promise<PrintResult> {
+  // Check if we need to trigger page count confirmation
+  // Try to parse as PDF - if it works, do the page count check. If it fails, it's not a PDF.
+  if (!skip_confirmation && config.confirmIfOverPages > 0) {
+    try {
+      const pdfPages = await getPdfPageCount(actualFilePath)
+      const isDuplex = isDuplexEnabled(options)
+      const physicalSheets = calculatePhysicalSheets(pdfPages, isDuplex)
+
+      // If exceeds threshold, return error indicating confirmation needed
+      if (shouldTriggerConfirmation(physicalSheets)) {
+        return {
+          success: false,
+          file_path: label,
+          message: `Confirmation required: ${pdfPages} pages (${physicalSheets} sheets${formatDuplexInfo(isDuplex)})`,
+          error: ERROR_CODES.PAGE_COUNT_CONFIRMATION_REQUIRED,
+          renderType,
+        }
+      }
+    } catch {
+      // Not a PDF or failed to parse - just continue with normal print
+      // (This is expected for plain text files, images, etc.)
+    }
+  }
+
+  // Execute print job
+  const { printerName } = await executePrintJob(actualFilePath, printer, copies, options)
+
+  const copiesInfo = copies > 1 ? ` × ${copies} copies` : ""
+  return {
+    success: true,
+    file_path: label,
+    message: `Printed to ${printerName}${copiesInfo}${formatRenderInfo(renderType)}`,
+    renderType,
+  }
+}
+
+/**
  * Handle a file print operation within a batch.
  *
  * This function handles the complete print workflow for one file:
@@ -136,40 +201,12 @@ export async function handlePrint(spec: FilePrintSpec): Promise<PrintResult> {
     })
 
     try {
-      // Check if we need to trigger page count confirmation
-      // Try to parse as PDF - if it works, do the page count check. If it fails, it's not a PDF.
-      if (!skip_confirmation && config.confirmIfOverPages > 0) {
-        try {
-          const pdfPages = await getPdfPageCount(actualFilePath)
-          const isDuplex = isDuplexEnabled(options)
-          const physicalSheets = calculatePhysicalSheets(pdfPages, isDuplex)
-
-          // If exceeds threshold, return error indicating confirmation needed
-          if (shouldTriggerConfirmation(physicalSheets)) {
-            return {
-              success: false,
-              file_path,
-              message: `Confirmation required: ${pdfPages} pages (${physicalSheets} sheets${formatDuplexInfo(isDuplex)})`,
-              error: ERROR_CODES.PAGE_COUNT_CONFIRMATION_REQUIRED,
-              renderType,
-            }
-          }
-        } catch {
-          // Not a PDF or failed to parse - just continue with normal print
-          // (This is expected for plain text files, images, etc.)
-        }
-      }
-
-      // Execute print job
-      const { printerName } = await executePrintJob(actualFilePath, printer, copies, options)
-
-      const copiesInfo = copies > 1 ? ` × ${copies} copies` : ""
-      return {
-        success: true,
-        file_path,
-        message: `Printed to ${printerName}${copiesInfo}${formatRenderInfo(renderType)}`,
-        renderType,
-      }
+      return await printPreparedFile(file_path, actualFilePath, renderType, {
+        printer,
+        copies,
+        options,
+        skip_confirmation,
+      })
     } finally {
       // Clean up rendered PDF if it was created
       cleanupRenderedPdf(renderedPdf)
@@ -179,6 +216,100 @@ export async function handlePrint(spec: FilePrintSpec): Promise<PrintResult> {
     return {
       success: false,
       file_path,
+      message: `Failed to print: ${message}`,
+      error: message,
+    }
+  }
+}
+
+/**
+ * Specification for printing document content sent by the client.
+ */
+export interface ContentPrintSpec
+  extends PrintTarget,
+    Omit<ContentOptions, "lineNumbers" | "colorScheme" | "fontSize" | "lineSpacing"> {
+  line_numbers?: boolean
+  color_scheme?: string
+  font_size?: string
+  line_spacing?: string
+}
+
+/**
+ * Handle printing of content sent by the client (print_content).
+ *
+ * Renders the content according to its format, applies the same page count confirmation
+ * and print settings as print_file, and removes all temporary files.
+ *
+ * @param spec - Content, format, rendering options and print settings
+ * @returns PrintResult object with success status and details
+ * @throws Never throws - all errors are captured in the result object
+ */
+export async function handlePrintContent(spec: ContentPrintSpec): Promise<PrintResult> {
+  const { printer, copies, options, skip_confirmation, ...content } = spec
+  const label = `(content: ${spec.format})`
+
+  try {
+    return await withPreparedContent(
+      {
+        content: content.content,
+        format: content.format,
+        language: content.language,
+        lineNumbers: content.line_numbers,
+        colorScheme: content.color_scheme,
+        fontSize: content.font_size,
+        lineSpacing: content.line_spacing,
+      },
+      ({ actualFilePath, renderType }) =>
+        printPreparedFile(label, actualFilePath, renderType, {
+          printer,
+          copies,
+          options,
+          skip_confirmation,
+        })
+    )
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    return {
+      success: false,
+      file_path: label,
+      message: `Failed to print: ${message}`,
+      error: message,
+    }
+  }
+}
+
+/**
+ * Specification for printing a PDF sent by the client as base64.
+ */
+export interface PdfPrintSpec extends PrintTarget {
+  pdf_base64: string
+}
+
+/**
+ * Handle printing of a PDF sent by the client as base64 (print_pdf).
+ *
+ * @param spec - Base64 PDF and print settings
+ * @returns PrintResult object with success status and details
+ * @throws Never throws - all errors are captured in the result object
+ */
+export async function handlePrintPdf(spec: PdfPrintSpec): Promise<PrintResult> {
+  const { pdf_base64, printer, copies, options, skip_confirmation } = spec
+  const label = "(content: pdf)"
+
+  try {
+    return await withPreparedPdf(pdf_base64, ({ actualFilePath, renderType }) =>
+      printPreparedFile(label, actualFilePath, renderType, {
+        printer,
+        copies,
+        options,
+        skip_confirmation,
+      })
+    )
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    return {
+      success: false,
+      file_path: label,
       message: `Failed to print: ${message}`,
       error: message,
     }

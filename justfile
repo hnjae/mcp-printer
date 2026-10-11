@@ -24,7 +24,7 @@ dev:
 [group('hooks')]
 hooks-install:
     prek install
-    cog install-hook commit-msg
+    cog install-hook commit-msg --overwrite
 
 [group('test')]
 test: test-unit test-integration
@@ -53,6 +53,7 @@ ci: lint typos format-check test build
 [group('lint')]
 lint:
     bun x biome lint src tests package.json tsconfig.json biome.jsonc
+    hadolint Containerfile
 
 [group('lint')]
 typos:

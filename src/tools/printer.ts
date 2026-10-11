@@ -38,14 +38,19 @@ export function registerPrinterTools(server: McpServer) {
     },
     () => {
       const configData = {
+        MCP_PRINTER_TRANSPORT: config.transport,
+        MCP_PRINTER_HTTP_HOST: config.httpHost,
+        MCP_PRINTER_HTTP_PORT: String(config.httpPort),
         MCP_PRINTER_DEFAULT_PRINTER: config.defaultPrinter || "(not set)",
         MCP_PRINTER_AUTO_DUPLEX: config.autoDuplex ? "true" : "false",
         MCP_PRINTER_DEFAULT_OPTIONS:
           config.defaultOptions.length > 0 ? config.defaultOptions.join(" ") : "(not set)",
         MCP_PRINTER_CHROME_PATH: config.chromePath || "(auto-detected)",
+        MCP_PRINTER_CHROME_NO_SANDBOX: config.chromeNoSandbox ? "true" : "false",
         MCP_PRINTER_AUTO_RENDER_MARKDOWN: config.autoRenderMarkdown ? "true" : "false",
         MCP_PRINTER_AUTO_RENDER_CODE: config.autoRenderCode ? "true" : "false",
         MCP_PRINTER_ENABLE_MANAGEMENT: config.enableManagement ? "true" : "false",
+        MCP_PRINTER_ENABLE_FILE_TOOLS: config.enableFileTools ? "true" : "false",
         MCP_PRINTER_ENABLE_PROMPTS: config.enablePrompts ? "true" : "false",
         MCP_PRINTER_CONFIRM_IF_OVER_PAGES:
           config.confirmIfOverPages > 0 ? String(config.confirmIfOverPages) : "0 (disabled)",

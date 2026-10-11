@@ -7,26 +7,14 @@
  * Provides a Model Context Protocol server that exposes printing tools via CUPS.
  */
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
-import packageJson from "../package.json" with { type: "json" }
-import { registerAllTools } from "./tools/index.js"
+import { config } from "./config.js"
+import { startHttpServer } from "./http.js"
+import { createMcpServer } from "./mcp-server.js"
 
 /**
- * MCP Server instance for printing via CUPS.
- * Handles printer management, print jobs, and document rendering.
- */
-const mcpServer = new McpServer({
-  name: "mcp-printer",
-  version: packageJson.version,
-})
-
-// Register all tools with the server
-registerAllTools(mcpServer)
-
-/**
- * Starts the MCP Printer server and connects it to stdio transport.
- * The server will handle tool requests for printer operations via stdin/stdout.
+ * Starts the MCP Printer server on the configured transport (stdio by default,
+ * or Streamable HTTP when MCP_PRINTER_TRANSPORT=http).
  *
  * @throws {Error} If server connection fails or unsupported OS detected
  */
@@ -43,7 +31,12 @@ export async function startServer() {
   // Log platform information
   console.error(`MCP Printer Server starting on ${process.platform}...`)
 
-  const transport = new StdioServerTransport()
-  await mcpServer.connect(transport)
+  if (config.transport === "http") {
+    await startHttpServer({ hostname: config.httpHost, port: config.httpPort })
+    console.error(`MCP Printer Server running on http://${config.httpHost}:${config.httpPort}/mcp`)
+    return
+  }
+
+  await createMcpServer().connect(new StdioServerTransport())
   console.error("MCP Printer Server running on stdio")
 }

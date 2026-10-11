@@ -38,6 +38,9 @@ export function registerPrinterTools(server: McpServer) {
     },
     () => {
       const configData = {
+        MCP_PRINTER_TRANSPORT: config.transport,
+        MCP_PRINTER_HTTP_HOST: config.httpHost,
+        MCP_PRINTER_HTTP_PORT: String(config.httpPort),
         MCP_PRINTER_DEFAULT_PRINTER: config.defaultPrinter || "(not set)",
         MCP_PRINTER_AUTO_DUPLEX: config.autoDuplex ? "true" : "false",
         MCP_PRINTER_DEFAULT_OPTIONS:

@@ -15,6 +15,7 @@ In the era of AI-assisted development, we're generating more documentation, spec
 - [Features](#features)
 - [Installation](#installation)
 - [Configuration](#configuration)
+- [Remote Access (HTTP)](#remote-access-http)
 - [Available Tools](#available-tools)
 - [Available Prompts](#available-prompts)
 - [Usage Examples](#usage-examples)
@@ -75,6 +76,9 @@ All configuration is optional. Add an `env` object to customize behavior:
 
 | Variable | Default | Description |
 | -------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `MCP_PRINTER_TRANSPORT` | `stdio` | `"stdio"` (spawned by the MCP client) or `"http"` (Streamable HTTP server, see [Remote Access](#remote-access-http)) |
+| `MCP_PRINTER_HTTP_HOST` | `127.0.0.1` | Interface the HTTP transport binds to (only with `MCP_PRINTER_TRANSPORT=http`) |
+| `MCP_PRINTER_HTTP_PORT` | `3000` | Port the HTTP transport listens on (only with `MCP_PRINTER_TRANSPORT=http`) |
 | `MCP_PRINTER_DEFAULT_PRINTER` | *(none)* | Default printer to use when none specified (falls back to system default) |
 | `MCP_PRINTER_AUTO_DUPLEX` | `false` | Set to `"true"` to automatically print double-sided by default (can be overridden per-call) |
 | `MCP_PRINTER_DEFAULT_OPTIONS` | *(none)* | Additional CUPS options (e.g., `"fit-to-page"`, `"landscape"`) |
@@ -123,6 +127,16 @@ All configuration is optional. Add an `env` object to customize behavior:
 💡 **Tip:** You can use the `list_printers` tool to see all available printers and their exact names.
 
 User-specified options in prompts always override these defaults.
+
+## Remote Access (HTTP)
+
+Set `MCP_PRINTER_TRANSPORT=http` to serve MCP over Streamable HTTP at `POST /mcp` instead of stdio. The server is stateless and answers with plain JSON.
+
+> **⚠️ The HTTP transport has no authentication.** Anyone who can reach the port can print. Keep it on loopback or an internal network and put an authenticating reverse proxy or gateway in front of it. Do not bind it to a public interface.
+
+```sh
+MCP_PRINTER_TRANSPORT=http MCP_PRINTER_HTTP_HOST=127.0.0.1 MCP_PRINTER_HTTP_PORT=3000 bun dist/index.js
+```
 
 ## Available Tools
 

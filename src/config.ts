@@ -11,6 +11,12 @@ import { parseDelimitedString } from "./utils.js"
  * Configuration interface for MCP Printer settings loaded from environment variables.
  */
 export interface Config {
+  /** Transport the server listens on: stdio (default) or Streamable HTTP */
+  transport: "stdio" | "http"
+  /** Interface the HTTP transport binds to. The HTTP transport has no authentication. */
+  httpHost: string
+  /** Port the HTTP transport listens on */
+  httpPort: number
   /** Default printer name for print operations */
   defaultPrinter: string
   /** Automatically enable duplex (two-sided) printing by default (can be overridden per-call) */
@@ -67,6 +73,9 @@ export type MarkdownExtension = (typeof MARKDOWN_EXTENSIONS)[number]
  * Default configuration values.
  * These are used when environment variables are not set.
  */
+const DEFAULT_TRANSPORT = "stdio"
+const DEFAULT_HTTP_HOST = "127.0.0.1"
+const DEFAULT_HTTP_PORT = 3000
 const DEFAULT_PRINTER = ""
 const DEFAULT_AUTO_DUPLEX = false
 const DEFAULT_CHROME_PATH = ""
@@ -145,6 +154,9 @@ const userDeniedPaths = parseDelimitedString(process.env.MCP_PRINTER_DENIED_PATH
  * Provides settings for printer defaults, rendering options, and code formatting.
  */
 export const config: Config = {
+  transport: parseTransport(process.env.MCP_PRINTER_TRANSPORT),
+  httpHost: process.env.MCP_PRINTER_HTTP_HOST || DEFAULT_HTTP_HOST,
+  httpPort: parseInt(process.env.MCP_PRINTER_HTTP_PORT || String(DEFAULT_HTTP_PORT), 10),
   defaultPrinter: process.env.MCP_PRINTER_DEFAULT_PRINTER || DEFAULT_PRINTER,
   autoDuplex: yn(process.env.MCP_PRINTER_AUTO_DUPLEX, { default: DEFAULT_AUTO_DUPLEX }),
   defaultOptions: parseDelimitedString(process.env.MCP_PRINTER_DEFAULT_OPTIONS, /\s+/),
@@ -185,6 +197,20 @@ export const config: Config = {
     fontSize: process.env.MCP_PRINTER_CODE_FONT_SIZE || DEFAULT_CODE_FONT_SIZE,
     lineSpacing: process.env.MCP_PRINTER_CODE_LINE_SPACING || DEFAULT_CODE_LINE_SPACING,
   },
+}
+
+/**
+ * Parses MCP_PRINTER_TRANSPORT, rejecting unknown values instead of silently using stdio.
+ *
+ * @param value - Raw environment variable value
+ * @returns The selected transport
+ */
+function parseTransport(value: string | undefined): Config["transport"] {
+  const transport = (value || DEFAULT_TRANSPORT).toLowerCase()
+  if (transport !== "stdio" && transport !== "http") {
+    throw new Error(`Invalid MCP_PRINTER_TRANSPORT "${value}": expected "stdio" or "http"`)
+  }
+  return transport
 }
 
 /**

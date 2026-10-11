@@ -283,6 +283,62 @@ export function shouldRenderToPdf(filePath: string): boolean {
   return MARKDOWN_EXTENSIONS.includes(ext as MarkdownExtension)
 }
 
+export const SIDES = ["one-sided", "two-sided-long-edge", "two-sided-short-edge"] as const
+export const ORIENTATIONS = ["portrait", "landscape"] as const
+
+/**
+ * Print settings that map to CUPS options.
+ * `sides`, `media` and `orientation` take precedence over `options` and the configured defaults.
+ */
+export interface PrintOptions {
+  /** Space-separated CUPS options (free-form escape hatch) */
+  options?: string
+  sides?: (typeof SIDES)[number]
+  media?: string
+  orientation?: (typeof ORIENTATIONS)[number]
+}
+
+/** IPP `orientation-requested` values for each orientation. */
+const ORIENTATION_REQUESTED = { portrait: 3, landscape: 4 } as const
+
+/**
+ * Build the effective CUPS option list for a print job. When an option name occurs more than
+ * once, the last occurrence wins, so the order is: auto-duplex, MCP_PRINTER_DEFAULT_OPTIONS,
+ * the free-form `options` string, then the typed settings. A typed `orientation` also removes
+ * `landscape` from the defaults and `options`.
+ *
+ * @param settings - Typed settings and free-form options from the tool call
+ * @returns Option strings in precedence order, each in `name=value` or `name` form
+ */
+export function buildCupsOptions({ options, sides, media, orientation }: PrintOptions): string[] {
+  const all: string[] = []
+  if (config.autoDuplex) {
+    all.push("sides=two-sided-long-edge")
+  }
+  all.push(...config.defaultOptions)
+  if (options) {
+    all.push(...options.split(/\s+/).filter(Boolean))
+  }
+  if (orientation) {
+    // `landscape` is a separate CUPS key that `orientation-requested` cannot override by order
+    for (let i = all.length - 1; i >= 0; i--) {
+      if (all[i] === "landscape" || all[i]?.startsWith("landscape=")) {
+        all.splice(i, 1)
+      }
+    }
+  }
+  if (sides) {
+    all.push(`sides=${sides}`)
+  }
+  if (media) {
+    all.push(`media=${media}`)
+  }
+  if (orientation) {
+    all.push(`orientation-requested=${ORIENTATION_REQUESTED[orientation]}`)
+  }
+  return all
+}
+
 /**
  * Execute a print job with the given file and options.
  * Handles copy validation, lpr argument building, and execution.
@@ -290,14 +346,14 @@ export function shouldRenderToPdf(filePath: string): boolean {
  * @param filePath - Path to the file to print
  * @param printer - Optional printer name
  * @param copies - Number of copies to print
- * @param options - Optional CUPS options string
+ * @param settings - Typed settings and free-form CUPS options
  * @returns Object with printer name and formatted options
  */
 export async function executePrintJob(
   filePath: string,
   printer?: string,
   copies: number = 1,
-  options?: string
+  settings: PrintOptions = {}
 ): Promise<{ printerName: string; allOptions: string[] }> {
   // Validate copy count against configured maximum
   if (config.maxCopies > 0 && copies > config.maxCopies) {
@@ -319,23 +375,7 @@ export async function executePrintJob(
     args.push(`-#${copies}`)
   }
 
-  // Build options with defaults
-  const allOptions = []
-
-  // Add default duplex if auto-enabled in config and not already specified
-  if (config.autoDuplex && !options?.includes("sides=")) {
-    allOptions.push("sides=two-sided-long-edge")
-  }
-
-  // Add default options if configured
-  if (config.defaultOptions.length > 0) {
-    allOptions.push(...config.defaultOptions)
-  }
-
-  // Add user-specified options (these override defaults, split by spaces)
-  if (options) {
-    allOptions.push(...options.split(/\s+/))
-  }
+  const allOptions = buildCupsOptions(settings)
 
   // Add each option with -o flag
   for (const option of allOptions) {
@@ -614,17 +654,16 @@ export async function prepareFileForPrinting(options: RenderOptions): Promise<Re
 }
 
 /**
- * Determines if duplex printing is enabled based on configuration and options.
+ * Determines if the job will print duplex, from the effective `sides` setting.
  *
- * @param options - CUPS options string (may contain sides= option)
- * @returns True if duplex printing is enabled
+ * @param settings - Typed settings and free-form CUPS options
+ * @returns True if the effective `sides` option is a two-sided mode
  */
-export function isDuplexEnabled(options?: string): boolean {
-  return (
-    config.autoDuplex ||
-    options?.includes("sides=two-sided") ||
-    config.defaultOptions.some((opt) => opt.includes("sides=two-sided"))
-  )
+export function isDuplexEnabled(settings: PrintOptions = {}): boolean {
+  const sides = buildCupsOptions(settings)
+    .filter((option) => option.startsWith("sides="))
+    .at(-1)
+  return sides?.startsWith("sides=two-sided") ?? false
 }
 
 /**

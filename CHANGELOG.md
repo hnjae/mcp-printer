@@ -9,6 +9,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- `sides`, `media` and `orientation` parameters on `print_content`, `print_pdf` and `print_file`, replacing the need to write `sides=…`, `media=…` and `landscape` in the free-form `options` string. They override the same settings in `options`, `MCP_PRINTER_DEFAULT_OPTIONS` and `MCP_PRINTER_AUTO_DUPLEX`. `get_page_meta` accepts `sides`. `options` remains for other CUPS options
+
+### Fixed
+
+- The sheet estimate and `PAGE_COUNT_CONFIRMATION_REQUIRED` check assumed duplex whenever `MCP_PRINTER_AUTO_DUPLEX` was on, even when the call printed one-sided. It now follows the effective `sides` setting
+
 ### Changed
 
 - **BREAKING**: Bun runs the TypeScript sources directly and there is no build step or `dist/` directory. Point MCP client configurations at `src/index.ts` instead of `dist/index.js`

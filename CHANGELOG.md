@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.1] - 2026-10-11
+
+### Fixed
+
+- `print_pdf` accepts PDFs up to 3 MB (3,000,000 bytes) instead of 5 MB. The HTTP transport rejects request bodies over 4 MiB, so a larger PDF could never arrive that way and failed with HTTP 413; 3 MB is the largest size that fits once base64 and the request around it are counted
+
 ## [3.0.0] - 2026-10-11
 
 ### Added

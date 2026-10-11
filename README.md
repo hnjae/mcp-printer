@@ -84,6 +84,8 @@ curl --fail-with-body http://127.0.0.1:3000/mcp \
 
 The container includes Bun, CUPS client commands, Chromium, CJK fonts, and the Sarasa Mono K code font. It connects to an existing CUPS server; it does not run a CUPS daemon.
 
+Release images are published to `ghcr.io/hnjae/mcp-printer`. `:3` follows the latest 3.x release, `:3.0` the latest 3.0.x, `:3.0.0` stays fixed, and `:latest` is the newest stable release. Pre-releases get only their full version tag.
+
 Build from this checkout and run with a CUPS server reachable from the container:
 
 ```sh

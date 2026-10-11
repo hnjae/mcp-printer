@@ -15,6 +15,8 @@ A file is rendered with syntax highlighting when `MCP_PRINTER_AUTO_RENDER_CODE` 
 - its extension, or for a file without an extension its lowercase name, is recognized: `js`, `jsx`, `ts`, `tsx`, `py`, `rb`, `java`, `c`, `cpp`, `cc`, `cxx`, `h`, `hpp`, `cs`, `php`, `go`, `rs`, `swift`, `kt`, `scala`, `lua`, `perl`, `pl`, `r`, `sh`, `bash`, `zsh`, `fish`, `ps1`, `vim`, `yaml`, `yml`, `json`, `xml`, `html`, `css`, `scss`, `sass`, `less`, `sql`, `makefile`, `dockerfile`, `gemfile`, `rakefile`, `vagrantfile`; or
 - the file is not recognized by name but has a line starting with `#!` within its first 1,024 bytes.
 
+The first page starts with the file's name, without the directory it is in.
+
 A file with a Markdown extension is never selected for code rendering automatically, so when Markdown rendering is off it is printed as it is; `render: code` renders it as code.
 
 The look of the output comes from the configuration; a call cannot change it:

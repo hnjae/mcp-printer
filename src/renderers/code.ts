@@ -380,7 +380,7 @@ function generateHTML(
   </style>
 </head>
 <body>
-  <h3 class="filepath">${encode(filePath)}</h3>
+  <h3 class="filepath">${encode(basename(filePath))}</h3>
   <table class="hljs">
     ${tableRows}
   </table>

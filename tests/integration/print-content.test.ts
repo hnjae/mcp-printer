@@ -27,6 +27,8 @@ vi.mock("../../src/config.js", () => ({
 }))
 
 import { withPreparedContent } from "../../src/utils.js"
+import { A4, B5, firstPageSize, isSize, LETTER } from "../helpers/pdf-page-size.js"
+import { pageSizeForMedia } from "../../src/page-size.js"
 
 async function prepare(options: Parameters<typeof withPreparedContent>[0]) {
   let path = ""
@@ -99,5 +101,44 @@ describe("withPreparedContent", () => {
 
     await expect(attempt).rejects.toThrow("printer unavailable")
     expect(existsSync(path)).toBe(false)
+  })
+
+  describe("page size", () => {
+    async function pageSize(options: Parameters<typeof withPreparedContent>[0]) {
+      let size = { width: 0, height: 0 }
+      await withPreparedContent(options, async (prepared) => {
+        size = firstPageSize(prepared.actualFilePath)
+      })
+      return size
+    }
+
+    const formats = [
+      { content: "# Title", format: "markdown" as const },
+      { content: "<p>Body</p>", format: "html" as const },
+      { content: "const x = 1", format: "code" as const, language: "ts" },
+      { content: "plain", format: "text" as const },
+    ]
+
+    it("renders every format on A4 unless told otherwise", async () => {
+      for (const options of formats) {
+        expect(isSize(await pageSize(options), A4)).toBe(true)
+      }
+    })
+
+    it("renders every format on the requested page size", async () => {
+      for (const options of formats) {
+        const size = await pageSize({ ...options, pageSize: pageSizeForMedia("jis_b5_182x257mm") })
+        expect(isSize(size, B5)).toBe(true)
+      }
+    })
+
+    it("lets HTML choose its own page size", async () => {
+      const size = await pageSize({
+        content: "<style>@page { size: letter }</style><p>Body</p>",
+        format: "html",
+      })
+
+      expect(isSize(size, LETTER)).toBe(true)
+    })
   })
 })

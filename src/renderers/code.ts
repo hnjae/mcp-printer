@@ -32,6 +32,7 @@ import { fileURLToPath } from "node:url"
 import { encode } from "he"
 import hljs from "highlight.js"
 import { config, MARKDOWN_EXTENSIONS } from "../config.js"
+import type { PageSize } from "../page-size.js"
 import { convertHtmlToPdf, hasShebang } from "../utils.js"
 
 /**
@@ -393,10 +394,11 @@ function generateHTML(
  * The color scheme, line numbers, font size, and line spacing come from the configuration.
  *
  * @param filePath - Path to the source code file to render
+ * @param pageSize - Page size to render on (default: A4)
  * @returns Path to the generated temporary PDF file
  * @throws {Error} If Chrome is not found or PDF generation fails
  */
-export async function renderCodeToPdf(filePath: string): Promise<string> {
+export async function renderCodeToPdf(filePath: string, pageSize?: PageSize): Promise<string> {
   // Step 1: Read source code and identify language
   const sourceCode = readFileSync(filePath, "utf-8")
   const language = getLanguageFromExtension(filePath)
@@ -423,5 +425,6 @@ export async function renderCodeToPdf(filePath: string): Promise<string> {
   // Step 5: Convert HTML to PDF
   return await convertHtmlToPdf(html, {
     tempDirPrefix: "mcp-printer-code-",
+    pageSize,
   })
 }

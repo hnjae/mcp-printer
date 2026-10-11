@@ -51,7 +51,7 @@ const printSettingsSchema = {
     .regex(/^[^\s=]+$/, "Must not contain whitespace or '='")
     .optional()
     .describe(
-      "Paper size, e.g. 'A4' or 'Letter'. Accepted names depend on the printer: list_printers shows them, including 'jis_b5_182x257mm', 'jis_b6_128x182mm' and Custom.<W>x<H>mm where supported."
+      "Paper size, e.g. 'A4' or 'Letter'. Documents the server renders (Markdown, code, HTML, text) are laid out on this size, and on A4 when it is omitted or not a standard size. Accepted names depend on the printer: list_printers shows them, including 'jis_b5_182x257mm', 'jis_b6_128x182mm' and Custom.<W>x<H>mm where supported."
     ),
   orientation: z
     .enum(ORIENTATIONS)
@@ -242,6 +242,7 @@ export function registerFilePrintTools(server: McpServer) {
             z.object({
               file_path: z.string().describe("Full path to the file to get page metadata for"),
               sides: printSettingsSchema.sides,
+              media: printSettingsSchema.media,
               options: z
                 .string()
                 .optional()

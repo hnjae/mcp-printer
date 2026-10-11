@@ -5,7 +5,7 @@ Every print tool takes the same settings. The typed ones have values a client ca
 | Parameter | Values | Sent to CUPS as |
 | --- | --- | --- |
 | `sides` | `one-sided`, `two-sided-long-edge`, `two-sided-short-edge` | `sides=<value>` |
-| `media` | Paper size without whitespace or `=`, such as `A4` | `media=<value>` |
+| `media` | Paper size without whitespace or `=`, such as `A4`; also the page size documents are rendered on ([rendering](rendering.md)) | `media=<value>` |
 | `orientation` | `portrait`, `landscape` | `orientation-requested=3` or `4` |
 | `quality` | `draft`, `normal`, `high` | `cupsPrintQuality=Draft`, `Normal` or `High` |
 | `options` | Space-separated CUPS options, such as `number-up=2` | Passed through |
@@ -22,7 +22,7 @@ The options of a job are assembled in this order, and when an option name occurs
 
 So a typed setting always overrides the same setting from the other sources. A typed `orientation` also removes `landscape` and a typed `quality` also removes `print-quality` from the defaults and `options`, because CUPS treats those as separate keys that order alone cannot override.
 
-The effective `sides` value decides whether a job counts as duplex for [page-confirmation](page-confirmation.md). `get_page_meta` accepts `sides` and `options` for that purpose only.
+The effective `sides` value decides whether a job counts as duplex for [page-confirmation](page-confirmation.md). `get_page_meta` accepts `sides` and `options` for the duplex decision, and `media` for the page size of rendered files.
 
 ## Custom sizes
 

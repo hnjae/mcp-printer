@@ -4,7 +4,7 @@ Some documents are converted to PDF before they are sent to CUPS. Rendering uses
 
 ## Markdown
 
-A file ending in `.md` or `.markdown` (any case) is rendered when `MCP_PRINTER_AUTO_RENDER_MARKDOWN` is `true` (default). Rendering supports tables, KaTeX math and Mermaid diagrams, and uses a light theme suited to print.
+A file ending in `.md` or `.markdown` (any case) is rendered when `MCP_PRINTER_AUTO_RENDER_MARKDOWN` is `true` (default). Rendering supports tables, KaTeX math and Mermaid diagrams, and uses a light theme suited to print. Pages have no filled backgrounds, to save ink: code blocks are outlined instead, and block quotes keep their left bar.
 
 Rendered pages carry a footer with the document's name and the page number out of the total. A Markdown file printed with `print_file` can replace the footer by setting `chrome` (or `puppeteer`) in its front matter, for example `chrome: { displayHeaderFooter: false }` to remove it; the file's own settings are then left untouched. Content from `print_content` always gets the default footer.
 

@@ -87,6 +87,7 @@ All configuration is optional. Add an `env` object to customize behavior:
 | `MCP_PRINTER_AUTO_RENDER_MARKDOWN` | `true` | Automatically render markdown files (`.md`, `.markdown`) to PDF (can be overridden with `force_markdown_render`) |
 | `MCP_PRINTER_AUTO_RENDER_CODE` | `true` | Automatically render code files to PDF with syntax highlighting (can be overridden with `force_code_render`) |
 | `MCP_PRINTER_ENABLE_MANAGEMENT` | `false` | Management operations are **disabled by default** for security. Set to `"true"` to enable `set_default_printer` and `cancel_print_job` tools |
+| `MCP_PRINTER_ENABLE_FILE_TOOLS` | `true` | Set to `"false"` to hide the tools that read files from paths on the server (`print_file`, `get_page_meta`) and the `/print-changed` prompt, leaving `print_content` and `print_pdf`. The container image sets it to `false` |
 | `MCP_PRINTER_ENABLE_PROMPTS` | `true` | Enable prompts (workflow templates). Set to `"false"` to disable prompt registration if you don't want prompts in your MCP client |
 | `MCP_PRINTER_ALLOWED_PATHS` | `~/Documents`, `~/Downloads`, `~/Desktop` | Colon-separated paths allowed for printing. **Overrides** default allowed directories when set (e.g., `"$HOME/Documents:$HOME/src"`) |
 | `MCP_PRINTER_DENIED_PATHS` | *(system dirs)* | Colon-separated paths denied for printing. **Merged with** system directory defaults like `/etc`, `/var`, etc. (e.g., `"/home/user/private"`) |
@@ -158,7 +159,7 @@ podman run -d --name mcp-printer \
 - The server has no authentication: publish the port on loopback only, or attach the container to an internal network that only your authenticating proxy can reach.
 - Mount the host CUPS socket at `/run/cups/cups.sock`. Rootless podman maps your host user to the image's `bun` user (uid 1000) with `--userns=keep-id:uid=1000,gid=1000`; add `:z` to the mounts on SELinux hosts.
 - Chrome keeps its sandbox as the non-root user. If Chrome fails to start, or you run the container as root, set `MCP_PRINTER_CHROME_NO_SANDBOX=true`; this removes Chrome's own sandbox, so rely on the container for isolation. Give Chrome enough shared memory (`--shm-size=1g`).
-- `print_file` reads from `/home/bun/Documents` by default; set `MCP_PRINTER_ALLOWED_PATHS` to use other mount points. `/root` and `/tmp` are always denied. Mount only directories you are willing to print: markdown content can still embed image files readable by the server.
+- The image sets `MCP_PRINTER_ENABLE_FILE_TOOLS=false`, so only `print_content` and `print_pdf` are offered. To use `print_file`, set it to `true` and mount documents; `print_file` reads from `/home/bun/Documents` by default, and `MCP_PRINTER_ALLOWED_PATHS` selects other mount points. `/root` and `/tmp` are always denied. Mount only directories you are willing to print: markdown content can still embed image files readable by the server.
 - CUPS records print jobs from the container as owned by `unknown`. That does not affect printing, but virtual printers that write per-user output, such as `cups-pdf`, then have nowhere to write.
 - `set_default_printer` writes the container user's CUPS settings, not the host's.
 
@@ -199,7 +200,7 @@ AI: Let me check what printers you have...
 
 ### `print_file`
 
-Print one or more files to a specified printer. Supports batch operations to reduce tool call costs.
+Print one or more files to a specified printer. Supports batch operations to reduce tool call costs. Not offered when `MCP_PRINTER_ENABLE_FILE_TOOLS=false`.
 
 **Parameters:**
 
@@ -281,7 +282,7 @@ The data must start with `%PDF-` and its page count must be readable; otherwise 
 
 ### `get_page_meta`
 
-Get page count and physical sheet information for one or more files before printing. This tool pre-renders files (markdown, code) if needed and returns page metadata. Supports batch operations.
+Get page count and physical sheet information for one or more files before printing. This tool pre-renders files (markdown, code) if needed and returns page metadata. Supports batch operations. Not offered when `MCP_PRINTER_ENABLE_FILE_TOOLS=false`.
 
 **Parameters:**
 

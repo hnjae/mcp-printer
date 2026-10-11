@@ -33,6 +33,8 @@ export interface Config {
   autoRenderCode: boolean
   /** Enable management operations (set_default_printer, cancel_print_job) */
   enableManagement: boolean
+  /** Enable the tools that read documents from paths on the server (print_file, get_page_meta) */
+  enableFileTools: boolean
   /** Enable prompts (workflow templates that appear as slash commands) */
   enablePrompts: boolean
   /** Fallback to printing original file if PDF rendering fails (for markdown and code) */
@@ -85,6 +87,7 @@ const DEFAULT_CHROME_NO_SANDBOX = false
 const DEFAULT_AUTO_RENDER_MARKDOWN = true
 const DEFAULT_AUTO_RENDER_CODE = true
 const DEFAULT_ENABLE_MANAGEMENT = false
+const DEFAULT_ENABLE_FILE_TOOLS = true
 const DEFAULT_ENABLE_PROMPTS = true
 const DEFAULT_FALLBACK_ON_RENDER_ERROR = false
 const DEFAULT_MAX_COPIES = 10
@@ -175,6 +178,9 @@ export const config: Config = {
   }),
   enableManagement: yn(process.env.MCP_PRINTER_ENABLE_MANAGEMENT, {
     default: DEFAULT_ENABLE_MANAGEMENT,
+  }),
+  enableFileTools: yn(process.env.MCP_PRINTER_ENABLE_FILE_TOOLS, {
+    default: DEFAULT_ENABLE_FILE_TOOLS,
   }),
   enablePrompts: yn(process.env.MCP_PRINTER_ENABLE_PROMPTS, {
     default: DEFAULT_ENABLE_PROMPTS,

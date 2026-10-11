@@ -3,8 +3,9 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 
 /**
- * @fileoverview File printing tool registration.
- * Registers print_file, print_content, print_pdf and get_page_meta tools with the MCP server.
+ * @fileoverview Print tool registration.
+ * Registers print_content and print_pdf (document sent by the client) and print_file and
+ * get_page_meta (document read from a path on the server) with the MCP server.
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
@@ -69,72 +70,11 @@ const MAX_CONTENT_LENGTH = 1_000_000
 const MAX_PDF_BASE64_LENGTH = Math.ceil((MAX_PDF_BYTES * 4) / 3) + 4
 
 /**
- * Registers the print_file tool with the MCP server.
- * Supports automatic rendering of markdown and code files to PDF before printing.
- * Accepts an array of files to print in batch operations.
+ * Registers the tools that receive the document from the client: print_content and print_pdf.
  *
- * @param server - The McpServer instance to register the tool with
+ * @param server - The McpServer instance to register the tools with
  */
-export function registerPrintTools(server: McpServer) {
-  server.registerTool(
-    "print_file",
-    {
-      title: "Print File",
-      description:
-        "Print a file to a specified printer. Supports PDF, text, and other common formats. Can specify number of copies and print options.",
-      inputSchema: {
-        files: z
-          .array(
-            z.object({
-              file_path: z.string().describe("Full path to the file to print"),
-              printer: z
-                .string()
-                .optional()
-                .describe(
-                  "Printer name (use list_printers to see available printers). Optional if default printer is set."
-                ),
-              copies: z
-                .number()
-                .min(1)
-                .optional()
-                .default(1)
-                .describe("Number of copies to print (default: 1)"),
-              options: z
-                .string()
-                .optional()
-                .describe(
-                  "Additional CUPS options (e.g., 'landscape', 'sides=two-sided-long-edge')"
-                ),
-              skip_confirmation: z
-                .boolean()
-                .optional()
-                .describe(
-                  "Skip page count confirmation check (bypasses MCP_PRINTER_CONFIRM_IF_OVER_PAGES threshold)"
-                ),
-              ...renderingParametersSchema,
-            })
-          )
-          .describe("Array of files to print (use single-element array for one file)"),
-      },
-    },
-    async ({ files }) => {
-      // Check for large batch size
-      const batchSizeWarning = checkBatchSizeLimit(files.length, "files")
-      if (batchSizeWarning) {
-        return batchSizeWarning
-      }
-
-      // Process each file in the batch
-      const results: PrintResult[] = []
-      for (const fileSpec of files) {
-        const result = await handlePrint(fileSpec)
-        results.push(result)
-      }
-
-      return formatPrintResults(results)
-    }
-  )
-
+export function registerContentPrintTools(server: McpServer) {
   // Register print_content tool
   server.registerTool(
     "print_content",
@@ -222,6 +162,74 @@ export function registerPrintTools(server: McpServer) {
       },
     },
     async (spec) => formatPrintResults([await handlePrintPdf(spec)])
+  )
+}
+
+/**
+ * Registers the tools that read documents from paths on the server: print_file and get_page_meta.
+ * print_file supports automatic rendering of markdown and code files to PDF before printing and
+ * accepts an array of files to print in batch operations.
+ *
+ * @param server - The McpServer instance to register the tools with
+ */
+export function registerFilePrintTools(server: McpServer) {
+  server.registerTool(
+    "print_file",
+    {
+      title: "Print File",
+      description:
+        "Print a file to a specified printer. Supports PDF, text, and other common formats. Can specify number of copies and print options.",
+      inputSchema: {
+        files: z
+          .array(
+            z.object({
+              file_path: z.string().describe("Full path to the file to print"),
+              printer: z
+                .string()
+                .optional()
+                .describe(
+                  "Printer name (use list_printers to see available printers). Optional if default printer is set."
+                ),
+              copies: z
+                .number()
+                .min(1)
+                .optional()
+                .default(1)
+                .describe("Number of copies to print (default: 1)"),
+              options: z
+                .string()
+                .optional()
+                .describe(
+                  "Additional CUPS options (e.g., 'landscape', 'sides=two-sided-long-edge')"
+                ),
+              skip_confirmation: z
+                .boolean()
+                .optional()
+                .describe(
+                  "Skip page count confirmation check (bypasses MCP_PRINTER_CONFIRM_IF_OVER_PAGES threshold)"
+                ),
+              ...renderingParametersSchema,
+            })
+          )
+          .describe("Array of files to print (use single-element array for one file)"),
+      },
+    },
+    async ({ files }) => {
+      // Check for large batch size
+      const batchSizeWarning = checkBatchSizeLimit(files.length, "files")
+      if (batchSizeWarning) {
+        return batchSizeWarning
+      }
+
+      // Process each file in the batch
+      const results: PrintResult[] = []
+      for (const fileSpec of files) {
+        const result = await handlePrint(fileSpec)
+        results.push(result)
+      }
+
+      return formatPrintResults(results)
+    }
   )
 
   // Register get_page_meta tool

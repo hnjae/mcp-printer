@@ -50,6 +50,7 @@ export function registerPrinterTools(server: McpServer) {
         MCP_PRINTER_AUTO_RENDER_MARKDOWN: config.autoRenderMarkdown ? "true" : "false",
         MCP_PRINTER_AUTO_RENDER_CODE: config.autoRenderCode ? "true" : "false",
         MCP_PRINTER_ENABLE_MANAGEMENT: config.enableManagement ? "true" : "false",
+        MCP_PRINTER_ENABLE_FILE_TOOLS: config.enableFileTools ? "true" : "false",
         MCP_PRINTER_ENABLE_PROMPTS: config.enablePrompts ? "true" : "false",
         MCP_PRINTER_CONFIRM_IF_OVER_PAGES:
           config.confirmIfOverPages > 0 ? String(config.confirmIfOverPages) : "0 (disabled)",

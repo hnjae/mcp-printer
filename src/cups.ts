@@ -130,7 +130,7 @@ export function showQueue(printer?: string): Promise<string> {
  * Read a printer's PPD options.
  *
  * @param printer - Printer name, or undefined for the default destination
- * @returns The options by PPD keyword, or null if they cannot be read in time
+ * @returns The options by PPD keyword, or null if they cannot be read in time or there are none
  */
 export async function readPrinterOptions(
   printer?: string
@@ -140,7 +140,9 @@ export async function readPrinterOptions(
       timeout: READ_TIMEOUT_MS,
       parsed: true,
     })
-    return parseLpoptions(stdout)
+    // lpoptions reports a PPD it cannot fetch on stderr and still exits 0, leaving no output
+    const options = parseLpoptions(stdout)
+    return Object.keys(options).length > 0 ? options : null
   } catch {
     return null
   }

@@ -52,6 +52,24 @@ describe("parseLpoptions", () => {
   })
 })
 
+describe("readPrinterOptions", () => {
+  it("returns the options lpoptions lists", async () => {
+    execa.mockResolvedValueOnce({ stdout: INKJET })
+    expect((await readPrinterOptions("athena"))?.Duplex?.default).toBe("DuplexNoTumble")
+  })
+
+  it("reports a printer whose PPD cannot be fetched as unreadable", async () => {
+    // lpoptions prints its complaint on stderr and exits 0, so stdout is empty
+    execa.mockResolvedValueOnce({ stdout: "" })
+    expect(await readPrinterOptions("athena")).toBeNull()
+  })
+
+  it("reports a failing or timed-out command as unreadable", async () => {
+    execa.mockRejectedValueOnce(new Error("timed out"))
+    expect(await readPrinterOptions("athena")).toBeNull()
+  })
+})
+
 describe("submitJob", () => {
   it("sends the printer, copies, options and file to lpr", async () => {
     await submitJob({

@@ -21,10 +21,46 @@ ColorModel/Output Mode: *RGB Gray
 Duplex/Duplex: None *DuplexNoTumble DuplexTumble
 OutputBin/OutputBin: *FaceUp
 `
+// `lpoptions -p athena -l` of a Brother inkjet as CUPS 2.4 generates its PPD from IPP attributes.
+const ATHENA = `PageSize/Media Size: 215x345mm 3.5x5 3.5x5.Borderless 4x6 4x6.Borderless 5x7 5x7.Borderless 5x8 5x8.Borderless *A4 A4.Borderless A5 A6 A6.Borderless Env10 EnvC5 EnvDL EnvMonarch Executive FanFoldGermanLegal Legal Letter Letter.Borderless Oficio Custom.WIDTHxHEIGHT
+InputSlot/Media Source: *Auto Main
+MediaType/Media Type: Stationery PhotographicGlossy *StationeryInkjet Com.brotherBp71
+cupsPrintQuality/cupsPrintQuality: Draft Normal *High
+ColorModel/Output Mode: *RGB Gray
+Duplex/Duplex: None *DuplexNoTumble DuplexTumble
+OutputBin/OutputBin: *FaceUp
+`
 const CUPS_PDF = `PageSize/Page Size: Custom.WIDTHxHEIGHT A3 *A4 A5 ISOB5 JISB4 JISB5 Letter
 Resolution/Output Resolution: 150dpi *300dpi 600dpi
 `
 const values = (list: { value: string }[]) => list.map(({ value }) => value)
+
+describe("describePrinterSettings for a printer whose default quality is high", () => {
+  const settings = describePrinterSettings(parseLpoptions(ATHENA))
+
+  it("offers every quality and marks high as the printer's default", () => {
+    expect(settings.quality).toEqual([
+      { value: "draft", isDefault: false },
+      { value: "normal", isDefault: false },
+      { value: "high", isDefault: true },
+    ])
+  })
+
+  it("lists its page sizes with A4 as the default and accepts custom sizes", () => {
+    expect(settings.media.find(({ isDefault }) => isDefault)?.value).toBe("A4")
+    expect(values(settings.media)).toContain("4x6")
+    expect(values(settings.media)).toContain("jis_b5_182x257mm")
+    expect(settings.customMedia).toBe(true)
+  })
+
+  it("lists the duplex modes it has", () => {
+    expect(values(settings.sides)).toEqual([
+      "one-sided",
+      "two-sided-long-edge",
+      "two-sided-short-edge",
+    ])
+  })
+})
 
 describe("describePrinterSettings", () => {
   it("translates Duplex and cupsPrintQuality into tool parameter values", () => {

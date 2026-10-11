@@ -27,7 +27,6 @@ describe("config", () => {
     expect(typeof config.autoDuplex).toBe("boolean")
     expect(typeof config.enableManagement).toBe("boolean")
     expect(typeof config.enablePrompts).toBe("boolean")
-    expect(typeof config.fallbackOnRenderError).toBe("boolean")
     expect(typeof config.autoRenderMarkdown).toBe("boolean")
     expect(typeof config.autoRenderCode).toBe("boolean")
   })

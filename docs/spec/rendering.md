@@ -38,7 +38,7 @@ Without `render`, the detection above applies.
 
 ## Failure
 
-If rendering fails, the item fails with the reason. When `MCP_PRINTER_FALLBACK_ON_RENDER_ERROR` is `true`, the original file is sent to CUPS unchanged instead.
+If rendering fails, the item fails with the reason and nothing is sent to CUPS. To print the file as it is, call again with `render: none`.
 
 ## Everything else
 

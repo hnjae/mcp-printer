@@ -512,8 +512,7 @@ export type RenderMode = (typeof RENDER_MODES)[number]
  *
  * **Security:** All file paths are validated against allowed/denied paths before processing.
  *
- * **Error Handling:** If rendering fails and `MCP_PRINTER_FALLBACK_ON_RENDER_ERROR` is enabled,
- * the original file is used. Otherwise, an error is thrown.
+ * **Error Handling:** If rendering fails, an error is thrown.
  *
  * @param options - File preparation options including path and rendering preferences
  * @param options.filePath - Absolute or relative path to the file to prepare
@@ -530,7 +529,7 @@ export type RenderMode = (typeof RENDER_MODES)[number]
  *                               empty string if no rendering occurred
  *
  * @throws {Error} If file path validation fails (security check)
- * @throws {Error} If rendering fails and fallback is disabled
+ * @throws {Error} If rendering fails
  *
  * @example
  * // Prepare a markdown file (will be rendered to PDF)
@@ -563,36 +562,18 @@ export async function prepareFileForPrinting(options: RenderOptions): Promise<Re
         : "none")
 
   if (render === "markdown") {
-    try {
-      renderedPdf = await renderMarkdownToPdf(options.filePath)
-      actualFilePath = renderedPdf
-      renderType = "markdown → PDF"
-    } catch (error) {
-      // If fallback is enabled, use original file; otherwise throw error
-      if (config.fallbackOnRenderError) {
-        console.error(`Warning: Failed to render ${options.filePath}, using as-is:`, error)
-      } else {
-        throw error
-      }
-    }
+    renderedPdf = await renderMarkdownToPdf(options.filePath)
+    actualFilePath = renderedPdf
+    renderType = "markdown → PDF"
   } else if (render === "code") {
-    try {
-      renderedPdf = await renderCodeToPdf(options.filePath, {
-        lineNumbers: options.lineNumbers,
-        colorScheme: options.colorScheme,
-        fontSize: options.fontSize,
-        lineSpacing: options.lineSpacing,
-      })
-      actualFilePath = renderedPdf
-      renderType = "code → PDF (syntax highlighted)"
-    } catch (error) {
-      // If fallback is enabled, use original file; otherwise throw error
-      if (config.fallbackOnRenderError) {
-        console.error(`Warning: Failed to render code ${options.filePath}, using as-is:`, error)
-      } else {
-        throw error
-      }
-    }
+    renderedPdf = await renderCodeToPdf(options.filePath, {
+      lineNumbers: options.lineNumbers,
+      colorScheme: options.colorScheme,
+      fontSize: options.fontSize,
+      lineSpacing: options.lineSpacing,
+    })
+    actualFilePath = renderedPdf
+    renderType = "code → PDF (syntax highlighted)"
   }
 
   return { actualFilePath, renderedPdf, renderType }

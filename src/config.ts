@@ -37,8 +37,6 @@ export interface Config {
   enableFileTools: boolean
   /** Enable prompts (workflow templates that appear as slash commands) */
   enablePrompts: boolean
-  /** Fallback to printing original file if PDF rendering fails (for markdown and code) */
-  fallbackOnRenderError: boolean
   /** List of directory paths that files must be under to be accessible (merged with defaults) */
   allowedPaths: string[]
   /** List of directory/file paths that are explicitly denied access (merged with defaults) */
@@ -87,7 +85,6 @@ const DEFAULT_AUTO_RENDER_CODE = true
 const DEFAULT_ENABLE_MANAGEMENT = false
 const DEFAULT_ENABLE_FILE_TOOLS = true
 const DEFAULT_ENABLE_PROMPTS = true
-const DEFAULT_FALLBACK_ON_RENDER_ERROR = false
 const DEFAULT_MAX_COPIES = 10
 const DEFAULT_CONFIRM_IF_OVER_PAGES = 10
 const DEFAULT_CODE_COLOR_SCHEME = "atom-one-light"
@@ -182,9 +179,6 @@ export const config: Config = {
   }),
   enablePrompts: yn(process.env.MCP_PRINTER_ENABLE_PROMPTS, {
     default: DEFAULT_ENABLE_PROMPTS,
-  }),
-  fallbackOnRenderError: yn(process.env.MCP_PRINTER_FALLBACK_ON_RENDER_ERROR, {
-    default: DEFAULT_FALLBACK_ON_RENDER_ERROR,
   }),
   // Use user-provided paths if set, otherwise use default allowed directories
   allowedPaths: hasUserPaths ? userAllowedPaths : [...defaultAllowedPaths],

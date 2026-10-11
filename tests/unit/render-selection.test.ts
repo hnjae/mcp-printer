@@ -18,7 +18,6 @@ vi.mock("../../src/config.js", () => ({
     deniedPaths: [],
     autoRenderMarkdown: true,
     autoRenderCode: true,
-    fallbackOnRenderError: false,
   },
   MARKDOWN_EXTENSIONS: ["md", "markdown"],
 }))

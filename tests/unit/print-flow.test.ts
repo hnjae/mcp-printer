@@ -16,7 +16,6 @@ const config = {
   deniedPaths: [],
   autoRenderMarkdown: true,
   autoRenderCode: true,
-  fallbackOnRenderError: false,
   defaultPrinter: "",
   autoDuplex: false,
   defaultOptions: [] as string[],

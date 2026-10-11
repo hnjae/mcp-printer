@@ -36,7 +36,22 @@ bun install --frozen-lockfile
 
 Run it with `bun src/index.ts`; Bun runs the TypeScript sources directly, so there is no build step. The default transport is stdio, so it waits for an MCP client rather than opening a web page. Logs go to stderr.
 
-This fork is not published to npm; the unscoped npm package `mcp-printer` is the upstream project.
+### Run from npm
+
+The package is published as [`@hnjae/mcp-printer`](https://www.npmjs.com/package/@hnjae/mcp-printer) and needs the same requirements, Bun included: its executable starts with a `bun` shebang, so `npx` also needs Bun on `PATH`. Run it with `bunx @hnjae/mcp-printer`. In an `mcpServers` configuration:
+
+```json
+{
+  "mcpServers": {
+    "printer": {
+      "command": "bunx",
+      "args": ["@hnjae/mcp-printer"]
+    }
+  }
+}
+```
+
+The unscoped npm package `mcp-printer` is the upstream project, not this fork.
 
 ## Connect an MCP client
 

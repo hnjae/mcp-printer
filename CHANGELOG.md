@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.2] - 2026-10-12
+
+### Added
+
+- The package is published to npm as `@hnjae/mcp-printer` (run with `bunx @hnjae/mcp-printer`; Bun is required). Pushing a `v*` tag publishes it through npm trusted publishing, and a tag containing a hyphen is published under the `next` tag
+
 ## [3.0.1] - 2026-10-11
 
 ### Fixed

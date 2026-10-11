@@ -1,6 +1,6 @@
 {
+  "name": "@hnjae/mcp-printer",
   "version": "3.0.1",
-  "private": true,
   "description": "MCP server for printing documents via CUPS. Gives AI assistants the ability to print files, manage print queues, and control printers.",
   "author": "KIM Hyunjae",
   "license": "AGPL-3.0-or-later",
@@ -19,6 +19,17 @@
     "cups"
   ],
   "type": "module",
+  "bin": {
+    "mcp-printer": "src/index.ts"
+  },
+  "files": [
+    "src",
+    "LICENSE",
+    "NOTICE.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "bun": ">=1.3.14"
   },

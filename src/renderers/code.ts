@@ -32,7 +32,6 @@ import { fileURLToPath } from "node:url"
 import { encode } from "he"
 import hljs from "highlight.js"
 import { config } from "../config.js"
-import { validateFilePath } from "../file-security.js"
 import { convertHtmlToPdf, hasShebang } from "../utils.js"
 
 /**
@@ -412,20 +411,17 @@ export async function renderCodeToPdf(
   filePath: string,
   options?: RenderCodeOptions
 ): Promise<string> {
-  // Step 1: Validate file path
-  validateFilePath(filePath)
-
-  // Step 2: Read source code and identify language
+  // Step 1: Read source code and identify language
   const sourceCode = readFileSync(filePath, "utf-8")
   const language = getLanguageFromExtension(filePath)
 
-  // Step 3: Apply syntax highlighting with extension-based language, fallback to auto-detect
+  // Step 2: Apply syntax highlighting with extension-based language, fallback to auto-detect
   const highlightedCode = applySyntaxHighlighting(sourceCode, language)
 
-  // Step 4: Fix multiline spans and split into lines
+  // Step 3: Fix multiline spans and split into lines
   const lines = fixMultilineSpans(highlightedCode).split("\n")
 
-  // Step 5: Build HTML structure with configuration
+  // Step 4: Build HTML structure with configuration
   const showLineNumbers = options?.lineNumbers ?? config.code.autoLineNumbers
   const tableRows = buildTableRows(lines, showLineNumbers)
 
@@ -440,7 +436,7 @@ export async function renderCodeToPdf(
     options?.lineSpacing ?? config.code.lineSpacing
   )
 
-  // Step 6: Convert HTML to PDF
+  // Step 5: Convert HTML to PDF
   return await convertHtmlToPdf(html, {
     tempDirPrefix: "mcp-printer-code-",
   })

@@ -15,7 +15,7 @@ on:
       - .github/workflows/image.yml
 jobs:
   image:
-    name: Build and publish image
+    name: Build image (publish on tag)
     runs-on: ubuntu-latest
     permissions:
       contents: read

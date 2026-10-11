@@ -215,4 +215,4 @@ Commands, conventions and the release procedure are in [AGENTS.md](AGENTS.md).
 
 ## License
 
-This fork is licensed under AGPL-3.0-or-later. It derives from [steveclarke/mcp-printer](https://github.com/steveclarke/mcp-printer); the upstream MIT copyright and permission notice are preserved in [LICENSE](LICENSE).
+This fork is licensed under AGPL-3.0-or-later. It derives from [steveclarke/mcp-printer](https://github.com/steveclarke/mcp-printer); the upstream MIT copyright and permission notice are preserved in [NOTICE.md](NOTICE.md).

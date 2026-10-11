@@ -5,6 +5,7 @@ path = [
   ".editorconfig-checker.json",
   "AGENTS.md",
   "CHANGELOG.md",
+  "NOTICE.md",
   "README.md",
   "biome.jsonc",
   "bun.lock",

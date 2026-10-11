@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "bun:test"
 import {
   cancelAllJobs,
   cancelJob,
+  getDefaultPrinter,
   parseLpoptions,
   setDefaultPrinter,
   submitJob,
@@ -90,5 +91,24 @@ describe("changes to CUPS state", () => {
   it("lets a CUPS failure reach the caller", async () => {
     execa.mockRejectedValueOnce(new Error("lprm: not authorized"))
     await expect(cancelJob("42")).rejects.toThrow("not authorized")
+  })
+})
+
+describe("getDefaultPrinter", () => {
+  it("reads the name from the default destination line", async () => {
+    execa.mockResolvedValueOnce({ stdout: "system default destination: athena" })
+    expect(await getDefaultPrinter()).toBe("athena")
+  })
+
+  it("returns undefined when no default is set", async () => {
+    execa.mockResolvedValueOnce({ stdout: "no system default destination" })
+    expect(await getDefaultPrinter()).toBeUndefined()
+  })
+
+  it("asks for untranslated output, which the parser depends on", async () => {
+    execa.mockResolvedValueOnce({ stdout: "system default destination: athena" })
+    await getDefaultPrinter()
+    const options = execa.mock.calls[0]?.[2] as { env?: Record<string, string> }
+    expect(options.env?.LC_ALL).toBe("C.UTF-8")
   })
 })

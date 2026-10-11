@@ -25,3 +25,7 @@ flowchart LR
 
 - Operations that only enrich a result, such as reading a printer's options, fail soft. The caller receives "unavailable" and carries on; one unreachable printer does not fail a listing or a print.
 - Operations that print or change state, such as submitting or cancelling a job and setting the default printer, fail loudly with CUPS's reason. They are never retried or reported as success.
+
+## Locale
+
+Commands whose output is parsed run with a fixed locale, so a parser never sees translated text. Text meant for people, such as the printer and queue listings, keeps the user's language.

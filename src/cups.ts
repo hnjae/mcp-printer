@@ -50,16 +50,28 @@ export function parseLpoptions(text: string): Record<string, PpdOption> {
 /** Longest wait for one printer's options, so an unreachable queue cannot stall a tool call. */
 const PRINTER_OPTIONS_TIMEOUT_MS = 10_000
 
+/** Environment for commands whose output is parsed, so a parser never sees translated text. */
+const PARSED_OUTPUT_ENV = { LC_ALL: "C.UTF-8" }
+
+interface RunOptions {
+  timeout?: number
+  /** Run with a fixed locale because the output is parsed */
+  parsed?: boolean
+}
+
 /** Run a CUPS command and return its trimmed stdout. Failures propagate as the command reported them. */
-async function run(command: string, args: string[], timeout?: number): Promise<string> {
-  const { stdout } = await execa(command, args, { timeout })
+async function run(command: string, args: string[], options: RunOptions = {}): Promise<string> {
+  const { stdout } = await execa(command, args, {
+    timeout: options.timeout,
+    env: options.parsed ? PARSED_OUTPUT_ENV : undefined,
+  })
   return stdout.trim()
 }
 
 /** Like {@link run}, with failures reported as "Command failed: <reason>". */
-async function read(command: string, args: string[]): Promise<string> {
+async function read(command: string, args: string[], options?: RunOptions): Promise<string> {
   try {
-    return await run(command, args)
+    return await run(command, args, options)
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     throw new Error(`Command failed: ${message}`)
@@ -82,7 +94,7 @@ export function describePrinters(): Promise<string> {
  */
 export async function listPrinterNames(): Promise<string[]> {
   try {
-    return (await run("lpstat", ["-e"])).split("\n").filter(Boolean)
+    return (await run("lpstat", ["-e"], { parsed: true })).split("\n").filter(Boolean)
   } catch {
     return []
   }
@@ -94,7 +106,8 @@ export async function listPrinterNames(): Promise<string[]> {
  * @returns The name, or undefined if none is set
  */
 export async function getDefaultPrinter(): Promise<string | undefined> {
-  return (await read("lpstat", ["-d"])).split(": ")[1] || undefined
+  const output = await read("lpstat", ["-d"], { parsed: true })
+  return /^system default destination: (.+)$/m.exec(output)?.[1]
 }
 
 /**
@@ -117,11 +130,10 @@ export async function readPrinterOptions(
   printer?: string
 ): Promise<Record<string, PpdOption> | null> {
   try {
-    const stdout = await run(
-      "lpoptions",
-      [...(printer ? ["-p", printer] : []), "-l"],
-      PRINTER_OPTIONS_TIMEOUT_MS
-    )
+    const stdout = await run("lpoptions", [...(printer ? ["-p", printer] : []), "-l"], {
+      timeout: PRINTER_OPTIONS_TIMEOUT_MS,
+      parsed: true,
+    })
     return parseLpoptions(stdout)
   } catch {
     return null

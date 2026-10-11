@@ -125,7 +125,7 @@ CUPS records jobs from the container as owned by `unknown`, so virtual printers 
 | Tool | Purpose | Availability |
 | --- | --- | --- |
 | `print_content` | Render and print supplied `content` with `format`: `markdown`, `html`, `code`, or `text`. | Always |
-| `print_pdf` | Print a readable PDF supplied as `pdf_base64`, up to 5 MiB decoded. | Always |
+| `print_pdf` | Print a readable PDF supplied as `pdf_base64`, up to 5 MiB decoded, about 3 MiB over HTTP. | Always |
 | `print_file` | Print server-side paths from a `files` array; Markdown and known code files render automatically. | File tools enabled |
 | `get_page_meta` | Get PDF pages and estimated physical sheets from a `files` array, rendering Markdown/code first when needed. | File tools enabled |
 | `list_printers` | List CUPS printers, their status, and the `sides`, `media`, and `quality` values each accepts. | Always |

@@ -26,7 +26,7 @@ Three tools submit print jobs. They differ in where the document comes from; eve
 
 ## print_pdf
 
-`pdf_base64` decodes to at most 5 MiB and must be a readable PDF; anything else fails the job before anything is sent to CUPS.
+`pdf_base64` decodes to at most 5 MiB and must be a readable PDF; anything else fails the job before anything is sent to CUPS. Over the HTTP transport the whole request must fit in 4 MiB, base64 included, which limits the PDF to about 3 MiB; a larger request is rejected with HTTP 413.
 
 ## print_file
 

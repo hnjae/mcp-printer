@@ -32,7 +32,7 @@ A printer whose `list_printers` entry mentions `Custom.<W>x<H>mm` accepts any si
 
 The names `jis_b5_182x257mm` (182 × 257 mm) and `jis_b6_128x182mm` (128 × 182 mm) are valid `media` values on every printer where `list_printers` shows them. A client cannot tell whether the printer lists the size itself, and does not need to.
 
-`list_printers` shows a size when the printer lists it itself, or when it lists A4 (for B5) or A5 (for B6) and custom page sizes. A size the printer lists itself, whatever its own name for it (`JISB5`, `182x257mm`), is shown once under the name above.
+`list_printers` shows a size when the printer lists it itself, or when it lists A4 (for B5) or A5 (for B6) and custom page sizes. A size the printer lists itself, whatever its own name for it (`B5` or `JISB5` for B5, `B6` for B6), is shown once under the name above.
 
 When a job asks for one of these names, the server reads the target printer's page sizes and sends the printer's own choice for the size if it has one, otherwise `Custom.<W>x<H>mm`. If the printer's page sizes cannot be read, or the printer has neither, the name is sent unchanged. Whether a printer feeds and prints a custom size depends on the printer.
 

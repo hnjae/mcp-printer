@@ -15,23 +15,23 @@ export const QUALITIES = ["draft", "normal", "high"] as const
 
 /**
  * JIS B-series sizes, named as in IPP (PWG). `ppdNames` are the `PageSize` choices under which a
- * printer may list the size itself. `JISB5` was seen in the PPD of a cups-pdf queue; the size in
- * millimetres is the name CUPS gives other sizes in a PPD it generates from IPP attributes, assumed
- * to hold here too. A printer that lists none of them can still print the size as a custom size
- * when it lists `requires` and custom page sizes.
+ * printer may list the size itself: `B5` and `B6` are what CUPS names them in a PPD it generates
+ * from IPP attributes (cups/pwg-media.c), and `JISB5` is what a cups-pdf PPD was seen to use. A
+ * printer that lists none of them can still print the size as a custom size when it lists
+ * `requires` and custom page sizes.
  */
 export const JIS_SIZES = {
   jis_b5_182x257mm: {
     widthMm: 182,
     heightMm: 257,
     requires: "A4",
-    ppdNames: ["JISB5", "182x257mm"],
+    ppdNames: ["B5", "JISB5"],
   },
   jis_b6_128x182mm: {
     widthMm: 128,
     heightMm: 182,
     requires: "A5",
-    ppdNames: ["128x182mm"],
+    ppdNames: ["B6"],
   },
 } as const
 

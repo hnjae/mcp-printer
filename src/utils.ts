@@ -15,13 +15,12 @@ import { type ExecaError, execa } from "execa"
 import { encode } from "he"
 import { PDFParse } from "pdf-parse"
 import { config, MARKDOWN_EXTENSIONS, type MarkdownExtension } from "./config.js"
+import { getDefaultPrinter, readPrinterOptions, submitJob } from "./cups.js"
 import { validateFilePath } from "./file-security.js"
 import {
   JIS_SIZES,
   type ORIENTATIONS,
-  type PpdOption,
   type QUALITIES,
-  parseLpoptions,
   resolveMedia,
   type SIDES,
 } from "./print-settings.js"
@@ -365,42 +364,22 @@ export function buildCupsOptions({
   return all
 }
 
-/** Longest wait for one printer's options, so an unreachable queue cannot stall a tool call. */
-const PRINTER_OPTIONS_TIMEOUT_MS = 10_000
-
-/**
- * Read a printer's PPD options with `lpoptions -l`.
- *
- * @param printer - Printer name, or undefined for the default destination
- * @returns The options by PPD keyword, or null if `lpoptions` fails or times out
- */
-export async function readPpdOptions(printer?: string): Promise<Record<string, PpdOption> | null> {
-  try {
-    const { stdout } = await execa("lpoptions", [...(printer ? ["-p", printer] : []), "-l"], {
-      timeout: PRINTER_OPTIONS_TIMEOUT_MS,
-    })
-    return parseLpoptions(stdout)
-  } catch {
-    return null
-  }
-}
-
 /**
  * Turn a JIS `media` name into what the target printer accepts. Only JIS sizes cost an extra
- * `lpoptions` call; if it fails, `media` is sent unchanged for CUPS to judge.
+ * read of the printer's options; if it fails, `media` is sent unchanged for CUPS to judge.
  */
 async function withResolvedMedia(settings: PrintOptions, printer?: string): Promise<PrintOptions> {
   const { media } = settings
   if (!media || !(media in JIS_SIZES)) {
     return settings
   }
-  const pageSizes = (await readPpdOptions(printer))?.PageSize?.choices ?? []
+  const pageSizes = (await readPrinterOptions(printer))?.PageSize?.choices ?? []
   return { ...settings, media: resolveMedia(media, pageSizes) }
 }
 
 /**
  * Execute a print job with the given file and options.
- * Handles copy validation, lpr argument building, and execution.
+ * Handles copy validation, option assembly, and execution.
  *
  * @param filePath - Path to the file to print
  * @param printer - Optional printer name
@@ -422,33 +401,19 @@ export async function executePrintJob(
     )
   }
 
-  const args: string[] = []
-
   // Use configured default printer if none specified
   const targetPrinter = printer || config.defaultPrinter
-  if (targetPrinter) {
-    args.push("-P", targetPrinter)
-  }
-
-  if (copies > 1) {
-    args.push(`-#${copies}`)
-  }
 
   const allOptions = buildCupsOptions(await withResolvedMedia(settings, targetPrinter))
-
-  // Add each option with -o flag
-  for (const option of allOptions) {
-    args.push("-o", option)
-  }
-
-  // Add file path
-  args.push(filePath)
-
-  await execa("lpr", args)
+  await submitJob({
+    file: filePath,
+    printer: targetPrinter || undefined,
+    copies,
+    options: allOptions,
+  })
 
   // Determine the printer name used
-  const printerName =
-    targetPrinter || (await execCommand("lpstat", ["-d"])).split(": ")[1] || "default"
+  const printerName = targetPrinter || (await getDefaultPrinter()) || "default"
 
   return { printerName, allOptions }
 }

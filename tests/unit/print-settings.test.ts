@@ -6,10 +6,10 @@
  */
 
 import { describe, expect, it } from "bun:test"
+import { parseLpoptions } from "../../src/cups.js"
 import {
   describePrinterSettings,
   formatPrinterSettings,
-  parseLpoptions,
   resolveMedia,
 } from "../../src/print-settings.js"
 
@@ -25,29 +25,6 @@ const CUPS_PDF = `PageSize/Page Size: Custom.WIDTHxHEIGHT A3 *A4 A5 ISOB5 JISB4 
 Resolution/Output Resolution: 150dpi *300dpi 600dpi
 `
 const values = (list: { value: string }[]) => list.map(({ value }) => value)
-
-describe("parseLpoptions", () => {
-  it("reads choices and the default of each option", () => {
-    const options = parseLpoptions(INKJET)
-    expect(options.PageSize?.default).toBe("A4")
-    expect(options.PageSize?.choices).toContain("Custom.WIDTHxHEIGHT")
-    expect(options.Duplex).toEqual({
-      choices: ["None", "DuplexNoTumble", "DuplexTumble"],
-      default: "DuplexNoTumble",
-    })
-  })
-
-  it("splits on the last colon so UI text containing one does not leak into choices", () => {
-    expect(
-      parseLpoptions("Duplex/Two-sided: printing: None *DuplexTumble").Duplex?.choices
-    ).toEqual(["None", "DuplexTumble"])
-  })
-
-  it("returns nothing for empty or unrelated output", () => {
-    expect(parseLpoptions("")).toEqual({})
-    expect(parseLpoptions("lpoptions: Unable to get PPD file")).toEqual({})
-  })
-})
 
 describe("describePrinterSettings", () => {
   it("translates Duplex and cupsPrintQuality into tool parameter values", () => {

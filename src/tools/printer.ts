@@ -8,15 +8,21 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
-import { execa } from "execa"
 import { z } from "zod"
 import { config } from "../config.js"
+import {
+  describePrinters,
+  getDefaultPrinter,
+  listPrinterNames,
+  readPrinterOptions,
+  setDefaultPrinter,
+  showQueue,
+} from "../cups.js"
 import {
   describePrinterSettings,
   formatPrinterSettings,
   type PrinterSettings,
 } from "../print-settings.js"
-import { execCommand, readPpdOptions } from "../utils.js"
 import {
   type CancelJobResult,
   checkBatchSizeLimit,
@@ -31,7 +37,7 @@ import {
  * @returns The settings, or null if the options could not be read
  */
 async function readPrinterSettings(name: string): Promise<PrinterSettings | null> {
-  const options = await readPpdOptions(name)
+  const options = await readPrinterOptions(name)
   return options && describePrinterSettings(options)
 }
 
@@ -107,14 +113,12 @@ export function registerPrinterTools(server: McpServer) {
       inputSchema: {},
     },
     async () => {
-      const output = await execCommand("lpstat", ["-p", "-d"])
+      const output = await describePrinters()
       if (!output) {
         return { content: [{ type: "text", text: "No printers found" }] }
       }
 
-      const names = (await execCommand("lpstat", ["-e"]).catch(() => ""))
-        .split("\n")
-        .filter(Boolean)
+      const names = await listPrinterNames()
       const settings = await Promise.all(names.map(readPrinterSettings))
       const details = names.map((name, i) => formatPrinterSettings(name, settings[i] ?? null))
       const text =
@@ -139,12 +143,7 @@ export function registerPrinterTools(server: McpServer) {
       },
     },
     async ({ printer }) => {
-      const lpqArgs: string[] = []
-      if (printer) {
-        lpqArgs.push("-P", printer)
-      }
-
-      const output = await execCommand("lpq", lpqArgs)
+      const output = await showQueue(printer)
       return {
         content: [
           {
@@ -165,8 +164,7 @@ export function registerPrinterTools(server: McpServer) {
       inputSchema: {},
     },
     async () => {
-      const output = await execCommand("lpstat", ["-d"])
-      const defaultPrinter = output.split(": ")[1] || "No default printer set"
+      const defaultPrinter = (await getDefaultPrinter()) ?? "No default printer set"
       return {
         content: [
           {
@@ -238,7 +236,7 @@ export function registerPrinterTools(server: McpServer) {
         },
       },
       async ({ printer }) => {
-        await execa("lpoptions", ["-d", printer])
+        await setDefaultPrinter(printer)
         return {
           content: [
             {

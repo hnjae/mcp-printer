@@ -44,6 +44,8 @@ lint:
     hadolint Containerfile
     actionlint
     editorconfig-checker
+    deadnix --fail --exclude node_modules
+    statix check
 
 [group('lint')]
 typecheck:

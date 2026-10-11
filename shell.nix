@@ -10,6 +10,7 @@ pkgs.mkShellNoCC {
     chromium
     cocogitto
     cups
+    deadnix
     editorconfig-checker
     hadolint
     just
@@ -17,6 +18,7 @@ pkgs.mkShellNoCC {
     prek
     reuse
     rumdl
+    statix
     taplo
     treefmt
     typos

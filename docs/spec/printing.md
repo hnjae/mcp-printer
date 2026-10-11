@@ -21,7 +21,7 @@ Three tools submit print jobs. They differ in where the document comes from; eve
 
 - `markdown`: rendered to PDF as described in [rendering](rendering.md), with the restrictions in [untrusted-content](untrusted-content.md).
 - `html`: rendered as a self-contained page with the restrictions in [untrusted-content](untrusted-content.md).
-- `code`: rendered with syntax highlighting. `language` is a file extension or language id of 1 to 20 letters, digits, `_`, `+` or `-`, such as `py` or `ts`, default `txt`; any other value fails the job. Rendering takes `line_numbers`, `color_scheme`, `font_size` and `line_spacing`, as in [rendering](rendering.md).
+- `code`: rendered with syntax highlighting. `language` is a file extension or language id of 1 to 20 letters, digits, `_`, `+` or `-`, such as `py` or `ts`, default `txt`; any other value fails the job. Its appearance follows [rendering](rendering.md).
 - `text`: printed as plain monospace text. The text is escaped, never interpreted as markup, and long lines wrap.
 
 ## print_pdf
@@ -30,7 +30,7 @@ Three tools submit print jobs. They differ in where the document comes from; eve
 
 ## print_file
 
-Each entry in `files` has a `file_path` and the shared parameters. Paths are checked against [file-access](file-access.md). Markdown and recognized code files are rendered to PDF first, controlled by `render` and the code rendering parameters described in [rendering](rendering.md). Any other file is sent to CUPS unchanged, and CUPS decides whether it can print it. Entries are processed as described in [batches](batches.md).
+Each entry in `files` has a `file_path` and the shared parameters. Paths are checked against [file-access](file-access.md). Markdown and recognized code files are rendered to PDF first, controlled by `render` as described in [rendering](rendering.md). Any other file is sent to CUPS unchanged, and CUPS decides whether it can print it. Entries are processed as described in [batches](batches.md).
 
 ## Result
 

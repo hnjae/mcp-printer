@@ -25,27 +25,9 @@ import {
 } from "./batch-helpers.js"
 
 /**
- * Shared parameter schema for rendering options used by both print_file and get_page_meta.
+ * Shared parameter schema for rendering used by both print_file and get_page_meta.
  */
 const renderingParametersSchema = {
-  line_numbers: z
-    .boolean()
-    .optional()
-    .describe("Show line numbers when rendering code files (overrides global setting)"),
-  color_scheme: z
-    .string()
-    .optional()
-    .describe(
-      "Syntax highlighting color scheme for code files (e.g., 'github', 'monokai', 'atom-one-light')"
-    ),
-  font_size: z
-    .string()
-    .optional()
-    .describe("Font size for code files (e.g., '8pt', '10pt', '12pt')"),
-  line_spacing: z
-    .string()
-    .optional()
-    .describe("Line spacing for code files (e.g., '1', '1.5', '2')"),
   render: z
     .enum(RENDER_MODES)
     .optional()
@@ -142,10 +124,6 @@ export function registerContentPrintTools(server: McpServer) {
           .describe(
             "Skip page count confirmation check (bypasses MCP_PRINTER_CONFIRM_IF_OVER_PAGES threshold)"
           ),
-        line_numbers: renderingParametersSchema.line_numbers,
-        color_scheme: renderingParametersSchema.color_scheme,
-        font_size: renderingParametersSchema.font_size,
-        line_spacing: renderingParametersSchema.line_spacing,
       },
     },
     async (spec) => formatPrintResults([await handlePrintContent(spec)])

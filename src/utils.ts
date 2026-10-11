@@ -475,14 +475,6 @@ export interface RenderResult {
 export interface RenderOptions {
   /** Path to the file to render */
   filePath: string
-  /** Show line numbers when rendering code files */
-  lineNumbers?: boolean
-  /** Syntax highlighting color scheme for code files */
-  colorScheme?: string
-  /** Font size for code files */
-  fontSize?: string
-  /** Line spacing for code files */
-  lineSpacing?: string
   /** How to render the file; omitted means detect from the file and the configuration */
   render?: RenderMode
 }
@@ -513,10 +505,6 @@ export type RenderMode = (typeof RENDER_MODES)[number]
  *
  * @param options - File preparation options including path and rendering preferences
  * @param options.filePath - Absolute or relative path to the file to prepare
- * @param options.lineNumbers - Show line numbers in code rendering (overrides global setting)
- * @param options.colorScheme - Syntax highlighting theme for code (e.g., "atom-one-light", "monokai")
- * @param options.fontSize - Font size for code rendering (e.g., "10pt", "12pt")
- * @param options.lineSpacing - Line spacing multiplier for code (e.g., "1", "1.5", "2")
  * @param options.render - Explicitly choose how to render the file
  *
  * @returns Promise resolving to a RenderResult object
@@ -563,12 +551,7 @@ export async function prepareFileForPrinting(options: RenderOptions): Promise<Re
     actualFilePath = renderedPdf
     renderType = "markdown → PDF"
   } else if (render === "code") {
-    renderedPdf = await renderCodeToPdf(options.filePath, {
-      lineNumbers: options.lineNumbers,
-      colorScheme: options.colorScheme,
-      fontSize: options.fontSize,
-      lineSpacing: options.lineSpacing,
-    })
+    renderedPdf = await renderCodeToPdf(options.filePath)
     actualFilePath = renderedPdf
     renderType = "code → PDF (syntax highlighted)"
   }
@@ -619,14 +602,6 @@ export interface ContentOptions {
   format: ContentFormat
   /** File extension or language id selecting syntax highlighting for format "code" (default: "txt") */
   language?: string
-  /** Show line numbers when rendering code */
-  lineNumbers?: boolean
-  /** Syntax highlighting color scheme for code */
-  colorScheme?: string
-  /** Font size for code rendering */
-  fontSize?: string
-  /** Line spacing for code rendering */
-  lineSpacing?: string
 }
 
 /**
@@ -673,12 +648,7 @@ export async function withPreparedContent<T>(
         }
         const file = join(tempDir, `code.${language}`)
         writeFileSync(file, options.content, "utf-8")
-        renderedPdf = await renderCodeToPdf(file, {
-          lineNumbers: options.lineNumbers,
-          colorScheme: options.colorScheme,
-          fontSize: options.fontSize,
-          lineSpacing: options.lineSpacing,
-        })
+        renderedPdf = await renderCodeToPdf(file)
         return await use({
           actualFilePath: renderedPdf,
           renderType: "code → PDF (syntax highlighted)",

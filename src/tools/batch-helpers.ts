@@ -75,10 +75,6 @@ export interface FilePrintSpec extends PrintOptions {
   printer?: string
   copies?: number
   skip_confirmation?: boolean
-  line_numbers?: boolean
-  color_scheme?: string
-  font_size?: string
-  line_spacing?: string
   render?: RenderMode
 }
 
@@ -183,10 +179,6 @@ export async function handlePrint(spec: FilePrintSpec): Promise<PrintResult> {
     orientation,
     quality,
     skip_confirmation,
-    line_numbers,
-    color_scheme,
-    font_size,
-    line_spacing,
     render,
   } = spec
 
@@ -194,10 +186,6 @@ export async function handlePrint(spec: FilePrintSpec): Promise<PrintResult> {
     // Use shared rendering function
     const { actualFilePath, renderedPdf, renderType } = await prepareFileForPrinting({
       filePath: file_path,
-      lineNumbers: line_numbers,
-      colorScheme: color_scheme,
-      fontSize: font_size,
-      lineSpacing: line_spacing,
       render,
     })
 
@@ -230,14 +218,7 @@ export async function handlePrint(spec: FilePrintSpec): Promise<PrintResult> {
 /**
  * Specification for printing document content sent by the client.
  */
-export interface ContentPrintSpec
-  extends PrintTarget,
-    Omit<ContentOptions, "lineNumbers" | "colorScheme" | "fontSize" | "lineSpacing"> {
-  line_numbers?: boolean
-  color_scheme?: string
-  font_size?: string
-  line_spacing?: string
-}
+export interface ContentPrintSpec extends PrintTarget, ContentOptions {}
 
 /**
  * Handle printing of content sent by the client (print_content).
@@ -269,10 +250,6 @@ export async function handlePrintContent(spec: ContentPrintSpec): Promise<PrintR
         content: content.content,
         format: content.format,
         language: content.language,
-        lineNumbers: content.line_numbers,
-        colorScheme: content.color_scheme,
-        fontSize: content.font_size,
-        lineSpacing: content.line_spacing,
       },
       ({ actualFilePath, renderType }) =>
         printPreparedFile(label, actualFilePath, renderType, {
@@ -408,10 +385,6 @@ export function formatPrintResults(results: PrintResult[]): {
  */
 export interface FilePageMetaSpec extends Pick<PrintOptions, "options" | "sides"> {
   file_path: string
-  line_numbers?: boolean
-  color_scheme?: string
-  font_size?: string
-  line_spacing?: string
   render?: RenderMode
 }
 
@@ -449,17 +422,12 @@ export interface PageMetaResult {
  * - Sheets is the physical paper count (pages/2 for duplex)
  */
 export async function handlePageMeta(spec: FilePageMetaSpec): Promise<PageMetaResult> {
-  const { file_path, options, sides, line_numbers, color_scheme, font_size, line_spacing, render } =
-    spec
+  const { file_path, options, sides, render } = spec
 
   try {
     // Use shared rendering function
     const { actualFilePath, renderedPdf, renderType } = await prepareFileForPrinting({
       filePath: file_path,
-      lineNumbers: line_numbers,
-      colorScheme: color_scheme,
-      fontSize: font_size,
-      lineSpacing: line_spacing,
       render,
     })
 

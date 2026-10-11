@@ -17,14 +17,14 @@ A file is rendered with syntax highlighting when `MCP_PRINTER_AUTO_RENDER_CODE` 
 
 A file with a Markdown extension is never selected for code rendering automatically, so when Markdown rendering is off it is printed as it is; `render: code` renders it as code.
 
-Code rendering takes these settings, per call or by default:
+The look of the output comes from the configuration; a call cannot change it:
 
-| Parameter | Default | Effect |
+| Variable | Default | Effect |
 | --- | --- | --- |
-| `line_numbers` | `MCP_PRINTER_CODE_AUTO_LINE_NUMBERS` (`true`) | Show line numbers |
-| `color_scheme` | `MCP_PRINTER_CODE_COLOR_SCHEME` (`atom-one-light`) | highlight.js theme name; an unknown name falls back to the default theme |
-| `font_size` | `MCP_PRINTER_CODE_FONT_SIZE` (`10pt`) | CSS font size |
-| `line_spacing` | `MCP_PRINTER_CODE_LINE_SPACING` (`1.5`) | CSS line height |
+| `MCP_PRINTER_CODE_AUTO_LINE_NUMBERS` | `true` | Show line numbers |
+| `MCP_PRINTER_CODE_COLOR_SCHEME` | `atom-one-light` | highlight.js theme name; an unknown name falls back to the default theme |
+| `MCP_PRINTER_CODE_FONT_SIZE` | `10pt` | CSS font size |
+| `MCP_PRINTER_CODE_LINE_SPACING` | `1.5` | CSS line height |
 
 ## Choosing the renderer
 

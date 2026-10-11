@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.3] - 2026-10-12
+
+### Fixed
+
+- `list_printers` reports a printer whose PPD options cannot be read as unavailable. `lpoptions -l` prints its complaint on stderr and exits 0 when it cannot fetch the PPD, for example when the CUPS daemon listens only on its Unix socket, and the empty output was shown as a printer that supports no quality and no page sizes
+
 ## [3.0.2] - 2026-10-12
 
 ### Added

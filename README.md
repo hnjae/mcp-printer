@@ -28,16 +28,15 @@ Check that CUPS can see your printers:
 lpstat -p -d
 ```
 
-Clone and build the server:
+Clone the server and install its dependencies:
 
 ```sh
 git clone https://github.com/hnjae/mcp-printer.git
 cd mcp-printer
 bun install --frozen-lockfile
-bun x tsc
 ```
 
-Run it with `bun dist/index.js`. The default transport is stdio, so it waits for an MCP client rather than opening a web page. Logs go to stderr.
+Run it with `bun src/index.ts`; Bun runs the TypeScript sources directly, so there is no build step. The default transport is stdio, so it waits for an MCP client rather than opening a web page. Logs go to stderr.
 
 This fork is not published to npm; the unscoped npm package `mcp-printer` is the upstream project.
 
@@ -52,7 +51,7 @@ For clients that use an `mcpServers` configuration, add:
   "mcpServers": {
     "printer": {
       "command": "/absolute/path/to/bun",
-      "args": ["/absolute/path/to/mcp-printer/dist/index.js"],
+      "args": ["/absolute/path/to/mcp-printer/src/index.ts"],
       "env": {
         "MCP_PRINTER_ALLOWED_PATHS": "~/Documents:~/Downloads:~/Desktop",
         "MCP_PRINTER_AUTO_DUPLEX": "true"
@@ -69,7 +68,7 @@ Replace both executable paths with your local paths; `command -v bun` shows the 
 Start the server from the repository directory:
 
 ```sh
-MCP_PRINTER_TRANSPORT=http bun dist/index.js
+MCP_PRINTER_TRANSPORT=http bun src/index.ts
 ```
 
 Configure your client's Streamable HTTP connection with `http://127.0.0.1:3000/mcp`. The endpoint accepts `POST` and returns JSON; it has no persistent sessions or GET event stream.
@@ -236,7 +235,7 @@ Rendered Markdown files get a page-number footer. In a file printed through `pri
 
 ## Development
 
-The [justfile](justfile) defines build, test, formatting, and CI commands. `nix-shell` provides the development tools, including Chromium and CUPS clients, and installs Git hooks on entry. Without Nix, install the tools used by the recipes yourself.
+The [justfile](justfile) defines type-checking, test, formatting, and CI commands. `nix-shell` provides the development tools, including Chromium and CUPS clients, and installs Git hooks on entry. Without Nix, install the tools used by the recipes yourself.
 
 ```sh
 nix-shell
@@ -244,7 +243,7 @@ bun install --frozen-lockfile
 just ci
 ```
 
-For narrower checks, use `just build`, `just test-unit`, or `just test-integration`. Integration tests render PDFs with Chrome/Chromium. `just dev` watches TypeScript and rebuilds; restart the running server to load changes. `just format` applies formatters, and `just hooks-install` installs the formatting, typo, and Conventional Commit hooks.
+For narrower checks, use `just typecheck`, `just test-unit`, or `just test-integration`. Integration tests render PDFs with Chrome/Chromium. Restart the running server to load source changes. `just format` applies formatters, and `just hooks-install` installs the formatting, typo, and Conventional Commit hooks.
 
 ### Releasing
 

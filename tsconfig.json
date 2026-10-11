@@ -2,8 +2,7 @@
   "compilerOptions": {
     "target": "ES2025",
     "module": "Preserve",
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "noEmit": true,
     "skipLibCheck": true,
     "types": ["node"]
   },

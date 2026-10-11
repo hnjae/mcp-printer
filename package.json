@@ -14,25 +14,11 @@
   "homepage": "https://github.com/hnjae/mcp-printer#readme",
   "keywords": [
     "mcp",
-    "mcp-server",
     "model-context-protocol",
-    "printer",
     "printing",
-    "cups",
-    "macos",
-    "linux",
-    "llm",
-    "automation",
-    "cli",
-    "pdf",
-    "document",
-    "queue"
+    "cups"
   ],
   "type": "module",
-  "main": "dist/index.js",
-  "bin": {
-    "mcp-printer": "./dist/index.js"
-  },
   "engines": {
     "bun": ">=1.3.14"
   },

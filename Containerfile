@@ -1,15 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 KIM Hyunjae
 
-FROM docker.io/oven/bun:1-debian AS build
-WORKDIR /app
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
-COPY tsconfig.json ./
-COPY src ./src
-RUN bun x tsc \
-    && bun install --frozen-lockfile --production
-
 FROM docker.io/oven/bun:1-debian
 # cups-bsd provides lpr/lpq/lprm, cups-client provides lpstat/lpoptions. Versions stay unpinned
 # (DL3008): Debian drops superseded package versions, so pins would break rebuilds.
@@ -18,9 +9,9 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends cups-client cups-bsd chromium fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-COPY --from=build /app/package.json ./
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --production
+COPY src ./src
 
 # The HTTP transport has no authentication: publish the port only to loopback or an internal
 # network behind an authenticating proxy. Chrome keeps its sandbox as the non-root user; set
@@ -33,4 +24,4 @@ ENV MCP_PRINTER_TRANSPORT=http \
     MCP_PRINTER_ENABLE_FILE_TOOLS=false
 USER bun
 EXPOSE 3000
-CMD ["bun", "dist/index.js"]
+CMD ["bun", "src/index.ts"]

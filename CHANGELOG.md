@@ -1,11 +1,18 @@
 <!--
 SPDX-License-Identifier: AGPL-3.0-or-later
 SPDX-FileCopyrightText: 2025 Steve CLARKE
+SPDX-FileCopyrightText: 2026 KIM Hyunjae
 -->
 
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [Unreleased]
+
+### Changed
+
+- **BREAKING**: Bun runs the TypeScript sources directly and there is no build step or `dist/` directory. Point MCP client configurations at `src/index.ts` instead of `dist/index.js`
 
 ## [3.0.0] - 2026-10-11
 

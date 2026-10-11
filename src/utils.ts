@@ -365,8 +365,8 @@ export function buildCupsOptions({
 }
 
 /**
- * extra read of the printer's options; if it fails, `media` is sent unchanged for CUPS to judge.
- * `lpoptions` call; if it fails, `media` is sent unchanged for CUPS to judge.
+ * Turn a JIS `media` name into what the target printer accepts. Only JIS sizes cost an extra
+ * read of the printer's options; if it fails, `media` is sent unchanged for CUPS to judge.
  */
 async function withResolvedMedia(settings: PrintOptions, printer?: string): Promise<PrintOptions> {
   const { media } = settings

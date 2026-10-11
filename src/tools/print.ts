@@ -11,7 +11,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
 import { ORIENTATIONS, QUALITIES, SIDES } from "../print-settings.js"
-import { CONTENT_FORMATS, MAX_PDF_BYTES } from "../utils.js"
+import { CONTENT_FORMATS, MAX_PDF_BYTES, RENDER_MODES } from "../utils.js"
 import {
   checkBatchSizeLimit,
   formatPageMetaResults,
@@ -46,17 +46,11 @@ const renderingParametersSchema = {
     .string()
     .optional()
     .describe("Line spacing for code files (e.g., '1', '1.5', '2')"),
-  force_markdown_render: z
-    .boolean()
+  render: z
+    .enum(RENDER_MODES)
     .optional()
     .describe(
-      "Force markdown rendering to PDF (true=always render, false=never render, undefined=use config)"
-    ),
-  force_code_render: z
-    .boolean()
-    .optional()
-    .describe(
-      "Force code rendering to PDF with syntax highlighting (true=always render, false=never render, undefined=use config)"
+      "How to render the file: 'markdown' or 'code' renders it to PDF as that kind of document whatever its extension, 'none' uses the file as it is. Omit to detect from the extension and the server configuration."
     ),
 }
 

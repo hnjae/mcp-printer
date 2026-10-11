@@ -30,7 +30,7 @@ Three tools submit print jobs. They differ in where the document comes from; eve
 
 ## print_file
 
-Each entry in `files` has a `file_path` and the shared parameters. Paths are checked against [file-access](file-access.md). Markdown and recognized code files are rendered to PDF first, controlled by `force_markdown_render`, `force_code_render` and the code rendering parameters described in [rendering](rendering.md). Any other file is sent to CUPS unchanged, and CUPS decides whether it can print it. Entries are processed as described in [batches](batches.md).
+Each entry in `files` has a `file_path` and the shared parameters. Paths are checked against [file-access](file-access.md). Markdown and recognized code files are rendered to PDF first, controlled by `render` and the code rendering parameters described in [rendering](rendering.md). Any other file is sent to CUPS unchanged, and CUPS decides whether it can print it. Entries are processed as described in [batches](batches.md).
 
 ## Result
 

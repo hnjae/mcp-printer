@@ -485,11 +485,13 @@ export interface RenderOptions {
   fontSize?: string
   /** Line spacing for code files */
   lineSpacing?: string
-  /** Force markdown rendering to PDF */
-  forceMarkdownRender?: boolean
-  /** Force code rendering to PDF with syntax highlighting */
-  forceCodeRender?: boolean
+  /** How to render the file; omitted means detect from the file and the configuration */
+  render?: RenderMode
 }
+
+export const RENDER_MODES = ["markdown", "code", "none"] as const
+
+export type RenderMode = (typeof RENDER_MODES)[number]
 
 /**
  * Prepares a file for printing by conditionally rendering it to PDF.
@@ -499,12 +501,13 @@ export interface RenderOptions {
  * or can be printed as-is.
  *
  * **Rendering Behavior:**
- * - **Markdown files** (`.md`, `.markdown`): Rendered to PDF with full formatting, unless
- *   auto-rendering is disabled or `forceMarkdownRender` is explicitly set to false
- * - **Code files**: Rendered to PDF with syntax highlighting, unless auto-rendering is
- *   disabled or `forceCodeRender` is explicitly set to false, or the extension is excluded
- * - **PDF files**: Used as-is (no re-rendering)
- * - **Other files** (text, images, etc.): Passed through without modification
+ * - **`render` given**: the file is rendered as Markdown or as code, or passed through for `none`,
+ *   whatever its extension
+ * - **`render` omitted, Markdown files** (`.md`, `.markdown`): Rendered to PDF with full
+ *   formatting, unless auto-rendering is disabled
+ * - **`render` omitted, code files**: Rendered to PDF with syntax highlighting, unless
+ *   auto-rendering is disabled or the extension is excluded
+ * - **Other files** (PDF, text, images, etc.): Passed through without modification
  *
  * **Security:** All file paths are validated against allowed/denied paths before processing.
  *
@@ -517,8 +520,7 @@ export interface RenderOptions {
  * @param options.colorScheme - Syntax highlighting theme for code (e.g., "atom-one-light", "monokai")
  * @param options.fontSize - Font size for code rendering (e.g., "10pt", "12pt")
  * @param options.lineSpacing - Line spacing multiplier for code (e.g., "1", "1.5", "2")
- * @param options.forceMarkdownRender - Explicitly enable/disable markdown rendering
- * @param options.forceCodeRender - Explicitly enable/disable code rendering
+ * @param options.render - Explicitly choose how to render the file
  *
  * @returns Promise resolving to a RenderResult object
  * @returns result.actualFilePath - The file path to actually print (original or rendered PDF)
@@ -551,14 +553,15 @@ export async function prepareFileForPrinting(options: RenderOptions): Promise<Re
   let renderedPdf: string | null = null
   let renderType = ""
 
-  // Check if file should be auto-rendered to PDF (markdown)
-  const shouldRenderMarkdown =
-    options.forceMarkdownRender !== undefined
-      ? options.forceMarkdownRender &&
-        MARKDOWN_EXTENSIONS.some((ext) => options.filePath.toLowerCase().endsWith(`.${ext}`))
-      : shouldRenderToPdf(options.filePath)
+  const render: RenderMode =
+    options.render ??
+    (shouldRenderToPdf(options.filePath)
+      ? "markdown"
+      : (await shouldRenderCode(options.filePath))
+        ? "code"
+        : "none")
 
-  if (shouldRenderMarkdown) {
+  if (render === "markdown") {
     try {
       renderedPdf = await renderMarkdownToPdf(options.filePath)
       actualFilePath = renderedPdf
@@ -571,13 +574,7 @@ export async function prepareFileForPrinting(options: RenderOptions): Promise<Re
         throw error
       }
     }
-  }
-  // Check if file should be rendered as code with syntax highlighting
-  else if (
-    options.forceCodeRender !== undefined
-      ? options.forceCodeRender
-      : await shouldRenderCode(options.filePath)
-  ) {
+  } else if (render === "code") {
     try {
       renderedPdf = await renderCodeToPdf(options.filePath, {
         lineNumbers: options.lineNumbers,

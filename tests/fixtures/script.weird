@@ -3,7 +3,7 @@
 
 // This file has a .weird extension but contains real JavaScript code
 // It should NOT auto-render (unknown extension)
-// Use force_code_render=true to render it
+// Use render=code to render it
 
 function fibonacci(n) {
   if (n <= 1) return n;

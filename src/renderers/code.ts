@@ -37,7 +37,7 @@ import { convertHtmlToPdf, hasShebang } from "../utils.js"
 /**
  * Determines if a file should be rendered with syntax highlighting.
  * Uses strict whitelist approach - only known extensions and special extensionless
- * files will be auto-rendered. Unknown extensions require force_code_render=true.
+ * files will be auto-rendered. Unknown extensions require render=code.
  * Falls back to shebang detection for files without recognized extensions.
  *
  * @param filePath - Path to the file to check
@@ -53,7 +53,7 @@ export async function shouldRenderCode(filePath: string): Promise<boolean> {
   const fileExt = extname(filePath)
   const ext = fileExt ? fileExt.slice(1).toLowerCase() : basename(filePath).toLowerCase()
 
-  // Markdown files are rendered as Markdown or printed as they are; code rendering needs force_code_render
+  // Markdown files are rendered as Markdown or printed as they are; code rendering needs render=code
   if (MARKDOWN_EXTENSIONS.some((markdownExt) => markdownExt === ext)) {
     return false
   }
@@ -82,7 +82,7 @@ const __dirname = dirname(__filename)
  *
  * This is a strict whitelist - only files with these extensions will be automatically
  * rendered as code. Files with unknown extensions will not be rendered unless
- * force_code_render=true is explicitly passed.
+ * render=code is explicitly passed.
  *
  * Benefits of strict whitelist:
  * - 100% predictable (no false positives on plain text files)

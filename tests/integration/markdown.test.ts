@@ -25,6 +25,7 @@ vi.mock("../../src/config.js", () => {
 mkdirSync(join(dirname(fileURLToPath(import.meta.url)), "../tmp"), { recursive: true })
 
 import { renderMarkdownToPdf } from "../../src/renderers/markdown.js"
+import { cleanupRenderedPdf, prepareFileForPrinting } from "../../src/utils.js"
 
 describe("renderMarkdownToPdf", () => {
   it("should render a simple markdown file to PDF", async () => {
@@ -391,6 +392,35 @@ This has an empty front-matter block.`
         unlinkSync(testFile)
       } catch {}
       throw error
+    }
+  })
+
+  it("should render a file without a Markdown extension when asked to", async () => {
+    const testFile = join(dirname(fileURLToPath(import.meta.url)), "../tmp/notes-as-markdown.txt")
+    const { writeFileSync } = await import("node:fs")
+    writeFileSync(testFile, "# Heading\n\n| a | b |\n|---|---|\n| 1 | 2 |\n", "utf-8")
+
+    try {
+      const pdfPath = await renderMarkdownToPdf(testFile)
+      expect(existsSync(pdfPath)).toBe(true)
+      unlinkSync(pdfPath)
+    } finally {
+      unlinkSync(testFile)
+    }
+  })
+
+  it("should route render: markdown to the Markdown renderer for any file", async () => {
+    const testFile = join(dirname(fileURLToPath(import.meta.url)), "../tmp/routed-as-markdown.txt")
+    const { writeFileSync } = await import("node:fs")
+    writeFileSync(testFile, "# Heading\n", "utf-8")
+
+    try {
+      const prepared = await prepareFileForPrinting({ filePath: testFile, render: "markdown" })
+      expect(prepared.renderType).toBe("markdown → PDF")
+      expect(existsSync(prepared.actualFilePath)).toBe(true)
+      cleanupRenderedPdf(prepared.renderedPdf)
+    } finally {
+      unlinkSync(testFile)
     }
   })
 })

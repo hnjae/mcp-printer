@@ -17,6 +17,7 @@ import {
   getPdfPageCount,
   isDuplexEnabled,
   type PrintOptions,
+  type RenderMode,
   prepareFileForPrinting,
   shouldTriggerConfirmation,
   withPreparedContent,
@@ -78,8 +79,7 @@ export interface FilePrintSpec extends PrintOptions {
   color_scheme?: string
   font_size?: string
   line_spacing?: string
-  force_markdown_render?: boolean
-  force_code_render?: boolean
+  render?: RenderMode
 }
 
 /**
@@ -187,8 +187,7 @@ export async function handlePrint(spec: FilePrintSpec): Promise<PrintResult> {
     color_scheme,
     font_size,
     line_spacing,
-    force_markdown_render,
-    force_code_render,
+    render,
   } = spec
 
   try {
@@ -199,8 +198,7 @@ export async function handlePrint(spec: FilePrintSpec): Promise<PrintResult> {
       colorScheme: color_scheme,
       fontSize: font_size,
       lineSpacing: line_spacing,
-      forceMarkdownRender: force_markdown_render,
-      forceCodeRender: force_code_render,
+      render,
     })
 
     try {
@@ -414,8 +412,7 @@ export interface FilePageMetaSpec extends Pick<PrintOptions, "options" | "sides"
   color_scheme?: string
   font_size?: string
   line_spacing?: string
-  force_markdown_render?: boolean
-  force_code_render?: boolean
+  render?: RenderMode
 }
 
 /**
@@ -452,17 +449,8 @@ export interface PageMetaResult {
  * - Sheets is the physical paper count (pages/2 for duplex)
  */
 export async function handlePageMeta(spec: FilePageMetaSpec): Promise<PageMetaResult> {
-  const {
-    file_path,
-    options,
-    sides,
-    line_numbers,
-    color_scheme,
-    font_size,
-    line_spacing,
-    force_markdown_render,
-    force_code_render,
-  } = spec
+  const { file_path, options, sides, line_numbers, color_scheme, font_size, line_spacing, render } =
+    spec
 
   try {
     // Use shared rendering function
@@ -472,8 +460,7 @@ export async function handlePageMeta(spec: FilePageMetaSpec): Promise<PageMetaRe
       colorScheme: color_scheme,
       fontSize: font_size,
       lineSpacing: line_spacing,
-      forceMarkdownRender: force_markdown_render,
-      forceCodeRender: force_code_render,
+      render,
     })
 
     try {

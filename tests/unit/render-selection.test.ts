@@ -3,7 +3,8 @@
 
 /**
  * @fileoverview Which renderer a file gets: Markdown files are rendered as Markdown or printed as
- * they are, never silently rendered as code. Only cases that need no Chrome are exercised.
+ * they are, never silently rendered as code, and `render: none` prints any file as it is. Only
+ * cases that need no Chrome are exercised.
  */
 
 import { describe, expect, it, vi } from "bun:test"
@@ -37,14 +38,23 @@ describe("code rendering selection", () => {
   })
 })
 
-describe("force_markdown_render: false", () => {
+describe("render: none", () => {
   it("prints a Markdown file as it is instead of rendering it as code", async () => {
     const file = join(fixtures, "markdown-test-short.md")
 
-    const prepared = await prepareFileForPrinting({ filePath: file, forceMarkdownRender: false })
+    const prepared = await prepareFileForPrinting({ filePath: file, render: "none" })
 
     expect(prepared.actualFilePath).toBe(file)
     expect(prepared.renderedPdf).toBeNull()
+    expect(prepared.renderType).toBe("")
+  })
+
+  it("prints a code file as it is", async () => {
+    const file = join(fixtures, "hello.py")
+
+    const prepared = await prepareFileForPrinting({ filePath: file, render: "none" })
+
+    expect(prepared.actualFilePath).toBe(file)
     expect(prepared.renderType).toBe("")
   })
 })

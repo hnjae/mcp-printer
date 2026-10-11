@@ -93,7 +93,7 @@ export function registerContentPrintTools(server: McpServer) {
     {
       title: "Print Content",
       description:
-        "Print a document whose text you provide, without needing a file on the server. Use it to print text you wrote: markdown is rendered to PDF with formatting (tables, math, mermaid diagrams), html is rendered as a self-contained page (inline CSS and data: images only; no scripts, no external or local resources), code is rendered with syntax highlighting, and text is printed as plain text.",
+        "Print a document whose text you provide, without needing a file on the server. Use it to print text you wrote: markdown is rendered to PDF with formatting (tables, math, mermaid diagrams), html is rendered as a self-contained page (inline CSS and data: images only; no scripts, no external or local resources; backgrounds are printed as written, so use a light one), code is rendered with syntax highlighting, and text is printed as plain text.",
       inputSchema: {
         content: z.string().min(1).max(MAX_CONTENT_LENGTH).describe("The document text to print"),
         format: z

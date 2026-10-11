@@ -242,6 +242,7 @@ export async function convertHtmlToPdf(
       await execa(chromePath, [
         "--headless",
         "--disable-gpu",
+        "--no-pdf-header-footer",
         ...getChromeSandboxArgs(),
         ...chromeFlags,
         `--print-to-pdf=${tmpPdf}`,

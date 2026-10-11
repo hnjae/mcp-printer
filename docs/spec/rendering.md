@@ -42,6 +42,10 @@ Any other name, such as `JISB5` or an envelope like `EnvDL`, renders on A4 while
 
 A document can choose its own size. HTML sets it with an `@page { size: … }` rule; Markdown sets it in its front matter, for example `chrome: { format: Letter }`. A Markdown file that sets other `chrome` options without a size is still laid out on the size of the call. PDFs from `print_pdf` and files printed as they are keep their own size.
 
+## HTML, code and text pages
+
+These pages carry no header or footer; only Markdown has the footer described above. HTML is printed as written, backgrounds and colors included, so a page with a dark or colored background uses a lot of ink and the server does not change that.
+
 ## Choosing the renderer
 
 On `print_file` and `get_page_meta`, `render` chooses how a file is rendered whatever its extension and the automatic-rendering settings:

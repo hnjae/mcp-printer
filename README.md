@@ -141,10 +141,25 @@ MCP_PRINTER_TRANSPORT=http MCP_PRINTER_HTTP_HOST=127.0.0.1 MCP_PRINTER_HTTP_PORT
 
 ### Running in a container
 
-- Install the CUPS client commands (`cups-client`), Chrome or Chromium, and fonts for the languages you print (for example CJK).
-- Mount the host CUPS socket at `/run/cups/cups.sock`. Rootless podman also needs access to the socket, for example `--userns=keep-id` or a matching group, and `:z` on SELinux hosts.
-- Set `MCP_PRINTER_CHROME_NO_SANDBOX=true` when the process runs as root, and give Chrome enough shared memory (`--shm-size=1g`).
-- Set `MCP_PRINTER_ALLOWED_PATHS` for the container filesystem if you use `print_file`. `/root` and `/tmp` are always denied, so mount documents elsewhere. Mount only directories you are willing to print: markdown content can still embed image files readable by the server.
+The `Containerfile` builds an image with the CUPS client commands, Chromium and CJK fonts, serving MCP over HTTP on port 3000 as the non-root `bun` user (about 2 GB).
+
+```sh
+podman build -t mcp-printer -f Containerfile .
+
+podman run -d --name mcp-printer \
+    --userns=keep-id:uid=1000,gid=1000 \
+    --shm-size=1g \
+    -v /run/cups/cups.sock:/run/cups/cups.sock \
+    -v "$HOME/Documents/print:/home/bun/Documents:ro" \
+    -p 127.0.0.1:3000:3000 \
+    mcp-printer
+```
+
+- The server has no authentication: publish the port on loopback only, or attach the container to an internal network that only your authenticating proxy can reach.
+- Mount the host CUPS socket at `/run/cups/cups.sock`. Rootless podman maps your host user to the image's `bun` user (uid 1000) with `--userns=keep-id:uid=1000,gid=1000`; add `:z` to the mounts on SELinux hosts.
+- Chrome keeps its sandbox as the non-root user. If Chrome fails to start, or you run the container as root, set `MCP_PRINTER_CHROME_NO_SANDBOX=true`; this removes Chrome's own sandbox, so rely on the container for isolation. Give Chrome enough shared memory (`--shm-size=1g`).
+- `print_file` reads from `/home/bun/Documents` by default; set `MCP_PRINTER_ALLOWED_PATHS` to use other mount points. `/root` and `/tmp` are always denied. Mount only directories you are willing to print: markdown content can still embed image files readable by the server.
+- CUPS records print jobs from the container as owned by `unknown`. That does not affect printing, but virtual printers that write per-user output, such as `cups-pdf`, then have nowhere to write.
 - `set_default_printer` writes the container user's CUPS settings, not the host's.
 
 ## Available Tools

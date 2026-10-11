@@ -9,6 +9,7 @@ pkgs.mkShellNoCC {
     chromium
     cocogitto
     cups
+    hadolint
     just
     nixfmt
     prek

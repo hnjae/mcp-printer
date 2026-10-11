@@ -26,5 +26,5 @@ Tooling comes from `shell.nix` (`nix-shell`), which also installs the git hooks;
 ## Releases
 
 - `CHANGELOG.md` is not edited per commit. At release, draft the section with `cog changelog vPREVIOUS..HEAD` and edit it by hand.
-- Set the `package.json` version, run `just ci`, then push a `vX.Y.Z` tag. The image workflow (`.github/workflows/image.yml`) fails if the tag differs from the `package.json` version.
+- Set the `package.json` version, run `just ci`, then push a `vX.Y.Z` tag. The tag push starts the image workflow (`image.yml`) and the npm workflow (`npm.yml`, trusted publishing to `@hnjae/mcp-printer`); both fail if the tag differs from the `package.json` version. A tag containing `-` is published to npm under the `next` tag.
 - `main` changes only through pull requests.

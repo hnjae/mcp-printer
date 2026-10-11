@@ -687,8 +687,11 @@ export async function withPreparedContent<T>(
   }
 }
 
-/** Largest PDF accepted from a client, in bytes after decoding. */
-export const MAX_PDF_BYTES = 5 * 1024 * 1024
+/**
+ * Largest PDF accepted from a client, in bytes after decoding. The base64 text and the rest of the
+ * request must fit in the 4 MiB the HTTP transport accepts, and exactly 3 MiB does not.
+ */
+export const MAX_PDF_BYTES = 3_000_000
 
 /**
  * Validates a base64-encoded PDF from the client, writes it to a private temporary file and removes
@@ -708,7 +711,7 @@ export async function withPreparedPdf<T>(
 ): Promise<T> {
   const bytes = Buffer.from(base64, "base64")
   if (bytes.length > MAX_PDF_BYTES) {
-    throw new Error(`PDF exceeds the ${MAX_PDF_BYTES / 1024 / 1024} MB size limit`)
+    throw new Error(`PDF exceeds the ${MAX_PDF_BYTES / 1_000_000} MB size limit`)
   }
   if (bytes.subarray(0, 5).toString("latin1") !== "%PDF-") {
     throw new Error("Data is not a PDF")

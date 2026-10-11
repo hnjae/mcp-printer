@@ -2,7 +2,7 @@
 
 ## Project
 
-MCP server (TypeScript on Bun, no build step) that prints through CUPS. Entry point is `src/index.ts`; run with `bun src/index.ts` (stdio) or `MCP_PRINTER_TRANSPORT=http bun src/index.ts`. Windows is unsupported. This is a fork; the unscoped npm package `mcp-printer` is the upstream project.
+MCP server (TypeScript on Bun, no build step) that prints through CUPS. Entry point is `src/index.ts`; run with `bun src/index.ts` (stdio) or `MCP_PRINTER_TRANSPORT=http bun src/index.ts`. This is a fork; the unscoped npm package `mcp-printer` is the upstream project.
 
 ## Commands
 

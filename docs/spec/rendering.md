@@ -8,6 +8,8 @@ A file ending in `.md` or `.markdown` (any case) is rendered when `MCP_PRINTER_A
 
 Rendered pages carry a footer with the document's name and the page number out of the total. A Markdown file printed with `print_file` can replace the footer by setting `chrome` (or `puppeteer`) in its front matter, for example `chrome: { displayHeaderFooter: false }` to remove it; the file's own settings are then left untouched. Content from `print_content` always gets the default footer.
 
+Body text uses `-apple-system`, `BlinkMacSystemFont`, `ui-sans-serif` and `sans-serif`; code uses `ui-monospace`. The container image maps `ui-sans-serif`, `ui-serif` and `ui-rounded` to the Noto CJK families, and `ui-monospace` to Sarasa Mono K; `sans-serif`, `serif` and `monospace` resolve the same way. Latin and CJK text therefore use consistent families. Elsewhere the browser chooses among the fonts installed on the system.
+
 ## Code
 
 A file is rendered with syntax highlighting when `MCP_PRINTER_AUTO_RENDER_CODE` is `true` (default) and either:

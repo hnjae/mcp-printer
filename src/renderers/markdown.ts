@@ -24,7 +24,14 @@ import { findChrome, getChromeSandboxArgs } from "../utils.ts"
  * Print styling on top of the themes: no filled backgrounds, so pages use little ink. Code blocks
  * get an outline instead so they stay set apart from the text.
  */
+const SANS_FONT_STACK = "-apple-system, BlinkMacSystemFont, ui-sans-serif, sans-serif"
+
 const PRINT_CSS = `
+html body { font-family: ${SANS_FONT_STACK}; }
+html body pre, html body code, html body kbd,
+pre[class*="language-"], code[class*="language-"] {
+  font-family: ui-monospace, 'Sarasa Mono K', monospace;
+}
 html body pre, html body code, html body blockquote, html body kbd,
 pre[class*="language-"], code[class*="language-"] { background: transparent !important; }
 html body pre, pre[class*="language-"] { border: 1px solid #d6d6d6; }
@@ -46,7 +53,7 @@ function getPageNumberConfig(filename: string) {
       "width: 100%",
       "margin: 0",
       "padding: 0 1cm",
-      "font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'",
+      `font-family: ${SANS_FONT_STACK}`,
       "display: flex",
       "justify-content: space-between",
       "align-items: center",

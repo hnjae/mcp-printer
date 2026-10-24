@@ -25,6 +25,8 @@ FROM docker.io/oven/bun:1-debian
 RUN apt-get update \
     && apt-get install -y --no-install-recommends cups-client cups-bsd chromium fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
+# Chromium on Linux leaves the CSS ui-* generic families to fontconfig.
+COPY --chmod=0644 fontconfig/99-mcp-printer.conf /etc/fonts/conf.d/
 # The font is under the SIL Open Font License, which asks for its text to travel with the font.
 COPY --from=sarasa --chmod=0644 /fonts/*.ttf /usr/local/share/fonts/sarasa-mono-k/
 COPY --from=sarasa --chmod=0644 /fonts/LICENSE /usr/share/licenses/sarasa-mono-k/LICENSE

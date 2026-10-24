@@ -667,7 +667,7 @@ export async function withPreparedContent<T>(
       case "text": {
         const html =
           '<!DOCTYPE html><html><head><meta charset="utf-8"><style>' +
-          "pre{font:10pt/1.4 ui-monospace,'Sarasa Mono K',monospace;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}" +
+          "pre{font:10pt/1.4 monospace;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}" +
           `</style></head><body><pre>${encode(options.content)}</pre></body></html>`
         renderedPdf = await convertHtmlToPdf(html, { pageSize: options.pageSize })
         return await use({ actualFilePath: renderedPdf, renderType: "text → PDF" })

@@ -8,7 +8,7 @@ A file ending in `.md` or `.markdown` (any case) is rendered when `MCP_PRINTER_A
 
 Rendered pages carry a footer with the document's name and the page number out of the total. A Markdown file printed with `print_file` can replace the footer by setting `chrome` (or `puppeteer`) in its front matter, for example `chrome: { displayHeaderFooter: false }` to remove it; the file's own settings are then left untouched. Content from `print_content` always gets the default footer.
 
-Body text uses `-apple-system`, `BlinkMacSystemFont`, `ui-sans-serif` and `sans-serif`; code uses `ui-monospace`. The container image maps `ui-sans-serif`, `ui-serif` and `ui-rounded` to the Noto CJK families, and `ui-monospace` to Sarasa Mono K; `sans-serif`, `serif` and `monospace` resolve the same way. Latin and CJK text therefore use consistent families. Elsewhere the browser chooses among the fonts installed on the system.
+Body text uses `-apple-system`, `BlinkMacSystemFont`, `ui-sans-serif` and `sans-serif`; code uses `monospace`. The container image maps `ui-sans-serif`, `ui-serif` and `ui-rounded` to the Noto CJK families, and `ui-monospace` and `monospace` to Sarasa Mono K; `sans-serif` and `serif` resolve to Noto as well. Latin and CJK text therefore use consistent families. Elsewhere the browser chooses among the fonts installed on the system.
 
 ## Code
 
@@ -30,7 +30,7 @@ The look of the output comes from the configuration; a call cannot change it:
 | `MCP_PRINTER_CODE_FONT_SIZE` | `10pt` | CSS font size |
 | `MCP_PRINTER_CODE_LINE_SPACING` | `1.5` | CSS line height |
 
-Code, and `print_content` with `format: text`, is set in the first available of `ui-monospace`, Sarasa Mono K and the system's generic monospace font. Sarasa Mono K sets Hangul and other CJK characters at exactly twice the width of Latin ones, so code with such comments stays aligned. The container image includes it; on other systems install it to get the same look.
+Code, and `print_content` with `format: text`, is set in the generic `monospace` family. The container image maps it to Sarasa Mono K, which sets Hangul and other CJK characters at exactly twice the width of Latin ones, so code with such comments stays aligned. On other systems the browser uses the generic monospace font installed there.
 
 ## Page size
 

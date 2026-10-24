@@ -30,7 +30,7 @@ const PRINT_CSS = `
 html body { font-family: ${SANS_FONT_STACK}; }
 html body pre, html body code, html body kbd,
 pre[class*="language-"], code[class*="language-"] {
-  font-family: ui-monospace, 'Sarasa Mono K', monospace;
+  font-family: monospace;
 }
 html body pre, html body code, html body blockquote, html body kbd,
 pre[class*="language-"], code[class*="language-"] { background: transparent !important; }

@@ -11,7 +11,7 @@ _:
 
 [group('hooks')]
 hooks-install:
-    prek install
+    prek install --config prek.toml
     cog install-hook commit-msg --overwrite
 
 [group('test')]
@@ -36,7 +36,7 @@ test-coverage:
 [group('ci')]
 ci: lint typecheck typos format-check test
     reuse lint
-    prek validate-config .pre-commit-config.yaml
+    prek validate-config prek.toml
 
 [group('lint')]
 lint:

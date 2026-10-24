@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 KIM Hyunjae
+
+default_stages = ["pre-commit"]
+default_install_hook_types = ["pre-commit", "pre-push"]
+
+[[repos]]
+repo = "builtin"
+hooks = [
+  { id = "trailing-whitespace" },
+  { id = "check-added-large-files" },
+  { id = "detect-private-key", types = ["text"] },
+]
+
+[[repos]]
+repo = "local"
+hooks = [
+  { id = "treefmt", name = "treefmt", entry = "treefmt", language = "system" },
+  { id = "typos", name = "typos", entry = "typos", language = "system" },
+  { id = "lint", name = "just lint", entry = "just lint", language = "system", stages = [
+    "pre-push",
+  ], always_run = true, pass_filenames = false },
+]

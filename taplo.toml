@@ -2,3 +2,4 @@
 # SPDX-FileCopyrightText: 2026 KIM Hyunjae
 [formatting]
 array_auto_collapse = false
+inline_table_expand = true
